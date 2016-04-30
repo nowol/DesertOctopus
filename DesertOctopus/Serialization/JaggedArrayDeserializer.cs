@@ -29,7 +29,6 @@ namespace DesertOctopus.Serialization
             variables.Add(numberOfDimensions);
 
             List<Expression> notTrackedExpressions = new List<Expression>();
-
             notTrackedExpressions.AddRange(ReadJaggedArray(type, elementType, newInstance, variables, inputStream, objTracking));
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
@@ -70,11 +69,11 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.New(type.GetConstructor(new []{ typeof(int)}), length), type)));
-            expressions.Add(Expression.Call(objTracking, typeof(List<object>).GetMethod("Add"), newInstance));
+            expressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType));
-            loopExpressions.Add(Expression.Call(newInstance, typeof(Array).GetMethod("SetValue", new[] { typeof(object), typeof(int) }), Expression.Convert(tmpValue, typeof(object)), i));
+            loopExpressions.Add(Expression.Call(newInstance, ArrayMIH.SetValue(), Expression.Convert(tmpValue, typeof(object)), i));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);
@@ -82,8 +81,7 @@ namespace DesertOctopus.Serialization
             var breakLabel = Expression.Label("breakLabel");
             var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                              loopBody,
-                                                             Expression.Break(breakLabel)
-                                                            ),
+                                                             Expression.Break(breakLabel)),
                                         breakLabel);
             expressions.Add(loop);
             return expressions;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using DesertOctopus.Serialization.Helpers.MethodInfoHelpers;
 
 namespace DesertOctopus.Serialization.Helpers
 {
@@ -54,7 +55,7 @@ namespace DesertOctopus.Serialization.Helpers
             if (typeof(IDisposable).IsAssignableFrom(typeof(TEnumeratorType)))
             {
                 finallyExpr = Expression.IfThen(Expression.NotEqual(enumeratorVar, Expression.Constant(null)),
-                                                Expression.Call(enumeratorVar, typeof(IDisposable).GetMethod("Dispose")));
+                                                Expression.Call(enumeratorVar, IDisposableMIH.Dispose()));
             }
             else
             {
@@ -63,11 +64,10 @@ namespace DesertOctopus.Serialization.Helpers
 
             return Expression.TryFinally(Expression.Block(Expression.Assign(enumeratorVar, getEnumeratorMethod),
                                                           PrimitiveHelpers.WriteInt32(outputStream, countExpression),
-                                                          Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, typeof(IEnumerator).GetMethod("MoveNext"))),
+                                                          Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, IEnumeratorMIH.MoveNext())),
                                                                                                 loopBody(loopBodyCargo),
                                                                                                 Expression.Break(breakLabel)),
-                                                                          breakLabel)
-                                             ),
+                                                                          breakLabel)),
                                          finallyExpr);
         }
     }

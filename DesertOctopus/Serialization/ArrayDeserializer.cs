@@ -68,12 +68,10 @@ namespace DesertOctopus.Serialization
             variables.Add(tmpValue);
             variables.Add(typeHashCode);
 
-
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Property(lengths, "Length"))));
-            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(typeof(Array).GetMethod("CreateInstance", BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(Type), typeof(int[]) }, null), Expression.Constant(elementType), lengths), type)));
-            expressions.Add(Expression.Call(objTracking, typeof(List<object>).GetMethod("Add"), newInstance));
-
+            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMIH.CreateInstance(), Expression.Constant(elementType), lengths), type)));
+            expressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
 
             Expression innerExpression;
             if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
@@ -96,12 +94,8 @@ namespace DesertOctopus.Serialization
 
                 loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
                 loopExpressions.Add(innerExpr);
-                loopExpressions.Add(
-                                    Expression.Call(newInstance, typeof(Array).GetMethod("SetValue", new[] { typeof(object), typeof(int[]) }), Expression.Convert(tmpValue, typeof(object)), indices)
-                                    );
+                loopExpressions.Add(Expression.Call(newInstance, ArrayMIH.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
-
-                //Array a;a.SetValue(
 
                 var cond = Expression.LessThan(loopRankIndex, Expression.ArrayIndex(lengths, Expression.Constant(loopRank)));
                 var loopBody = Expression.Block(loopExpressions);
@@ -109,8 +103,7 @@ namespace DesertOctopus.Serialization
                 var breakLabel = Expression.Label("breakLabel" + loopRank);
                 var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                                  loopBody,
-                                                                 Expression.Break(breakLabel)
-                                                                ),
+                                                                 Expression.Break(breakLabel)),
                                             breakLabel);
                 return Expression.Block(Expression.Assign(loopRankIndex, Expression.Constant(0)),
                                         loop);
@@ -145,8 +138,7 @@ namespace DesertOctopus.Serialization
             var cond = Expression.LessThan(i, numberOfDimensions);
             var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                              loopBody,
-                                                             Expression.Break(breakLabel)
-                                                            ),
+                                                             Expression.Break(breakLabel)),
                                        breakLabel);
             expressions.Add(loop);
 

@@ -48,7 +48,6 @@ namespace DesertOctopus.Serialization
                 }
 
                 Func<Stream, List<object>, object> deserializerMethod = GetTypeDeserializer(type.Type);
-
                 object value = deserializerMethod(ms, objs);
 
                 Debug.Assert(ms.Position == ms.Length);
@@ -213,18 +212,10 @@ namespace DesertOctopus.Serialization
                 }
 
             }
-            else// if (type.IsClass)
+            else // class, struct, etc
             {
                 expressions.Add(Expression.Assign(returnValue, Expression.Convert(GenerateClassExpression(type, inputStream, objTracking), typeof(object))));
             }
-            //else
-            //{
-            //    throw new NotSupportedException(string.Format("Type {0} is not supported",
-            //                                                  type));
-            //}
-
-            // todo return type stuff ?
-
 
             expressions.Add(returnValue);
 
@@ -262,35 +253,31 @@ namespace DesertOctopus.Serialization
                                                              Type elementType)
         {
             var readType = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
-                                                                  Expression.Assign(typeExpr, Expression.Call(typeof(SerializedTypeResolver).GetMethod("GetTypeFromFullName", BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(Type) }, null), Expression.Constant(elementType))),
+                                                                  Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_Type(), Expression.Constant(elementType))),
                                                                   Expression.Block(Expression.Assign(typeName, PrimitiveHelpers.ReadString(inputStream)),
                                                                                    Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
-                                                                                   Expression.Assign(typeExpr, Expression.Call(typeof(SerializedTypeResolver).GetMethod("GetTypeFromFullName", BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(string) }, null), typeName)),
+                                                                                   Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_String(), typeName)),
                                                                                    Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
-                                                                                                     Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr))))
-                                                );
+                                                                                                     Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
 
             var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracking);
             Expression convertExpression;
 
             if (typeof(IQueryable).IsAssignableFrom(elementType))
             {
-                convertExpression = Expression.Convert(Expression.Call(typeof(Deserializer).GetMethod("ConvertObjectToIQueryable", BindingFlags.Static | BindingFlags.NonPublic), invokeDeserializer, Expression.Constant(elementType)), elementType);
+                convertExpression = Expression.Convert(Expression.Call(DeserializerMIH.ConvertObjectToIQueryable(), invokeDeserializer, Expression.Constant(elementType)), elementType);
             }
             else
             {
                 convertExpression = Expression.Convert(invokeDeserializer, elementType);
             }
             
-
             return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
                                                           Expression.Assign(leftSize, Expression.Constant(null, elementType)),
                                                           Expression.Block(
                                                                             readType,
-                                                                            Expression.Assign(deserializer, Expression.Call(typeof(Deserializer).GetMethod("GetTypeDeserializer", BindingFlags.Static | BindingFlags.NonPublic), Expression.Property(typeExpr, "Type"))),
-                                                                            Expression.Assign(leftSize, convertExpression)
-                                                                            )
-                                                        );
+                                                                            Expression.Assign(deserializer, Expression.Call(DeserializerMIH.GetTypeDeserializer(), Expression.Property(typeExpr, "Type"))),
+                                                                            Expression.Assign(leftSize, convertExpression)));
 
         }
 
@@ -305,8 +292,7 @@ namespace DesertOctopus.Serialization
             Debug.Assert(instance.GetType().IsArray);
 
             var elementType = instance.GetType().GetElementType();
-
-            var m = typeof(Queryable).GetMethod("AsQueryable", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(IEnumerable<>).MakeGenericType(elementType) }, new ParameterModifier[0]);
+            var m = QueryableMIH.AsQueryable(elementType);;
 
             return m.Invoke(null, new[] { instance });
         }
@@ -336,16 +322,16 @@ namespace DesertOctopus.Serialization
             variables.Add(typeHashCode);
 
             List<Expression> notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(typeof(FormatterServices).GetMethod("GetUninitializedObject", BindingFlags.Public | BindingFlags.Static), Expression.Constant(type)), type)));
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializingAttributeExpression(type, newInstance, Expression.New(typeof(StreamingContext).GetConstructor(new[] { typeof(StreamingContextStates) }), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(FormatterServicesMIH.GetUninitializedObject(), Expression.Constant(type)), type)));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializingAttributeExpression(type, newInstance, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
             if (type.IsClass)
             {
-                notTrackedExpressions.Add(Expression.Call(objTracking, typeof(List<object>).GetMethod("Add"), newInstance));
+                notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
             }
             else
             {
-                notTrackedExpressions.Add(Expression.Call(objTracking, typeof(List<object>).GetMethod("Add"), Expression.Convert(newInstance, typeof(object))));
+                notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), Expression.Convert(newInstance, typeof(object))));
             }
 
             foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
@@ -373,7 +359,7 @@ namespace DesertOctopus.Serialization
                 }
             }
 
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, Expression.New(typeof(StreamingContext).GetConstructor(new[] { typeof(StreamingContextStates) }), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
@@ -393,7 +379,7 @@ namespace DesertOctopus.Serialization
                                                                             ParameterExpression trackType,
                                                                             List<ParameterExpression> variables)
         {
-            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(typeof(Deserializer).GetMethod("GetTrackedObject", BindingFlags.NonPublic | BindingFlags.Static), objTracking, PrimitiveHelpers.ReadInt32(inputStream)), type));
+            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(DeserializerMIH.GetTrackedObject(), objTracking, PrimitiveHelpers.ReadInt32(inputStream)), type));
 
             var notAlreadyTrackedExpr = Expression.Block(notTrackedExpressions);
             var isNotNullExpr = Expression.Block(Expression.Assign(trackType, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte))),
@@ -406,22 +392,6 @@ namespace DesertOctopus.Serialization
                                              isNotNullExpr);
 
             return Expression.Block(variables, expr, newInstance);
-        }
-
-        private static class CopyReadOnlyFieldMethodInfo
-        {
-            private static readonly MethodInfo Method = typeof(CopyReadOnlyFieldMethodInfo).GetMethod("CopyReadonlyField", BindingFlags.NonPublic | BindingFlags.Static);
-
-            public static MethodInfo GetMethodInfo()
-            {
-                return Method;
-            }
-
-            private static void CopyReadonlyField(FieldInfo field, object value, object target)
-            {
-                // using reflection to copy readonly fields.  It's slower but it's the only choice
-                field.SetValue(target, value);
-            }
         }
     }
 }

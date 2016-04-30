@@ -3,7 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace DesertOctopus.Serialization
+namespace DesertOctopus.Serialization.Helpers
 {
     internal static class CreateArrayMethodInfo
     {

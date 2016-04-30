@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using DesertOctopus.Serialization.Helpers;
 
 namespace DesertOctopus.Serialization
 {
@@ -29,15 +30,14 @@ namespace DesertOctopus.Serialization
             variables.Add(lengths);
             variables.Add(arr);
 
-            notTrackedExpressions.Add(Expression.Call(objTracking, typeof(SerializerObjectTracker).GetMethod("TrackObject"), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
             notTrackedExpressions.Add(Expression.Assign(arr, Expression.Convert(objToSerialize, type)));
             notTrackedExpressions.Add(Expression.Assign(lengths, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.IfThen(Expression.GreaterThanOrEqual(Expression.Constant(rank), Expression.Constant(255)),
-                                                        Expression.Throw(Expression.New(typeof(NotSupportedException).GetConstructor(new[] { typeof(string) }), Expression.Constant("Array with more than 255 dimensions are not supported")))));
+                                                        Expression.Throw(Expression.New(NotSupportedExceptionMIH.ConstructorString(), Expression.Constant("Array with more than 255 dimensions are not supported")))));
             notTrackedExpressions.AddRange(WriteDimensionalArrayLength(outputStream, i, arr, lengths, rank));
             notTrackedExpressions.AddRange(WriteDimensionalArray(elementType, variables, outputStream, arr, rank, lengths, objTracking));
-
 
             return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
                                                                        objToSerialize,
@@ -66,10 +66,8 @@ namespace DesertOctopus.Serialization
             variables.Add(item);
             variables.Add(indices);
 
-
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
-
 
             Expression innerExpression;
             if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
@@ -92,7 +90,7 @@ namespace DesertOctopus.Serialization
                 var loopExpressions = new List<Expression>();
 
                 loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
-                loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, typeof(Array).GetMethod("GetValue", new[] { typeof(int[]) }), indices), elementType)));
+                loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMIH.GetValueRank(), indices), elementType)));
                 loopExpressions.Add(innerExpr);
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
@@ -130,7 +128,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)rank)));
 
-            var length = Expression.Call(arr, typeof(Array).GetMethod("GetLength"), i);
+            var length = Expression.Call(arr, ArrayMIH.GetLength(), i);
             loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), length));
             loopExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.ArrayIndex(lengths, i)));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DesertOctopus.Serialization
+namespace DesertOctopus.Serialization.Helpers
 {
     internal class SerializerObjectTracker
     {
