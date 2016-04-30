@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using DesertOctopus.Serialization.Helpers;
-using DesertOctopus.Serialization.Helpers.MethodInfoHelpers;
 
 namespace DesertOctopus.Serialization
 {

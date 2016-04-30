@@ -14,7 +14,7 @@ using DesertOctopus.Serialization.Helpers;
 
 namespace DesertOctopus.Serialization
 {
-    public static class Serializer
+    internal static class Serializer
     {
         public static byte[] Serialize<T>(T obj)
             where T: class

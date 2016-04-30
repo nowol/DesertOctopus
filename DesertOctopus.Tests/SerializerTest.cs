@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
+using DesertOctopus;
 using DesertOctopus.Serialization;
 using DesertOctopus.Serialization.Exceptions;
 using DesertOctopus.Serialization.Helpers;
@@ -1944,6 +1945,18 @@ namespace SerializerTests
                 instance.Value = p;
                 Serializer.Serialize(instance);
             }
+        }
+
+        [TestMethod]
+        public void KrakenSerializerShouldWork()
+        {
+            var instance = new GenericBaseClass<IQueryable> { Value = null };
+            
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<GenericBaseClass<IQueryable>>(bytes);
+
+            Assert.IsNotNull(deserializedValue);
+            Assert.IsNull(deserializedValue.Value);
         }
 
         //[TestMethod]
