@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -65,7 +65,7 @@ namespace DesertOctopus.Serialization
             Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string));
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, i)));
+            loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, i)));   // uh?
             loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMIH.GetValue(), i), elementType)));
             loopExpressions.Add(Serializer.GetWriteClassTypeExpression(outputStream, objTracking, item, itemAsObj, typeExpr, serializer, elementType));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));

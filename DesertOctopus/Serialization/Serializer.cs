@@ -10,7 +10,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -26,7 +26,7 @@ namespace DesertOctopus.Serialization
                     return new byte[0];
                 }
 
-                object objToSerialize = PrepareObjectForSerialization(obj);
+                object objToSerialize = ObjectCleaner.PrepareObjectForSerialization(obj);
                 var cargo = new SerializerObjectTracker();
 
                 Action<Stream, object, SerializerObjectTracker> shortSerializerMethod = GetTypeSerializer(typeof(short));
@@ -78,7 +78,6 @@ namespace DesertOctopus.Serialization
         {
             var map = new ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression>>();
 
-            map.TryAdd(typeof(string), PrimitiveHelpers.WriteString);
             map.TryAdd(typeof(char), PrimitiveHelpers.WriteChar);
             map.TryAdd(typeof(char?), PrimitiveHelpers.WriteNullableChar);
 
@@ -131,7 +130,7 @@ namespace DesertOctopus.Serialization
 
         private static Action<Stream, object, SerializerObjectTracker> CreateTypeSerializer(Type type)
         {
-            System.Diagnostics.Debug.WriteLine("CreateTypeSerializer " + type);
+            //System.Diagnostics.Debug.WriteLine("CreateTypeSerializer " + type);
 
             var variables = new List<ParameterExpression>();
             var expressions = new List<Expression>();
@@ -152,6 +151,10 @@ namespace DesertOctopus.Serialization
                 {
                     expressions.Add(primitiveWriter(outputStream, objToSerialize));
                 }
+            }
+            else if (type == typeof(string))
+            {
+                expressions.Add(GenerateStringExpression(outputStream, objToSerialize, objCargo));
             }
             else if (typeof(ISerializable).IsAssignableFrom(type))
             {
@@ -187,7 +190,7 @@ namespace DesertOctopus.Serialization
                 }
 
             }
-            else // class, struct, etc
+            else
             {
                 expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objCargo));
             }
@@ -233,43 +236,6 @@ namespace DesertOctopus.Serialization
             {
                 throw new NotSupportedException(type.ToString());
             }
-        }
-
-        private static object PrepareObjectForSerialization(object objToPrepare)
-        {
-            var enumerableValue = objToPrepare as IEnumerable;
-            if (enumerableValue != null)
-            {
-                var objectType = objToPrepare.GetType();
-                if (objectType.IsArray
-                    || typeof(IList).IsAssignableFrom(objectType)
-                    || typeof(ICollection).IsAssignableFrom(objectType))
-                {
-                    return objToPrepare;
-                }
-
-                if (enumerableValue.GetType().DeclaringType == typeof(System.Linq.Enumerable)
-                    || (!String.IsNullOrWhiteSpace(enumerableValue.GetType().Namespace) && enumerableValue.GetType().Namespace.StartsWith("System.Linq")))
-                {
-                    Type itemType = typeof(object);
-
-                    var enumerableInterface = objectType.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-                    if (enumerableInterface != null)
-                    {
-                        itemType = enumerableInterface.GetGenericArguments()[0];
-                    }
-
-                    var converter = SerializerMIH.ConvertEnumerableToArray(itemType);
-                    return converter.Invoke(null,
-                                            new object[]
-                                            {
-                                                enumerableValue
-                                            });
-                }
-            }
-
-
-            return objToPrepare;
         }
 
         /// <summary>
@@ -323,7 +289,7 @@ namespace DesertOctopus.Serialization
                                                   Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
                                                                    Expression.Assign(itemAsObj, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), item)),
                                                                    Expression.Assign(typeExpr, Expression.Call(itemAsObj, ObjectMIH.GetTypeMethod())),
-                                                                   PrimitiveHelpers.WriteString(outputStream,  Expression.Call(SerializedTypeResolverMIH.GetShortNameFromType(), typeExpr)),
+                                                                   GenerateStringExpression(outputStream,  Expression.Call(SerializedTypeResolverMIH.GetShortNameFromType(), typeExpr), objTracking),
                                                                    PrimitiveHelpers.WriteInt32(outputStream, Expression.Call(SerializedTypeResolverMIH.GetHashCodeFromType(), typeExpr))));
 
             return Expression.IfThenElse(Expression.Equal(item, Expression.Constant(null)),
@@ -370,6 +336,25 @@ namespace DesertOctopus.Serialization
 
             notTrackedExpressions.AddRange(copyFieldsExpressions);
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+
+            return GenerateNullTrackedOrUntrackedExpression(outputStream,
+                                                            objToSerialize,
+                                                            objTracking,
+                                                            notTrackedExpressions,
+                                                            expressions,
+                                                            variables);
+        }
+
+        internal static Expression GenerateStringExpression(ParameterExpression outputStream,
+                                                            Expression objToSerialize,
+                                                            ParameterExpression objTracking)
+        {
+            List<Expression> expressions = new List<Expression>();
+            List<Expression> notTrackedExpressions = new List<Expression>();
+            List<ParameterExpression> variables = new List<ParameterExpression>();
+
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(PrimitiveHelpers.WriteString(outputStream, objToSerialize));
 
             return GenerateNullTrackedOrUntrackedExpression(outputStream,
                                                             objToSerialize,

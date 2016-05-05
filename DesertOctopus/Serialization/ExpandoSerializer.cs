@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -23,16 +23,14 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.EnumeratorType = typeof(IEnumerator<KeyValuePair<string, object>>);
             loopBodyCargo.KvpType = typeof(KeyValuePair<string, object>);
 
-            return EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(
-                                            type,
-                                            variables,
-                                            outputStream,
-                                            objToSerialize,
-                                            objTracking,
-                                            EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
-                                            Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), ICollectionMIH.Count<KeyValuePair<string, object>>()),
-                                            enumeratorMethod,
-                                            loopBodyCargo);
+            var preLoopActions = new List<Expression>();
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), ICollectionMIH.Count<KeyValuePair<string, object>>())));
+
+            return EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
+                                                                                                                          EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
+                                                                                                                          enumeratorMethod,
+                                                                                                                          preLoopActions,
+                                                                                                                          loopBodyCargo);
         }
     }
 }

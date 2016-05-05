@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {

@@ -8,9 +8,9 @@ using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
 using DesertOctopus;
+using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
-using DesertOctopus.Serialization.Exceptions;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
@@ -1959,6 +1959,23 @@ namespace SerializerTests
             Assert.IsNull(deserializedValue.Value);
         }
 
+        [TestMethod]
+        public void StringShouldNotBeSerializedTwice()
+        {
+            var str = RandomString(1000);
+            var instance = new List<string> { str };
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<List<string>>(bytes);
+            CollectionAssert.AreEqual(instance, deserializedValue);
+
+            instance = new List<string> { str, str };
+            var bytesTwice = KrakenSerializer.Serialize(instance);
+            deserializedValue = KrakenSerializer.Deserialize<List<string>>(bytesTwice);
+            CollectionAssert.AreEqual(instance, deserializedValue);
+
+            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+        }
+
         //[TestMethod]
         //[ExpectedException(typeof(NotSupportedException))]
         //public void SerializingAStreamIsNotSupported()
@@ -1972,7 +1989,7 @@ namespace SerializerTests
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{
-            
+
         //    Assert.Fail();
         //}
     }

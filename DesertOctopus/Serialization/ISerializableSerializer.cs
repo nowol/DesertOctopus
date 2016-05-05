@@ -4,8 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
-using DesertOctopus.Serialization.Exceptions;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Exceptions;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -57,14 +57,14 @@ namespace DesertOctopus.Serialization
                                               Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
             expressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsAssemblyNameSetExplicit")),
                                               Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
-            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(typeof(SerializationInfo),
-                                                                                                                     variables,
-                                                                                                                     outputStream,
-                                                                                                                     si,
-                                                                                                                     objTracking,
+
+            var preLoopActions = new List<Expression>();
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMIH.MemberCount())));
+
+            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(variables,
                                                                                                                      GetLoopBodyCargo(outputStream, objTracking),
-                                                                                                                     Expression.Property(si, SerializationInfoMIH.MemberCount()),
                                                                                                                      enumeratorMethod,
+                                                                                                                     preLoopActions,
                                                                                                                      loopBodyCargo));
             return Expression.Block(expressions);
         }
@@ -80,8 +80,8 @@ namespace DesertOctopus.Serialization
                 var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 
-                return Expression.Block(PrimitiveHelpers.WriteString(outputStream, keyExpression),
-                                                       Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, typeof(object)));
+                return Expression.Block(Serializer.GenerateStringExpression(outputStream, keyExpression, objTracking),
+                                        Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, typeof(object)));
             };
 
             

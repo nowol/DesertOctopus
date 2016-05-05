@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -49,7 +49,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(key, PrimitiveHelpers.ReadString(inputStream)));
+            loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
             loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
             loopExpressions.Add(Expression.Call(si, SerializationInfoMIH.AddValue(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));

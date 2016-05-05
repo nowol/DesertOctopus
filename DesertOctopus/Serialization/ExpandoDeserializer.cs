@@ -4,7 +4,7 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using DesertOctopus.Serialization.Helpers;
+using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
@@ -45,7 +45,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(destDict, Expression.Convert(newInstance, dictType)));
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(key, PrimitiveHelpers.ReadString(inputStream)));
+            loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
             loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
             loopExpressions.Add(Expression.Call(destDict, DictionaryMIH.Add<string, object>(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
