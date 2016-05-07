@@ -1475,9 +1475,7 @@ namespace SerializerTests
         [TestMethod]
         public void CloneInParallel()
         {
-            //Serializer.ClearTypeSerializersCache(); // empty the serialization Type to TypeData dictionary to start from a fresh state.
-            //Deserializer.ClearTypeDeserializersCache(); // empty the serialization Type to TypeData dictionary to start from a fresh state.
-
+            ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
 
             for (int i = 0; i < 100; i++)
             {
@@ -1495,9 +1493,6 @@ namespace SerializerTests
                                                              clonedValue.Items.ToList());
                              });
             }
-
-            Assert.Fail();
-
         }
 
         [TestMethod]

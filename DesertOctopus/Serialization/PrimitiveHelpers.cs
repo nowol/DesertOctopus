@@ -76,6 +76,7 @@ namespace DesertOctopus.Serialization
 
             for (int bits = numberOfBytes * 8 - 8; bits >= 8; bits -= 8)
             {
+                //expressions.Add(Expression.Call(outputStream, StreamMIH.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Constant(Convert.ChangeType(0xFFu, expectedType), expectedType)), typeof(byte))));
                 expressions.Add(Expression.Call(outputStream, StreamMIH.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
             }
             expressions.Add(Expression.Call(outputStream, StreamMIH.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));

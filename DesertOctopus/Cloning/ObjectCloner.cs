@@ -39,6 +39,11 @@ namespace DesertOctopus.Cloning
             return (T)CloneImpl(obj.GetType())(objToClone, refTracker);
         }
 
+        internal static void ClearTypeCache()
+        {
+            Cloners.Clear();
+        }
+
         internal static Func<object, ObjectClonerReferenceTracker, object> CloneImpl(Type type)
         {
             return Cloners.GetOrAdd(type, t => GenerateCloner(type));
