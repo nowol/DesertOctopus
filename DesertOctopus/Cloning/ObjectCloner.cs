@@ -72,11 +72,11 @@ namespace DesertOctopus.Cloning
                 //returnExpression = Expression.Return(returnTarget, source, sourceType);
                 expressions.Add(Expression.Assign(clone, source));
             }
-            //else if (typeof(ISerializable).IsAssignableFrom(sourceType))
-            //{
-            //    //expressions.Add(ISerializableCloner.GenerateISerializableExpression(variables, sourceType, source, refTrackerParam));
-            //    //returnExpression = Expression.Return(returnTarget, clone, sourceType);
-            //}
+            else if (typeof(ISerializable).IsAssignableFrom(sourceType))
+            {
+                expressions.Add(ISerializableCloner.GenerateISerializableExpression(variables, source, clone, sourceType, refTrackerParam));
+                //returnExpression = Expression.Return(returnTarget, clone, sourceType);
+            }
             else if (sourceType == typeof(ExpandoObject))
             {
                 expressions.Add(ExpandoCloner.GenerateExpandoObjectExpression(variables, source, clone, refTrackerParam));

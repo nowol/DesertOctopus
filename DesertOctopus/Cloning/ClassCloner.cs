@@ -121,7 +121,7 @@ namespace DesertOctopus.Cloning
         }
         
         public static Expression GetCloneClassTypeExpression(ParameterExpression refTrackerParam,
-                                                             ParameterExpression item,
+                                                             Expression item,
                                                              ParameterExpression clonedItem,
                                                              Type cloneType,
                                                              Expression cloner)
