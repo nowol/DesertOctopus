@@ -2014,6 +2014,31 @@ namespace DesertOctopus.Tests
             Assert.IsNull(deserializedValue.Values);
         }
 
+        [TestMethod]
+        public void TrackReferenceOfExpandoObject()
+        {
+            dynamic eo = new ExpandoObject();
+            eo.Property1 = 123;
+            eo.Property2 = "abc";
+            eo.Property3 = new ClassWithGenericInt(349);
+            eo.Property4 = new object();
+            eo.Property5 = null;
+
+            var instance = new List<ExpandoObject> { eo, null, eo };
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<List<ExpandoObject>>(bytes);
+
+            Assert.AreEqual(3, deserializedValue.Count);
+            dynamic clonedValue = deserializedValue[0];
+
+            Assert.AreEqual(eo.Property1, clonedValue.Property1);
+            Assert.AreEqual(eo.Property2, clonedValue.Property2);
+            Assert.AreEqual(eo.Property3, clonedValue.Property3);
+            Assert.IsTrue(clonedValue.Property4.GetType() == typeof(object));
+            Assert.IsNull(clonedValue.Property5);
+            Assert.IsTrue(ReferenceEquals(deserializedValue[0], deserializedValue[2]));
+        }
+
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{

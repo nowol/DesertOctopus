@@ -52,7 +52,7 @@
     <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
     <Compile Include="KrakenSerializer.cs" />
-    <Compile Include="Cloning\ObjectCloner.cs" />
+    <Compile Include="ObjectCloner.cs" />
     <Compile Include="Cloning\ObjectClonerReferenceTracker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ArrayDeserializer.cs" />

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
@@ -41,23 +42,23 @@ namespace DesertOctopus.Cloning
             var c = Expression.Invoke(Expression.Constant(cloner), Expression.Convert(arrSource, typeof(object)), refTrackerParam);
             expressions.Add(Expression.Assign(arrClone, Expression.Convert(c, arrayType)));
 
-
-            //IEnumerable<string> l = new List<string>();
-            //l.ToArray();
-
             if (queryableInterface != null)
             {
                 var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(arrClone, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
                 expressions.Add(Expression.Assign(clone, Expression.Convert(m, sourceType)));
+                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
             }
             else
             {
                 expressions.Add(Expression.Assign(clone, Expression.Convert(arrClone, sourceType)));
+                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
             }
 
-            // todo: tracker thingy
-
-            return Expression.Block(expressions);
+            return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
+                                                                         clone,
+                                                                         sourceType,
+                                                                         refTrackerParam,
+                                                                         Expression.Block(expressions));
         }
 
         internal static Type GetInterfaceType(Type sourceType, Type expectedInterface)

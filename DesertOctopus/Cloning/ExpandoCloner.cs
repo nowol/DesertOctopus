@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq.Expressions;
 using DesertOctopus.Utilities;
+using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
@@ -24,6 +25,7 @@ namespace DesertOctopus.Cloning
 
             expressions.Add(Expression.Assign(clone, Expression.New(typeof(ExpandoObject))));
             expressions.Add(Expression.Assign(cloneAsDict, Expression.Convert(clone, dictType)));
+            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
 
 
             var loopBodyCargo = new EnumerableLoopBodyCargo<string, object>();
@@ -36,7 +38,11 @@ namespace DesertOctopus.Cloning
                                                                                                                           null,
                                                                                                                           loopBodyCargo));
 
-            return Expression.Block(expressions);
+            return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
+                                                                         clone,
+                                                                         typeof(ExpandoObject),
+                                                                         refTrackerParam,
+                                                                         Expression.Block(expressions));
         }
 
 

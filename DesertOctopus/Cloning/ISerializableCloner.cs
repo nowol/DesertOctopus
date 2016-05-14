@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using DesertOctopus.Exceptions;
-using DesertOctopus.ObjectCloner;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
+using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
@@ -76,10 +76,15 @@ namespace DesertOctopus.Cloning
                                                                                                                      loopBodyCargo));
 
             expressions.Add(Expression.Assign(clone, Expression.New(serializationConstructor, siClone, context)));
+            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
             expressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(sourceType, clone, context));
             expressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(sourceType, clone));
 
-            return Expression.Block(expressions);
+            return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
+                                                                         clone,
+                                                                         sourceType,
+                                                                         refTrackerParam,
+                                                                         Expression.Block(expressions));
         }
 
         private static Func<EnumerableLoopBodyCargo<string, object>, Expression> GetLoopBodyCargo(ParameterExpression siClone, ParameterExpression cloner, ParameterExpression clonedItem, ParameterExpression refTrackerParam)

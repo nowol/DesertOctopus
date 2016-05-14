@@ -71,7 +71,7 @@ namespace DesertOctopus.Tests
         public void CloneUtcDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.UtcNow };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.IsNotNull(clonedValue.Value);
             Assert.AreEqual(instance.Value, clonedValue.Value);
             Assert.AreEqual(instance.Value.Kind, clonedValue.Value.Kind);
@@ -81,7 +81,7 @@ namespace DesertOctopus.Tests
         public void CloneNullPrimitiveArray()
         {
             int[] nullArray = null;
-            var clonedValue = Cloning.ObjectCloner.Clone(nullArray);
+            var clonedValue = ObjectCloner.Clone(nullArray);
             Assert.IsNull(clonedValue);
         }
 
@@ -89,7 +89,7 @@ namespace DesertOctopus.Tests
         public void CloneEmptyObjectArray()
         {
             Object[] emptyArray = new Object[0];
-            var clonedValue = Cloning.ObjectCloner.Clone(emptyArray);
+            var clonedValue = ObjectCloner.Clone(emptyArray);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
         }
@@ -98,7 +98,7 @@ namespace DesertOctopus.Tests
         public void CloneNullObjectArray()
         {
             Object[] nullArray = null;
-            var clonedValue = Cloning.ObjectCloner.Clone(nullArray);
+            var clonedValue = ObjectCloner.Clone(nullArray);
             Assert.IsNull(clonedValue);
         }
 
@@ -106,7 +106,7 @@ namespace DesertOctopus.Tests
         public void CloneEmptyPrimitiveArray()
         {
             int[] emptyArray = new int[0];
-            var clonedValue = Cloning.ObjectCloner.Clone(emptyArray);
+            var clonedValue = ObjectCloner.Clone(emptyArray);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
         }
@@ -115,7 +115,7 @@ namespace DesertOctopus.Tests
         public void CloneObjectArrayWithNullValues()
         {
             var array = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = Cloning.ObjectCloner.Clone(array);
+            var clonedValue = ObjectCloner.Clone(array);
             Assert.AreEqual(array.Length, clonedValue.Length);
             Assert.AreEqual(array[0].PublicPropertyValue, clonedValue[0].PublicPropertyValue);
             Assert.IsNull(clonedValue[1]);
@@ -126,7 +126,7 @@ namespace DesertOctopus.Tests
         public void CloneNullPrimitiveList()
         {
             List<int> nullList = null;
-            var clonedValue = Cloning.ObjectCloner.Clone(nullList);
+            var clonedValue = ObjectCloner.Clone(nullList);
             Assert.IsNull(clonedValue);
         }
 
@@ -134,7 +134,7 @@ namespace DesertOctopus.Tests
         public void CloneEmptyObjectList()
         {
             List<Object> emptyList = new List<Object>();
-            var clonedValue = Cloning.ObjectCloner.Clone(emptyList);
+            var clonedValue = ObjectCloner.Clone(emptyList);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
         }
@@ -143,7 +143,7 @@ namespace DesertOctopus.Tests
         public void CloneNullObjectList()
         {
             List<object> nullList = null;
-            var clonedValue = Cloning.ObjectCloner.Clone(nullList);
+            var clonedValue = ObjectCloner.Clone(nullList);
             Assert.IsNull(clonedValue);
         }
 
@@ -151,7 +151,7 @@ namespace DesertOctopus.Tests
         public void CloneEmptyPrimitiveList()
         {
             List<int> emptyList = new List<int>();
-            var clonedValue = Cloning.ObjectCloner.Clone(emptyList);
+            var clonedValue = ObjectCloner.Clone(emptyList);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
         }
@@ -160,7 +160,7 @@ namespace DesertOctopus.Tests
         public void CloneObjectListWithNullValues()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
             Assert.AreEqual(list.Count, clonedValue.Count);
             Assert.AreEqual(list[0].PublicPropertyValue, clonedValue[0].PublicPropertyValue);
             Assert.IsNull(clonedValue[1]);
@@ -187,7 +187,7 @@ namespace DesertOctopus.Tests
             };
 
             Type targetType = typeof(T);
-            var clonedValue = Cloning.ObjectCloner.Clone(wrappedObject);
+            var clonedValue = ObjectCloner.Clone(wrappedObject);
 
             Assert.AreEqual(wrappedObject.Value,
                             clonedValue.Value,
@@ -198,7 +198,7 @@ namespace DesertOctopus.Tests
 
         private static void CloneArray<T>(T[] value)
         {
-            var clonedValue = Cloning.ObjectCloner.Clone(value);
+            var clonedValue = ObjectCloner.Clone(value);
 
             CollectionAssert.AreEquivalent(value,
                                            clonedValue);
@@ -209,7 +209,7 @@ namespace DesertOctopus.Tests
             var array = new T[1];
             array[0] = value;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(array);
+            var clonedValue = ObjectCloner.Clone(array);
             Assert.IsNotNull(clonedValue, "Type: " + typeof(T));
             CollectionAssert.AreEquivalent(array,
                                             clonedValue, "Type: " + typeof(T));
@@ -222,7 +222,7 @@ namespace DesertOctopus.Tests
                             value
                         };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
 
             CollectionAssert.AreEquivalent(list,
                                             clonedValue);
@@ -232,7 +232,7 @@ namespace DesertOctopus.Tests
         {
             var list = value.ToList();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
 
             CollectionAssert.AreEquivalent(list,
                                             clonedValue);
@@ -242,14 +242,14 @@ namespace DesertOctopus.Tests
         public void CloneStruct()
         {
             var instance = new Wrapper<StructForTesting> { Value = new StructForTesting { Value = 1 } };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Value, clonedValue.Value);
         }
 
         [TestMethod]
         public void CloneShortString()
         {
-            var clonedValue = Cloning.ObjectCloner.Clone("abc");
+            var clonedValue = ObjectCloner.Clone("abc");
             //Assert.AreEqual(5, bytes.Length);
             Assert.AreEqual("abc", clonedValue);
         }
@@ -258,7 +258,7 @@ namespace DesertOctopus.Tests
         public void CloneMediumString()
         {
             var str = RandomString(3000);
-            var clonedValue = Cloning.ObjectCloner.Clone(str);
+            var clonedValue = ObjectCloner.Clone(str);
             Assert.AreEqual(str, clonedValue);
         }
 
@@ -266,7 +266,7 @@ namespace DesertOctopus.Tests
         public void CloneLongString()
         {
             var str = RandomString(100000);
-            var clonedValue = Cloning.ObjectCloner.Clone(str);
+            var clonedValue = ObjectCloner.Clone(str);
             Assert.AreEqual(str, clonedValue);
         }
 
@@ -290,7 +290,7 @@ namespace DesertOctopus.Tests
             classInstance.SetPrivateFieldValue(2);
             classInstance.SetPrivatePropertyValue(5);
 
-            var clonedValue = Cloning.ObjectCloner.Clone(classInstance);
+            var clonedValue = ObjectCloner.Clone(classInstance);
 
             Assert.AreEqual(classInstance.PublicFieldValue,
                             clonedValue.PublicFieldValue);
@@ -315,7 +315,7 @@ namespace DesertOctopus.Tests
             instance1.Child = instance2;
             instance2.Parent = instance1;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance1);
+            var clonedValue = ObjectCloner.Clone(instance1);
 
             Assert.IsTrue(ReferenceEquals(clonedValue,
                                           clonedValue.Child.Parent));
@@ -335,7 +335,7 @@ namespace DesertOctopus.Tests
                             instance
                         };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -355,7 +355,7 @@ namespace DesertOctopus.Tests
                             instance
                         };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -371,7 +371,7 @@ namespace DesertOctopus.Tests
                 PublicPropertyValue = 4
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.PublicPropertyValue,
                             clonedValue.PublicPropertyValue);
@@ -385,7 +385,7 @@ namespace DesertOctopus.Tests
                 Value = 4
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -399,7 +399,7 @@ namespace DesertOctopus.Tests
                 Value = 4
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -415,7 +415,7 @@ namespace DesertOctopus.Tests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -438,7 +438,7 @@ namespace DesertOctopus.Tests
                 {3, "Value3"}
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -461,7 +461,7 @@ namespace DesertOctopus.Tests
                 {Guid.NewGuid(), "Value3"}
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -484,7 +484,7 @@ namespace DesertOctopus.Tests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -510,7 +510,7 @@ namespace DesertOctopus.Tests
                                        }
                            };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value.Count,
                             clonedValue.Value.Count);
@@ -533,7 +533,7 @@ namespace DesertOctopus.Tests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -559,7 +559,7 @@ namespace DesertOctopus.Tests
             };
 
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -586,7 +586,7 @@ namespace DesertOctopus.Tests
                 {"Key4", null },
             };
 
-            Cloning.ObjectCloner.Clone(instance);
+            ObjectCloner.Clone(instance);
         }
 
         [TestMethod]
@@ -600,7 +600,7 @@ namespace DesertOctopus.Tests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SomeProperty,
                             clonedValue.SomeProperty);
@@ -626,7 +626,7 @@ namespace DesertOctopus.Tests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(0,
                             clonedValue.SomeProperty); // default value for property
@@ -657,7 +657,7 @@ namespace DesertOctopus.Tests
                 { new ClassWithGenericInt(3), "Key3" },
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             CompareDictionaries(instance,
                                 clonedValue);
@@ -705,7 +705,7 @@ namespace DesertOctopus.Tests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SomeProperty,
                             clonedValue.SomeProperty);
@@ -729,7 +729,7 @@ namespace DesertOctopus.Tests
                 new ChildStringHierarchy("abc"),
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(list);
+            var clonedValue = ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -744,7 +744,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 } };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -760,7 +760,7 @@ namespace DesertOctopus.Tests
                 Items = new HashSet<int> { 1, 2, 3 }
             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -773,7 +773,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { "a", "b", "C" };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -788,7 +788,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new GenericBaseClass<EnumForTesting> { Value = EnumForTesting.Two };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -803,7 +803,7 @@ namespace DesertOctopus.Tests
                                 {"a", "b"},
                             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -820,7 +820,7 @@ namespace DesertOctopus.Tests
                                 {"a", "b"},
                             };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(GetHashTableComparer(instance));
             Assert.IsNotNull(GetHashTableComparer(clonedValue));
@@ -850,7 +850,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new[] { 1, 2, 3 } };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -863,7 +863,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -876,7 +876,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Where(x => x > 1) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -889,7 +889,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OrderBy(x => x) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -902,7 +902,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.DefaultIfEmpty(123) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -915,7 +915,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Except(new[] { 2 }) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -928,7 +928,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Union(new[] { 4 }) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -941,7 +941,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Intersect(new[] { 2 }) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -954,7 +954,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OfType<int>() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -967,7 +967,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Skip(1) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -980,7 +980,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Take(1) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -993,7 +993,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Select(x => x * 2) };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -1008,7 +1008,7 @@ namespace DesertOctopus.Tests
             var testData = new List<int> { 1, 2, 3, 4, 5, 6 };
             System.Func<int, bool> instance = x => x > 3;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1024,7 +1024,7 @@ namespace DesertOctopus.Tests
 
             Expression<System.Func<int, bool>> instance = x => x > 3;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1038,7 +1038,7 @@ namespace DesertOctopus.Tests
         public void CloneAnonymousObject()
         {
             var instance = new { Property1 = "hello", Property2 = 123 };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Property1, clonedValue.Property1);
             Assert.AreEqual(instance.Property2, clonedValue.Property2);
 
@@ -1049,7 +1049,7 @@ namespace DesertOctopus.Tests
         public void CloneArray()
         {
             var instance = new int[] { 123, 456 };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             CollectionAssert.AreEqual(instance, clonedValue);
         }
 
@@ -1057,7 +1057,7 @@ namespace DesertOctopus.Tests
         public void CloneArrayWithNullablePrimitive()
         {
             var instance = new int?[] { 123, null, 456 };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             CollectionAssert.AreEqual(instance, clonedValue);
         }
 
@@ -1065,7 +1065,7 @@ namespace DesertOctopus.Tests
         public void CloneArrayObject()
         {
             var instance = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(2, clonedValue.Length);
             Assert.AreEqual(123, clonedValue[0].PublicPropertyValue);
             Assert.AreEqual(456, clonedValue[1].PublicPropertyValue);
@@ -1077,7 +1077,7 @@ namespace DesertOctopus.Tests
             var obj = new ClassWithGenericInt(123);
             var instance = new ClassWithGenericInt[] { obj, null };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1086,7 +1086,7 @@ namespace DesertOctopus.Tests
         public void CloneArrayObjectHierarchy()
         {
             var instance = new SomeBaseClass[] { new ClassWithGenericInt(123), new ClassWithGenericDouble(3.38D) };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(2, clonedValue.Length);
             Assert.AreEqual(123, (clonedValue[0] as ClassWithGenericInt).Value);
             Assert.AreEqual(3.38D, (clonedValue[1] as ClassWithGenericDouble).Value);
@@ -1097,7 +1097,7 @@ namespace DesertOctopus.Tests
         {
             var obj123 = new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 };
             var instance = new ClassWithoutSerializableAttribute[] { obj123, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 }, obj123 };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(3, clonedValue.Length);
             Assert.AreEqual(123, clonedValue[0].PublicPropertyValue);
             Assert.AreEqual(456, clonedValue[1].PublicPropertyValue);
@@ -1122,7 +1122,7 @@ namespace DesertOctopus.Tests
             instance[2, 2] = 10;
             instance[2, 3] = 11;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
         }
 
@@ -1132,7 +1132,7 @@ namespace DesertOctopus.Tests
             var instance = CreateMultiDimensionalArray<int>(8);
             SeedArray(instance);
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
         }
 
@@ -1143,7 +1143,7 @@ namespace DesertOctopus.Tests
             instance.SetValue(new object(), new[] { 0, 0 });
             instance.SetValue(new object(), new[] { 1, 0 });
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsTrue(clonedValue.GetValue(new[] { 0, 0 }).GetType() == typeof(object));
             Assert.IsNull(clonedValue.GetValue(new[] { 0, 1 }));
@@ -1160,7 +1160,7 @@ namespace DesertOctopus.Tests
             instance.SetValue(new ClassWithGenericInt(456), new[] { 1, 0 });
             instance.SetValue(obj, new[] { 1, 1 });
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
             Assert.AreEqual(456, ((ClassWithGenericInt)clonedValue.GetValue(1, 0)).Value);
             Assert.IsTrue(ReferenceEquals(clonedValue.GetValue(0, 0), clonedValue.GetValue(1, 1)));
@@ -1204,7 +1204,7 @@ namespace DesertOctopus.Tests
             instance[0] = new object[] { new object(), null };
             instance[1] = new object[] { new object(), null };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsTrue(clonedValue[0][0].GetType() == typeof(object));
             Assert.IsNull(clonedValue[0][1]);
@@ -1222,7 +1222,7 @@ namespace DesertOctopus.Tests
             //instance[0] = new ClassWithGenericInt[] { obj, new ClassWithGenericInt(4563) };
             instance[1] = new ClassWithGenericInt[] { new ClassWithGenericInt(456), obj };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
 
@@ -1233,7 +1233,7 @@ namespace DesertOctopus.Tests
             instance[0] = new ClassWithGenericInt[] { obj, new ClassWithGenericInt(4563) };
             instance[1] = new ClassWithGenericInt[] { new ClassWithGenericInt(456), obj };
 
-            clonedValue = Cloning.ObjectCloner.Clone(instance);
+            clonedValue = ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1247,7 +1247,7 @@ namespace DesertOctopus.Tests
             instance[0] = new SomeBaseClass[] { obj, new ClassWithGenericDouble(123.3D) };
             instance[1] = new SomeBaseClass[] { new ClassWithGenericInt(456), obj };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(123, ((ClassWithGenericInt)clonedValue[0][0]).Value);
             Assert.AreEqual(123.3D, ((ClassWithGenericDouble)clonedValue[0][1]).Value);
@@ -1261,7 +1261,7 @@ namespace DesertOctopus.Tests
         {
             int[][] nullArray = null;
             var instance = new Wrapper<int[][]> { Value = nullArray };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue.Value);
         }
@@ -1271,7 +1271,7 @@ namespace DesertOctopus.Tests
         {
             int[][][] instance = new [] { new int[2][], new int[3][] };
             instance[0][0] = new int[] { 123, 238 };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1280,7 +1280,7 @@ namespace DesertOctopus.Tests
         public void CloneEmptyJaggedArray()
         {
             int[][] instance = new int[2][];
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
 
@@ -1288,7 +1288,7 @@ namespace DesertOctopus.Tests
         public void CloneJaggedArray()
         {
             var instance = new int[][] { new int[] { 123, 238 }, new int[] { 456, 546, 784 }, null };
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Length, clonedValue.Length);
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1303,7 +1303,7 @@ namespace DesertOctopus.Tests
             instance1.Child = instance2;
             instance2.Child = instance3;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance1);
+            var clonedValue = ObjectCloner.Clone(instance1);
 
             CollectionAssert.AreEqual(arr, clonedValue.Child.Ids);
             Assert.IsTrue(ReferenceEquals(clonedValue.Child.Ids, clonedValue.Child.Child.Ids));
@@ -1314,7 +1314,7 @@ namespace DesertOctopus.Tests
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(instance.Value, clonedValue.Value);
         }
@@ -1357,7 +1357,7 @@ namespace DesertOctopus.Tests
             instance.Property4 = new object();
             instance.Property5 = null;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1377,7 +1377,7 @@ namespace DesertOctopus.Tests
         {
             dynamic instance = new ExpandoObject();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, (clonedValue as IDictionary<string, object>).Count);
@@ -1388,11 +1388,11 @@ namespace DesertOctopus.Tests
         {
             ExpandoObject instance = null;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue2 = Cloning.ObjectCloner.Clone(new Wrapper<ExpandoObject> { Value = instance });
+            var wrappedclonedValue2 = ObjectCloner.Clone(new Wrapper<ExpandoObject> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue2.Value);
         }
@@ -1405,7 +1405,7 @@ namespace DesertOctopus.Tests
             instance.Enqueue(2);
             instance.Enqueue(3);
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1424,7 +1424,7 @@ namespace DesertOctopus.Tests
             instance.Enqueue("abc");
             instance.Enqueue(new ClassWithGenericInt(123));
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1442,7 +1442,7 @@ namespace DesertOctopus.Tests
             instance.Push(2);
             instance.Push(3);
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1461,7 +1461,7 @@ namespace DesertOctopus.Tests
             instance.Push("abc");
             instance.Push(new ClassWithGenericInt(123));
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1474,7 +1474,7 @@ namespace DesertOctopus.Tests
         [TestMethod]
         public void CloneInParallel()
         {
-            Cloning.ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
+            ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
 
             for (int i = 0; i < 100; i++)
             {
@@ -1484,7 +1484,7 @@ namespace DesertOctopus.Tests
                              {
                                  var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
 
-                                 var clonedValue = Cloning.ObjectCloner.Clone(instance);
+                                 var clonedValue = ObjectCloner.Clone(instance);
 
                                  Assert.AreEqual(instance.Items.Count(),
                                                  clonedValue.Items.Count());
@@ -1499,7 +1499,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new Dictionary<EnumForTesting, int> { { EnumForTesting.One, 1 }, { EnumForTesting.Two, 2 } };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1512,7 +1512,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new object();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
         }
@@ -1522,7 +1522,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithObjectProperty();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNull(clonedValue.Obj);
@@ -1533,7 +1533,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithObjectProperty { Obj = new object() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Obj);
@@ -1544,7 +1544,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithObjectProperty { Obj = 123 };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(123, (int)clonedValue.Obj);
@@ -1556,7 +1556,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IList> { Value = list };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1573,7 +1573,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<ICollection> { Value = list };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1590,7 +1590,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IQueryable> { Value = list.AsQueryable() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1607,7 +1607,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             IQueryable<ClassWithoutSerializableAttribute> instance = list.AsQueryable();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue);
@@ -1624,7 +1624,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new List<GenericBaseClass<IQueryable>> { new GenericBaseClass<IQueryable> { Value = list.AsQueryable() } };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Count);
@@ -1642,7 +1642,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IQueryable>[] { new GenericBaseClass<IQueryable> { Value = list.AsQueryable() } };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Length);
@@ -1659,7 +1659,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new List<object> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(4, clonedValue.Count);
@@ -1672,7 +1672,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new List<object>();
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
@@ -1685,11 +1685,11 @@ namespace DesertOctopus.Tests
         {
             List<object> instance = null;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue = Cloning.ObjectCloner.Clone(new Wrapper<List<object>> { Value = instance });
+            var wrappedclonedValue = ObjectCloner.Clone(new Wrapper<List<object>> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue.Value);
         }
@@ -1699,7 +1699,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new object[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(4, clonedValue.Length);
@@ -1712,7 +1712,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new object[0];
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
@@ -1725,11 +1725,11 @@ namespace DesertOctopus.Tests
         {
             object[] instance = null;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue = Cloning.ObjectCloner.Clone(new Wrapper<object[]> { Value = instance });
+            var wrappedclonedValue = ObjectCloner.Clone(new Wrapper<object[]> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue.Value);
         }
@@ -1740,7 +1740,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             List<IQueryable<ClassWithoutSerializableAttribute>> instance = new List<IQueryable<ClassWithoutSerializableAttribute>> { list.AsQueryable() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Count);
@@ -1757,7 +1757,7 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             IQueryable<ClassWithoutSerializableAttribute>[] instance = new IQueryable<ClassWithoutSerializableAttribute>[] { list.AsQueryable() };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Length);
@@ -1773,7 +1773,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNull(clonedValue.Value);
@@ -1790,7 +1790,7 @@ namespace DesertOctopus.Tests
             instance.Add("Key5", new object());
             instance.Add("Key6", new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 });
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             CompareDictionaries(instance,
                                 clonedValue);
@@ -1803,7 +1803,7 @@ namespace DesertOctopus.Tests
             instance.SerializableProperty = 839;
             instance.NonSerializableProperty = 33534;
 
-            var clonedValue = Cloning.ObjectCloner.Clone(instance);
+            var clonedValue = ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SerializableProperty, clonedValue.SerializableProperty);
             Assert.AreEqual(0, clonedValue.NonSerializableProperty);
@@ -1818,7 +1818,7 @@ namespace DesertOctopus.Tests
             {
                 var instance = new ClassWithPointer();
                 instance.Value = p;
-                Cloning.ObjectCloner.Clone(instance);
+                ObjectCloner.Clone(instance);
             }
         }
 
@@ -1827,7 +1827,7 @@ namespace DesertOctopus.Tests
         {
             var instance = new ClassWithInitializedList();
             instance.Values = null;
-            var clone = Cloning.ObjectCloner.Clone(instance);
+            var clone = ObjectCloner.Clone(instance);
             Assert.IsNull(clone.Values);
         }
 
@@ -1838,7 +1838,31 @@ namespace DesertOctopus.Tests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IEnumerable<IGrouping<int, ClassWithoutSerializableAttribute>>> { Value = list.GroupBy(x => x.PublicPropertyValue) };
 
-            var bytes = Cloning.ObjectCloner.Clone(instance);
+            var bytes = ObjectCloner.Clone(instance);
+        }
+
+        [TestMethod]
+        public void TrackReferenceOfExpandoObject()
+        {
+            dynamic eo = new ExpandoObject();
+            eo.Property1 = 123;
+            eo.Property2 = "abc";
+            eo.Property3 = new ClassWithGenericInt(349);
+            eo.Property4 = new object();
+            eo.Property5 = null;
+
+            var instance = new List<ExpandoObject> { eo, null, eo };
+            var cloneList = ObjectCloner.Clone(instance);
+
+            Assert.AreEqual(3, cloneList.Count);
+            dynamic clonedValue = cloneList[0];
+
+            Assert.AreEqual(eo.Property1, clonedValue.Property1);
+            Assert.AreEqual(eo.Property2, clonedValue.Property2);
+            Assert.AreEqual(eo.Property3, clonedValue.Property3);
+            Assert.IsTrue(clonedValue.Property4.GetType() == typeof(object));
+            Assert.IsNull(clonedValue.Property5);
+            Assert.IsTrue(ReferenceEquals(cloneList[0], cloneList[2]));
         }
 
         //[TestMethod]

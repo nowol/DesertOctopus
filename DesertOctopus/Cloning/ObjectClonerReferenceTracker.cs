@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DesertOctopus.ObjectCloner
+namespace DesertOctopus.Cloning
 {
     internal class ObjectClonerReferenceTracker
     {

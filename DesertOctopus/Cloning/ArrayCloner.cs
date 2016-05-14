@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
-using DesertOctopus.ObjectCloner;
 using DesertOctopus.Utilities;
 using DesertOctopus.Utilities.MethodInfoHelpers;
 using System.Diagnostics;
@@ -43,12 +42,10 @@ namespace DesertOctopus.Cloning
         {
             var i = Expression.Parameter(typeof(int), "i");
             var lengths = Expression.Parameter(typeof(int[]), "lengths");
-            //var sourceArray = Expression.Parameter(cloneType, "arr");
             var rank = cloneType.GetArrayRank();
 
             variables.Add(i);
             variables.Add(lengths);
-            //variables.Add(sourceArray);
 
             List<Expression> notTrackedExpressions = new List<Expression>();
 
@@ -66,76 +63,6 @@ namespace DesertOctopus.Cloning
                                                                          cloneType,
                                                                          refTrackerParam,
                                                                          Expression.Block(notTrackedExpressions));
-
-
-
-
-
-
-
-            //notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
-            //notTrackedExpressions.Add(Expression.Assign(arr, Expression.Convert(objToSerialize, type)));
-            //notTrackedExpressions.Add(Expression.Assign(lengths, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
-            //notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
-            //notTrackedExpressions.AddRange(WriteDimensionalArrayLength(outputStream, i, arr, lengths, rank));
-            //notTrackedExpressions.AddRange(WriteDimensionalArray(elementType, variables, outputStream, arr, rank, lengths, objTracking));
-
-            //return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
-            //                                                           objToSerialize,
-            //                                                           objTracking,
-            //                                                           notTrackedExpressions,
-            //                                                           expressions,
-            //                                                           variables);
-
-            /*
-             if (IsTracked)
-                clone = tracked version
-            else
-            {
-                if (rank >= 255)
-                    throw exception
-                clone = new ()
-                track(source, clone)
-                copy(source, clone)
-            }
-             */
-
-
-
-            //expressions.Add(Expression.IfThenElse(Expression.Call(refTrackerParam, typeof(ObjectClonerReferenceTracker).GetMethod("IsSourceObjectTracked"), source),
-            //                                    Expression.Assign(clone, Expression.Convert(Expression.Call(refTrackerParam, typeof(ObjectClonerReferenceTracker).GetMethod("GetEquivalentTargetObject"), source), sourceType)),
-
-            //                                    expr)
-            //                );
-
-
-
-
-
-
-            //var arrayLengthExpr = Expression.Call(original, CreateArrayMethodInfo.GetArrayLengthMethod(), Expression.Constant(0));
-            //var assignExpr = Expression.Assign(clone, Expression.Convert(Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(elementType), arrayLengthExpr), clonedType));
-            //expressions.Add(assignExpr);
-
-            //var index = Expression.Parameter(typeof(int));
-            //var item = Expression.Parameter(elementType);
-            //var breakLabel = Expression.Label("breakLabel");
-
-            //var loopBody = Expression.Block(new[] { item },
-            //                                Expression.Assign(item, Expression.ArrayAccess(original, index)),
-            //                                Expression.IfThen(Expression.NotEqual(item, Expression.Constant(null)),
-            //                                                    Expression.Assign(Expression.ArrayAccess(clone, index),
-            //                                                                      Expression.Convert(CallCopyExpression(item, refTrackerParam), elementType))));
-
-            //var loop = Expression.Block(new[] { index },
-            //                            Expression.Assign(index, Expression.Constant(0)),
-            //                            Expression.Loop(Expression.IfThenElse(Expression.LessThan(index, arrayLengthExpr),
-            //                                                                  Expression.Block(loopBody,
-            //                                                                                   Expression.AddAssign(index, Expression.Constant(1))),
-            //                                                                  Expression.Break(breakLabel)),
-            //                                            breakLabel));
-            //expressions.Add(loop);
-
         }
 
         private static IEnumerable<Expression> GenerateCopyDimensionalArray(ParameterExpression sourceArray,
@@ -152,11 +79,9 @@ namespace DesertOctopus.Cloning
             var item = Expression.Parameter(elementType, "item");
             var clonedItem = Expression.Parameter(elementType, "clonedItem");
             var cloner = Expression.Parameter(typeof(Func<object, ObjectClonerReferenceTracker, object>), "cloner");
-            //var itemAsObj = Expression.Parameter(typeof(object), "itemAsObj");
             var typeExpr = Expression.Parameter(typeof(Type), "typeExpr");
             var indices = Expression.Parameter(typeof(int[]), "indices");
             variables.Add(typeExpr);
-            //variables.Add(itemAsObj);
             variables.Add(cloner);
             variables.Add(item);
             variables.Add(indices);
@@ -248,11 +173,9 @@ namespace DesertOctopus.Cloning
         {
             var elementType = cloneType.GetElementType();
 
-            //var sourceArray = Expression.Parameter(cloneType, "sourceArray");
             var item = Expression.Parameter(elementType, "item");
             var clonedItem = Expression.Parameter(elementType, "item");
             var cloner = Expression.Parameter(typeof(Func<object, ObjectClonerReferenceTracker, object>), "cloner");
-            //var itemAsObj = Expression.Parameter(typeof(object), "itemAsObj");
             var typeExpr = Expression.Parameter(typeof(Type), "typeExpr");
             var i = Expression.Parameter(typeof(int), "i");
             var length = Expression.Parameter(typeof(int), "length");
@@ -263,7 +186,6 @@ namespace DesertOctopus.Cloning
             variables.Add(item);
             variables.Add(length);
             variables.Add(i);
-            //variables.Add(source);
 
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Assign(length, Expression.Property(source, "Length")));

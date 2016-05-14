@@ -15,21 +15,104 @@ The main pros of DesertOctopus.KrakenSerializer are:
 * Binary serialization for use in remote caching server scenarios
 * Does not require objects to be decorated with the `Serializable` attribute
   * It is up to the user of the serializer to ensure that the objects can be safely serialized
-* Supports classes, structs, enums, interfaces, abstract classes
+* Serialize all fields (private, public, etc) of an object
 * Thread safe
 * Supports interface `ISerializable` to allow dictionaries to be correctly serialized
+* Respect the `NotSerialized` attribute
 * Supported types:
   * All primitive types
   * Multi dimensional arrays
   * Jagged arrays
   * Class / Struct
   * ExpandoObject
+  * Basic support for `IEnumerable<>` and `IQueryable<>`
+    * Don't go crazy and try to serialize a `GroupedEnumerable` or something similar
 * No need to know the type of the object to deserialize. The object's type is embedded in the serialized payload.
 * Automatic abort if an object's definition (e.g.: number of fields, name of a field, etc) was modified.
-* 
-* 
+* Can handle circular references
+  * There is one case that is not supported: a dictionary with a reference to itself
+* Good unit tests
+* You can say "Release the Kraken" when you serialize something
 
-The serializer is implemented using expression trees.  
+The mains cons are:
+
+* Including the objects' types increase the size of the payload
+* It's not the fastest serializer around.  I should point out that no development has been made to improve the performance so this point could change in the future.
+
+
+### Benchmark
+
+This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.  A big performance hit is the handling of `ISerializable`
+
+```ini
+
+BenchmarkDotNet=v0.9.6.0
+OS=Microsoft Windows NT 6.3.9600.0
+Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
+Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
+HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
+JitModules=clrjit-v4.6.1055.0
+
+Type=SerializationBenchMark  Mode=Throughput  
+
+```
+                         Method |      Median |    StdDev |
+------------------------------- |------------ |---------- |
+              JsonSerialization |  83.1897 us | 0.9590 us |
+            JsonDeserialization | 165.7533 us | 1.6285 us |
+              OmniSerialization | 199.7462 us | 1.5890 us |
+            OmniDeserialization |  79.5162 us | 0.7924 us |
+            KrakenSerialization | 520.9887 us | 5.2882 us |
+          KrakenDeserialization | 168.6924 us | 2.2030 us |
+   BinaryFormatterSerialization | 413.1625 us | 4.2110 us |
+ BinaryFormatterDeserialization | 392.7262 us | 3.2117 us |
+
 
 ## Object Cloning
 
+The main use of this object cloner is to clone DTOs.  The cloning engine is implemented using expression trees which mean a small performance hit the first type you serialize a type for the creation of the expression tree.  Subsequent serialization for the same type can use the compiled expression tree without having to suffer the performance hit.
+
+The main pros are:
+
+* Fairly fast
+* Does not require objects to be decorated with any attribute
+  * It is up to the user of the object cloner to ensure that the objects can be safely cloned
+* Clone all fields (private, public, etc) of an object
+* Thread safe
+* Supports interface `ISerializable` to allow dictionaries to be correctly cloned
+* Respect the `NotSerialized` attribute
+* Supported types:
+  * All primitive types
+  * Multi dimensional arrays
+  * Jagged arrays
+  * Class / Struct
+  * ExpandoObject
+  * Basic support for `IEnumerable<>` and `IQueryable<>`
+    * Don't go crazy and try to serialize a `GroupedEnumerable` or something similar
+* Can handle circular references
+  * There is one case that is not supported: a dictionary with a reference to itself
+* Good unit tests
+
+The mains cons are:
+
+* Does not have a cool name.
+
+### Benchmark
+
+This benchmark clones a fairly large object containing array, lists and dictionaries.
+
+```ini
+
+BenchmarkDotNet=v0.9.6.0
+OS=Microsoft Windows NT 6.3.9600.0
+Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
+Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
+HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
+JitModules=clrjit-v4.6.1055.0
+
+Type=CloningBenchMark  Mode=Throughput  
+
+```
+ Method |     Median |    StdDev |
+------- |----------- |---------- |
+  Clone | 63.6519 us | 0.4349 us |

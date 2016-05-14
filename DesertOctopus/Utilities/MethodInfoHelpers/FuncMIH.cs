@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using DesertOctopus.ObjectCloner;
+using DesertOctopus.Cloning;
 
 namespace DesertOctopus.Utilities.MethodInfoHelpers
 {

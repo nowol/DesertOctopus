@@ -26,11 +26,19 @@ namespace DesertOctopus.Serialization
             var preLoopActions = new List<Expression>();
             preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), ICollectionMIH.Count<KeyValuePair<string, object>>())));
 
-            return EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
-                                                                                                                          EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
-                                                                                                                          enumeratorMethod,
-                                                                                                                          preLoopActions,
-                                                                                                                          loopBodyCargo);
+            var notTrackedExpressions = new List<Expression>();
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
+                                                                                                                                             EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
+                                                                                                                                             enumeratorMethod,
+                                                                                                                                             preLoopActions,
+                                                                                                                                             loopBodyCargo));
+
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
+                                                                       objToSerialize,
+                                                                       objTracking,
+                                                                       notTrackedExpressions,
+                                                                       variables);
         }
     }
 }

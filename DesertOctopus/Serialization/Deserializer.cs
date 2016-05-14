@@ -213,7 +213,6 @@ namespace DesertOctopus.Serialization
                 {
                     throw new NotSupportedException(type.ToString());
                 }
-
             }
             else
             {

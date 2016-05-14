@@ -6,7 +6,7 @@ namespace DesertOctopus.Utilities
     {
         public static MethodInfo CloneImpl()
         {
-            return typeof(Cloning.ObjectCloner).GetMethod("CloneImpl", BindingFlags.NonPublic | BindingFlags.Static);
+            return typeof(ObjectCloner).GetMethod("CloneImpl", BindingFlags.NonPublic | BindingFlags.Static);
         }
     }
 }

@@ -8,13 +8,11 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-using DesertOctopus.ObjectCloner;
+using DesertOctopus.Cloning;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
 
-namespace DesertOctopus.Cloning
+namespace DesertOctopus
 {
     public class ObjectCloner
     {
@@ -30,12 +28,6 @@ namespace DesertOctopus.Cloning
             }
 
             object objToClone = ObjectCleaner.PrepareObjectForSerialization(obj);
-            //object objToClone = obj;
-
-            //if (obj is Expression)
-            //{
-            //    throw new NotSupportedException("Cannot clone expression.");
-            //}
 
             var refTracker = new ObjectClonerReferenceTracker();
             var clone = CloneImpl(objToClone.GetType())(objToClone, refTracker);
@@ -45,12 +37,7 @@ namespace DesertOctopus.Cloning
             if (queryable != null)
             {
                 var genericArgumentType = queryable.GetGenericArguments()[0];
-                //var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(deserializedValue, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
-
-                //return Queryable.AsQueryable(
-
                 return (T)Deserializer.ConvertObjectToIQueryable(clone, typeof(IQueryable<>).MakeGenericType(genericArgumentType));
-                
             }
 
             return (T)clone;
@@ -70,16 +57,11 @@ namespace DesertOctopus.Cloning
         {
             ValidateSupportedTypes(sourceType);
 
-
-
-            //Expression resultExpression;
             ParameterExpression sourceParameter = Expression.Parameter(typeof(object), "sourceParam");
             ParameterExpression refTrackerParam = Expression.Parameter(typeof(ObjectClonerReferenceTracker), "refTrackerParam");
 
             var clone = Expression.Parameter(sourceType, "newInstance");
             var source = Expression.Parameter(sourceType, "source");
-            //var returnTarget = Expression.Label(sourceType);
-            //GotoExpression returnExpression;
 
             var variables = new List<ParameterExpression>();
             var expressions = new List<Expression>();
@@ -90,60 +72,28 @@ namespace DesertOctopus.Cloning
 
             if (sourceType.IsPrimitive || sourceType.IsValueType || (sourceType == typeof(string)))
             {
-                // Primitives, value types and strings are copied on direct assignment
-                //returnExpression = Expression.Return(returnTarget, source, sourceType);
                 expressions.Add(Expression.Assign(clone, source));
             }
             else if (typeof(ISerializable).IsAssignableFrom(sourceType))
             {
                 expressions.Add(ISerializableCloner.GenerateISerializableExpression(variables, source, clone, sourceType, refTrackerParam));
-                //returnExpression = Expression.Return(returnTarget, clone, sourceType);
             }
             else if (sourceType == typeof(ExpandoObject))
             {
                 expressions.Add(ExpandoCloner.GenerateExpandoObjectExpression(variables, source, clone, refTrackerParam));
-                //returnExpression = Expression.Return(returnTarget, clone, sourceType);
             }
             else if (sourceType.IsArray)
             {
-                //variables.Add(clone);
                 expressions.Add(ArrayCloner.GenerateArrayExpression(variables, source, clone, sourceType, refTrackerParam));
-                //returnExpression = Expression.Return(returnTarget, clone, sourceType);
             }
-            //else if (typeof(IQueryable).IsAssignableFrom(sourceType)
-            //         && !IsAGenericList(sourceType))
-            //{
-            //    expressions.Add(IQueryableCloner.GenerateIQueryableExpression(variables, source, clone, sourceType, refTrackerParam));
-            //}
-            //else if (typeof(IEnumerable).IsAssignableFrom(sourceType)
-            //         && !IsAGenericList(sourceType))
-            //{
-            //    expressions.Add(IEnumerableCloner.GenerateIEnumerableExpression(variables, source, clone, sourceType, refTrackerParam));
-            //}
             else if (ObjectCleaner.IsEnumeratingType(sourceType))
             {
                 expressions.Add(IQueryableCloner.GenerateEnumeratingExpression(variables, source, clone, sourceType, refTrackerParam));
             }
             else
             {
-                //variables.Add(clone);
                 expressions.Add(ClassCloner.GenerateClassExpressions(variables, sourceType, source, clone, refTrackerParam));
-                //returnExpression = Expression.Return(returnTarget, clone, sourceType);
             }
-
-            //expressions.Add(returnExpression);
-            //var returnLabel = Expression.Label(returnTarget, Expression.Default(sourceType));
-            //expressions.Add(returnLabel);
-
-            //// Turn all transfer expressions into a single block if necessary
-            //if ((expressions.Count == 1) && (variables.Count == 0))
-            //{
-            //    resultExpression = expressions[0];
-            //}
-            //else
-            //{
-            //    resultExpression = Expression.Block(variables, expressions);
-            //}
 
             // Value types require manual boxing
             if (sourceType.IsValueType)
@@ -195,11 +145,6 @@ namespace DesertOctopus.Cloning
                 throw new NotSupportedException($"Type {type} cannot contains fields that are pointers.");
             }
 
-            //if (typeof(IQueryable).IsAssignableFrom(type))
-            //{
-            //    throw new NotSupportedException(type.ToString());
-            //}
-
             if (type == typeof(IQueryable))
             {
                 throw new NotSupportedException(type.ToString());
@@ -220,11 +165,6 @@ namespace DesertOctopus.Cloning
                     throw new NotSupportedException(type.ToString());
                 }
             }
-
-            //if (ObjectCleaner.IsEnumeratingType(type))
-            //{
-            //    throw new NotSupportedException(type.ToString());
-            //}
 
             if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
                      && type.IsGenericType && type.Name.Contains("AnonymousType")

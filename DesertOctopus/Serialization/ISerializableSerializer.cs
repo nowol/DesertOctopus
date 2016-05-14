@@ -84,8 +84,6 @@ namespace DesertOctopus.Serialization
                                         Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, typeof(object)));
             };
 
-            
-
             return loopBody;
         }
     }

@@ -34,7 +34,6 @@ namespace DesertOctopus.Serialization
                                                                         objToSerialize,
                                                                         objTracking,
                                                                         notTrackedExpressions,
-                                                                        expressions,
                                                                         variables);
         }
 

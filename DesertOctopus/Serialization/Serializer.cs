@@ -223,11 +223,6 @@ namespace DesertOctopus.Serialization
                 throw new NotSupportedException($"Type {type} cannot contains fields that are pointers.");
             }
 
-            //if (typeof(IQueryable).IsAssignableFrom(type))
-            //{
-            //    throw new NotSupportedException(type.ToString());
-            //}
-
             var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
             if (enumerableType != null)
             {
@@ -353,7 +348,6 @@ namespace DesertOctopus.Serialization
                                                             objToSerialize,
                                                             objTracking,
                                                             notTrackedExpressions,
-                                                            expressions,
                                                             variables);
         }
 
@@ -372,7 +366,6 @@ namespace DesertOctopus.Serialization
                                                             objToSerialize,
                                                             objTracking,
                                                             notTrackedExpressions,
-                                                            expressions,
                                                             variables);
         }
 
@@ -380,7 +373,6 @@ namespace DesertOctopus.Serialization
                                                                            Expression objToSerialize,
                                                                            ParameterExpression objTracking,
                                                                            List<Expression> notTrackedExpressions,
-                                                                           List<Expression> expressions,
                                                                            List<ParameterExpression> variables)
         {
             var trackedObjectPosition = Expression.Parameter(typeof(int?), "trackedObjectPosition");
@@ -400,7 +392,7 @@ namespace DesertOctopus.Serialization
             var ifIsNullExpr = Expression.IfThenElse(Expression.Equal(objToSerialize, Expression.Constant(null)),
                                                      isNullExpr,
                                                      isNotNullExpr);
-            expressions.Add(ifIsNullExpr);
+            List<Expression> expressions = new List<Expression> { ifIsNullExpr };
 
             return Expression.Block(variables, expressions);
         }
