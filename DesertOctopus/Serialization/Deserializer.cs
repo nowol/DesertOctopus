@@ -284,7 +284,7 @@ namespace DesertOctopus.Serialization
 
         }
 
-        private static object ConvertObjectToIQueryable(object instance, Type expectedQueryableType)
+        internal static object ConvertObjectToIQueryable(object instance, Type expectedQueryableType)
         {
             if (instance == null)
             {

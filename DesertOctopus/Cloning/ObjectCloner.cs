@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -29,6 +30,7 @@ namespace DesertOctopus.Cloning
             }
 
             object objToClone = ObjectCleaner.PrepareObjectForSerialization(obj);
+            //object objToClone = obj;
 
             //if (obj is Expression)
             //{
@@ -36,7 +38,22 @@ namespace DesertOctopus.Cloning
             //}
 
             var refTracker = new ObjectClonerReferenceTracker();
-            return (T)CloneImpl(obj.GetType())(objToClone, refTracker);
+            var clone = CloneImpl(objToClone.GetType())(objToClone, refTracker);
+
+            var queryable = IQueryableCloner.GetInterfaceType(obj.GetType(), typeof(IQueryable<>));
+
+            if (queryable != null)
+            {
+                var genericArgumentType = queryable.GetGenericArguments()[0];
+                //var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(deserializedValue, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
+
+                //return Queryable.AsQueryable(
+
+                return (T)Deserializer.ConvertObjectToIQueryable(clone, typeof(IQueryable<>).MakeGenericType(genericArgumentType));
+                
+            }
+
+            return (T)clone;
         }
 
         internal static void ClearTypeCache()
@@ -93,23 +110,19 @@ namespace DesertOctopus.Cloning
                 expressions.Add(ArrayCloner.GenerateArrayExpression(variables, source, clone, sourceType, refTrackerParam));
                 //returnExpression = Expression.Return(returnTarget, clone, sourceType);
             }
-            else if (typeof(IQueryable).IsAssignableFrom(sourceType))
+            //else if (typeof(IQueryable).IsAssignableFrom(sourceType)
+            //         && !IsAGenericList(sourceType))
+            //{
+            //    expressions.Add(IQueryableCloner.GenerateIQueryableExpression(variables, source, clone, sourceType, refTrackerParam));
+            //}
+            //else if (typeof(IEnumerable).IsAssignableFrom(sourceType)
+            //         && !IsAGenericList(sourceType))
+            //{
+            //    expressions.Add(IEnumerableCloner.GenerateIEnumerableExpression(variables, source, clone, sourceType, refTrackerParam));
+            //}
+            else if (ObjectCleaner.IsEnumeratingType(sourceType))
             {
-                var queryableInterface = sourceType.GetInterfaces()
-                                                   .FirstOrDefault(t => t.IsGenericType
-                                                                        && t.GetGenericTypeDefinition() == typeof(IQueryable<>)
-                                                                        && t.GetGenericArguments()
-                                                                            .Length == 1);
-                if (queryableInterface != null)
-                {
-                    var genericArgumentType = queryableInterface.GetGenericArguments()[0];
-                    expressions.Add(ArrayCloner.GenerateArrayExpression(variables, source, clone, genericArgumentType.MakeArrayType(), refTrackerParam));
-                    //returnExpression = Expression.Return(returnTarget, clone, sourceType);
-                }
-                else
-                {
-                    throw new NotSupportedException(sourceType.ToString());
-                }
+                expressions.Add(IQueryableCloner.GenerateEnumeratingExpression(variables, source, clone, sourceType, refTrackerParam));
             }
             else
             {
@@ -145,6 +158,21 @@ namespace DesertOctopus.Cloning
             return Expression.Lambda<Func<object, ObjectClonerReferenceTracker, object>>(Expression.Block(variables, expressions), sourceParameter, refTrackerParam).Compile();
         }
 
+        private static bool IsAGenericList(Type type)
+        {
+            var isGenericList = false;
+            var targetType = type;
+
+            do
+            {
+                isGenericList = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>);
+                targetType = targetType.BaseType;
+
+            } while (!isGenericList && targetType != null);
+
+            return isGenericList;
+        }
+
         private static void ValidateSupportedTypes(Type type)
         {
             if (typeof(Expression).IsAssignableFrom(type))
@@ -168,6 +196,32 @@ namespace DesertOctopus.Cloning
             }
 
             //if (typeof(IQueryable).IsAssignableFrom(type))
+            //{
+            //    throw new NotSupportedException(type.ToString());
+            //}
+
+            if (type == typeof(IQueryable))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            if (type == typeof(IEnumerable))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
+            if (enumerableType != null)
+            {
+                var genericArgument = enumerableType.GetGenericArguments()[0];
+                if (genericArgument.IsGenericType
+                    && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
+                {
+                    throw new NotSupportedException(type.ToString());
+                }
+            }
+
+            //if (ObjectCleaner.IsEnumeratingType(type))
             //{
             //    throw new NotSupportedException(type.ToString());
             //}

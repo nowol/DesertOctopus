@@ -7,7 +7,6 @@ using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
-using DesertOctopus;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
@@ -15,7 +14,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
 
-namespace SerializerTests
+namespace DesertOctopus.Tests
 {
     [TestClass]
     public class SerializerTest
@@ -1711,6 +1710,16 @@ namespace SerializerTests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void SerializeGroupByContainedInAClass()
+        {
+            var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
+            var instance = new GenericBaseClass<IEnumerable<IGrouping<int, ClassWithoutSerializableAttribute>>> { Value = list.GroupBy(x => x.PublicPropertyValue) };
+
+            var bytes = Serializer.Serialize(instance);
+        }
+
+        [TestMethod]
         public void SerializeIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1976,6 +1985,15 @@ namespace SerializerTests
             Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
         }
 
+        [TestMethod]
+        public void SerializeClassWithAllPrimitiveTypes()
+        {
+            var instance = new ClassWithAllPrimitiveTypes();
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytes);
+            instance.ShouldBeEquivalentTo(deserializedValue);
+        }
+
         //[TestMethod]
         //[ExpectedException(typeof(NotSupportedException))]
         //public void SerializingAStreamIsNotSupported()
@@ -1986,10 +2004,19 @@ namespace SerializerTests
         //    }
         //}
 
+        [TestMethod]
+        public void SerializeAutoInitializeList()
+        {
+            var instance = new ClassWithInitializedList();
+            instance.Values = null;
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<ClassWithInitializedList>(bytes);
+            Assert.IsNull(deserializedValue.Values);
+        }
+
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{
-
         //    Assert.Fail();
         //}
     }

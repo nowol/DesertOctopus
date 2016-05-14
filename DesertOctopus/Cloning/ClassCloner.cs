@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using DesertOctopus.ObjectCloner;
@@ -46,26 +48,26 @@ namespace DesertOctopus.Cloning
         {
             foreach (var field in fields)
             {
+                var cloneField = Expression.Field(clone, field);
+                var sourceField = Expression.Field(source, field);
                 if (field.FieldType.IsPrimitive || field.FieldType.IsValueType || (field.FieldType == typeof(string)))
                 {
                     if (field.IsInitOnly)
                     {
                         expressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
                                                         Expression.Constant(field),
-                                                        Expression.Convert(Expression.Field(source, field), typeof(object)),
+                                                        Expression.Convert(sourceField, typeof(object)),
                                                         clone));
                     }
                     else
                     {
-                        var from = Expression.Field(source, field);
-                        var to = Expression.Field(clone, field);
+                        var from = sourceField;
+                        var to = cloneField;
                         expressions.Add(Expression.Assign(to, from));
                     }
                 }
                 else
                 {
-                    var callCopyExpression = CallCopyExpression(Expression.Field(source, field), refTrackerParam);
-
                     if (field.IsInitOnly)
                     {
                         Func<Expression, Expression> assignExpr = exx => Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
@@ -78,13 +80,13 @@ namespace DesertOctopus.Cloning
                                                              Expression.Constant(null, typeof(object)),
                                                              clone);
 
-                        var conditionalExpression = Expression.IfThenElse(Expression.NotEqual(Expression.Field(source, field), Expression.Constant(null)),
-                                                                          assignExpr(callCopyExpression),
+                        var conditionalExpression = Expression.IfThenElse(Expression.NotEqual(sourceField, Expression.Constant(null)),
+                                                                          assignExpr(CallCopyExpression(sourceField, refTrackerParam)),
                                                                           assignNullExpr);
 
 
-                        expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(Expression.Field(source, field),
-                                                                        Expression.Field(clone, field),
+                        expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(sourceField,
+                                                                        cloneField,
                                                                         field.FieldType,
                                                                         refTrackerParam,
                                                                         conditionalExpression,
@@ -92,13 +94,45 @@ namespace DesertOctopus.Cloning
                     }
                     else
                     {
-                        var assignExpr = Expression.Assign(Expression.Field(clone, field),
-                                                  Expression.Convert(callCopyExpression, field.FieldType));
-                        var conditionalExpression = Expression.IfThenElse(Expression.NotEqual(Expression.Field(source, field), Expression.Constant(null)),
-                                                                          assignExpr,
-                                                                          Expression.Assign(Expression.Field(clone, field), Expression.Constant(null, field.FieldType)));
-                        expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(Expression.Field(source, field),
-                                                                         Expression.Field(clone, field),
+                        //var assignExpr = Expression.IfThenElse(Expression.IsTrue(Expression.Call(IQueryableMIH.IsGenericIQueryableType(), Expression.Constant(field.FieldType))),
+                        //                                       Expression.Assign(cloneField, callCopyExpr ),
+                        //                                       Expression.Assign(cloneField, callCopyExpr));
+
+                        Expression assignExpr;
+
+                        if (IQueryableCloner.IsGenericIQueryableType(field.FieldType))
+                        {
+                            Type queryableInterface = IQueryableCloner.GetInterfaceType(field.FieldType, typeof(IQueryable<>));
+                            var genericArgumentType = queryableInterface.GetGenericArguments()[0];
+
+                            var copy = CallCopyExpression(Expression.Call(SerializerMIH.PrepareObjectForSerialization(), sourceField), refTrackerParam);
+                            var copy2 = Expression.Convert(copy, field.FieldType);
+
+                            var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(copy2, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
+                            assignExpr = Expression.Assign(cloneField, m);
+                        }
+                        else if (IEnumerableCloner.IsGenericIEnumerableType(field.FieldType))
+                        {
+                            Type enumerableInterface = IQueryableCloner.GetInterfaceType(field.FieldType, typeof(IEnumerable<>));
+                            var genericArgumentType = enumerableInterface.GetGenericArguments()[0];
+
+
+                            var copy = CallCopyExpression(Expression.Call(SerializerMIH.PrepareObjectForSerialization(), sourceField), refTrackerParam);
+
+                            //var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(copy, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
+                            assignExpr = Expression.Assign(cloneField, Expression.Convert(copy, field.FieldType));
+                        }
+                        else
+                        {
+                            assignExpr = Expression.Assign(cloneField, Expression.Convert(CallCopyExpression(sourceField, refTrackerParam), field.FieldType));
+                        }
+
+
+                        var conditionalExpression = Expression.IfThenElse(Expression.Equal(sourceField, Expression.Constant(null)),
+                                                                          Expression.Assign(cloneField, Expression.Constant(null, field.FieldType)),
+                                                                          assignExpr);
+                        expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(sourceField,
+                                                                         cloneField,
                                                                          field.FieldType,
                                                                          refTrackerParam,
                                                                          conditionalExpression));
@@ -106,12 +140,19 @@ namespace DesertOctopus.Cloning
                 }
             }
         }
-
+        
         internal static Expression CallCopyExpression(Expression item, ParameterExpression refTrackerParam)
         {
-            //return Expression.Block(
-                                    
-            //                        );
+            /*
+             var t = item.GetType();
+             if (ObjectCloner.IsEnumeratingType(t))
+             {
+                 var arr = item.ToArray();
+                 var arrClone = CloneImpl(arr);
+
+             }
+             
+             */
 
 
 

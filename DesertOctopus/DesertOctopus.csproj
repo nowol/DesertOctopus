@@ -48,10 +48,11 @@
     <Compile Include="Cloning\ArrayCloner.cs" />
     <Compile Include="Cloning\ClassCloner.cs" />
     <Compile Include="Cloning\ExpandoCloner.cs" />
+    <Compile Include="Cloning\IEnumerableCloner.cs" />
+    <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
     <Compile Include="KrakenSerializer.cs" />
     <Compile Include="Cloning\ObjectCloner.cs" />
-    <Compile Include="Cloning\ObjectCloner2.cs" />
     <Compile Include="Cloning\ObjectClonerReferenceTracker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ArrayDeserializer.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="Utilities\MethodInfoHelpers\FuncMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\ICollectionMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\IDisposableMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IQueryableMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\IEnumerableMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\IEnumeratorMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\InvalidOperationExceptionMIH.cs" />

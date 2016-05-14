@@ -8,12 +8,11 @@ using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
 using DesertOctopus.Exceptions;
-using DesertOctopus.Cloning;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
 
-namespace SerializerTests
+namespace DesertOctopus.Tests
 {
     [TestClass]
     public class ClonerTest
@@ -72,7 +71,7 @@ namespace SerializerTests
         public void CloneUtcDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.UtcNow };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.IsNotNull(clonedValue.Value);
             Assert.AreEqual(instance.Value, clonedValue.Value);
             Assert.AreEqual(instance.Value.Kind, clonedValue.Value.Kind);
@@ -82,7 +81,7 @@ namespace SerializerTests
         public void CloneNullPrimitiveArray()
         {
             int[] nullArray = null;
-            var clonedValue = ObjectCloner.Clone(nullArray);
+            var clonedValue = Cloning.ObjectCloner.Clone(nullArray);
             Assert.IsNull(clonedValue);
         }
 
@@ -90,7 +89,7 @@ namespace SerializerTests
         public void CloneEmptyObjectArray()
         {
             Object[] emptyArray = new Object[0];
-            var clonedValue = ObjectCloner.Clone(emptyArray);
+            var clonedValue = Cloning.ObjectCloner.Clone(emptyArray);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
         }
@@ -99,7 +98,7 @@ namespace SerializerTests
         public void CloneNullObjectArray()
         {
             Object[] nullArray = null;
-            var clonedValue = ObjectCloner.Clone(nullArray);
+            var clonedValue = Cloning.ObjectCloner.Clone(nullArray);
             Assert.IsNull(clonedValue);
         }
 
@@ -107,7 +106,7 @@ namespace SerializerTests
         public void CloneEmptyPrimitiveArray()
         {
             int[] emptyArray = new int[0];
-            var clonedValue = ObjectCloner.Clone(emptyArray);
+            var clonedValue = Cloning.ObjectCloner.Clone(emptyArray);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
         }
@@ -116,7 +115,7 @@ namespace SerializerTests
         public void CloneObjectArrayWithNullValues()
         {
             var array = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = ObjectCloner.Clone(array);
+            var clonedValue = Cloning.ObjectCloner.Clone(array);
             Assert.AreEqual(array.Length, clonedValue.Length);
             Assert.AreEqual(array[0].PublicPropertyValue, clonedValue[0].PublicPropertyValue);
             Assert.IsNull(clonedValue[1]);
@@ -127,7 +126,7 @@ namespace SerializerTests
         public void CloneNullPrimitiveList()
         {
             List<int> nullList = null;
-            var clonedValue = ObjectCloner.Clone(nullList);
+            var clonedValue = Cloning.ObjectCloner.Clone(nullList);
             Assert.IsNull(clonedValue);
         }
 
@@ -135,7 +134,7 @@ namespace SerializerTests
         public void CloneEmptyObjectList()
         {
             List<Object> emptyList = new List<Object>();
-            var clonedValue = ObjectCloner.Clone(emptyList);
+            var clonedValue = Cloning.ObjectCloner.Clone(emptyList);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
         }
@@ -144,7 +143,7 @@ namespace SerializerTests
         public void CloneNullObjectList()
         {
             List<object> nullList = null;
-            var clonedValue = ObjectCloner.Clone(nullList);
+            var clonedValue = Cloning.ObjectCloner.Clone(nullList);
             Assert.IsNull(clonedValue);
         }
 
@@ -152,7 +151,7 @@ namespace SerializerTests
         public void CloneEmptyPrimitiveList()
         {
             List<int> emptyList = new List<int>();
-            var clonedValue = ObjectCloner.Clone(emptyList);
+            var clonedValue = Cloning.ObjectCloner.Clone(emptyList);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
         }
@@ -161,7 +160,7 @@ namespace SerializerTests
         public void CloneObjectListWithNullValues()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
             Assert.AreEqual(list.Count, clonedValue.Count);
             Assert.AreEqual(list[0].PublicPropertyValue, clonedValue[0].PublicPropertyValue);
             Assert.IsNull(clonedValue[1]);
@@ -188,7 +187,7 @@ namespace SerializerTests
             };
 
             Type targetType = typeof(T);
-            var clonedValue = ObjectCloner.Clone(wrappedObject);
+            var clonedValue = Cloning.ObjectCloner.Clone(wrappedObject);
 
             Assert.AreEqual(wrappedObject.Value,
                             clonedValue.Value,
@@ -199,7 +198,7 @@ namespace SerializerTests
 
         private static void CloneArray<T>(T[] value)
         {
-            var clonedValue = ObjectCloner.Clone(value);
+            var clonedValue = Cloning.ObjectCloner.Clone(value);
 
             CollectionAssert.AreEquivalent(value,
                                            clonedValue);
@@ -210,7 +209,7 @@ namespace SerializerTests
             var array = new T[1];
             array[0] = value;
 
-            var clonedValue = ObjectCloner.Clone(array);
+            var clonedValue = Cloning.ObjectCloner.Clone(array);
             Assert.IsNotNull(clonedValue, "Type: " + typeof(T));
             CollectionAssert.AreEquivalent(array,
                                             clonedValue, "Type: " + typeof(T));
@@ -223,7 +222,7 @@ namespace SerializerTests
                             value
                         };
 
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
 
             CollectionAssert.AreEquivalent(list,
                                             clonedValue);
@@ -233,7 +232,7 @@ namespace SerializerTests
         {
             var list = value.ToList();
 
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
 
             CollectionAssert.AreEquivalent(list,
                                             clonedValue);
@@ -243,14 +242,14 @@ namespace SerializerTests
         public void CloneStruct()
         {
             var instance = new Wrapper<StructForTesting> { Value = new StructForTesting { Value = 1 } };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Value, clonedValue.Value);
         }
 
         [TestMethod]
         public void CloneShortString()
         {
-            var clonedValue = ObjectCloner.Clone("abc");
+            var clonedValue = Cloning.ObjectCloner.Clone("abc");
             //Assert.AreEqual(5, bytes.Length);
             Assert.AreEqual("abc", clonedValue);
         }
@@ -259,7 +258,7 @@ namespace SerializerTests
         public void CloneMediumString()
         {
             var str = RandomString(3000);
-            var clonedValue = ObjectCloner.Clone(str);
+            var clonedValue = Cloning.ObjectCloner.Clone(str);
             Assert.AreEqual(str, clonedValue);
         }
 
@@ -267,7 +266,7 @@ namespace SerializerTests
         public void CloneLongString()
         {
             var str = RandomString(100000);
-            var clonedValue = ObjectCloner.Clone(str);
+            var clonedValue = Cloning.ObjectCloner.Clone(str);
             Assert.AreEqual(str, clonedValue);
         }
 
@@ -291,7 +290,7 @@ namespace SerializerTests
             classInstance.SetPrivateFieldValue(2);
             classInstance.SetPrivatePropertyValue(5);
 
-            var clonedValue = ObjectCloner.Clone(classInstance);
+            var clonedValue = Cloning.ObjectCloner.Clone(classInstance);
 
             Assert.AreEqual(classInstance.PublicFieldValue,
                             clonedValue.PublicFieldValue);
@@ -316,7 +315,7 @@ namespace SerializerTests
             instance1.Child = instance2;
             instance2.Parent = instance1;
 
-            var clonedValue = ObjectCloner.Clone(instance1);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance1);
 
             Assert.IsTrue(ReferenceEquals(clonedValue,
                                           clonedValue.Child.Parent));
@@ -336,7 +335,7 @@ namespace SerializerTests
                             instance
                         };
 
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -356,7 +355,7 @@ namespace SerializerTests
                             instance
                         };
 
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -372,7 +371,7 @@ namespace SerializerTests
                 PublicPropertyValue = 4
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.PublicPropertyValue,
                             clonedValue.PublicPropertyValue);
@@ -386,7 +385,7 @@ namespace SerializerTests
                 Value = 4
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -400,7 +399,7 @@ namespace SerializerTests
                 Value = 4
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -416,7 +415,7 @@ namespace SerializerTests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -439,7 +438,7 @@ namespace SerializerTests
                 {3, "Value3"}
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -462,7 +461,7 @@ namespace SerializerTests
                 {Guid.NewGuid(), "Value3"}
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -485,7 +484,7 @@ namespace SerializerTests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -511,7 +510,7 @@ namespace SerializerTests
                                        }
                            };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value.Count,
                             clonedValue.Value.Count);
@@ -534,7 +533,7 @@ namespace SerializerTests
                 {"Key3", new ClassWithGenericInt(3) },
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -560,7 +559,7 @@ namespace SerializerTests
             };
 
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -587,7 +586,7 @@ namespace SerializerTests
                 {"Key4", null },
             };
 
-            ObjectCloner.Clone(instance);
+            Cloning.ObjectCloner.Clone(instance);
         }
 
         [TestMethod]
@@ -601,7 +600,7 @@ namespace SerializerTests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SomeProperty,
                             clonedValue.SomeProperty);
@@ -627,7 +626,7 @@ namespace SerializerTests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(0,
                             clonedValue.SomeProperty); // default value for property
@@ -658,7 +657,7 @@ namespace SerializerTests
                 { new ClassWithGenericInt(3), "Key3" },
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             CompareDictionaries(instance,
                                 clonedValue);
@@ -706,7 +705,7 @@ namespace SerializerTests
             };
             instance.SomeProperty = 849;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SomeProperty,
                             clonedValue.SomeProperty);
@@ -730,7 +729,7 @@ namespace SerializerTests
                 new ChildStringHierarchy("abc"),
             };
 
-            var clonedValue = ObjectCloner.Clone(list);
+            var clonedValue = Cloning.ObjectCloner.Clone(list);
 
             Assert.AreEqual(list.Count,
                             clonedValue.Count);
@@ -745,7 +744,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 } };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -761,7 +760,7 @@ namespace SerializerTests
                 Items = new HashSet<int> { 1, 2, 3 }
             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -774,7 +773,7 @@ namespace SerializerTests
         {
             var instance = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { "a", "b", "C" };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Comparer.GetType(),
                             clonedValue.Comparer.GetType());
@@ -789,7 +788,7 @@ namespace SerializerTests
         {
             var instance = new GenericBaseClass<EnumForTesting> { Value = EnumForTesting.Two };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Value,
                             clonedValue.Value);
@@ -804,7 +803,7 @@ namespace SerializerTests
                                 {"a", "b"},
                             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Count,
                             clonedValue.Count);
@@ -821,7 +820,7 @@ namespace SerializerTests
                                 {"a", "b"},
                             };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(GetHashTableComparer(instance));
             Assert.IsNotNull(GetHashTableComparer(clonedValue));
@@ -851,7 +850,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new[] { 1, 2, 3 } };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -864,7 +863,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -877,7 +876,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Where(x => x > 1) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -890,7 +889,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OrderBy(x => x) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -903,7 +902,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.DefaultIfEmpty(123) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -916,7 +915,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Except(new[] { 2 }) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -929,7 +928,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Union(new[] { 4 }) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -942,7 +941,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Intersect(new[] { 2 }) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -955,7 +954,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OfType<int>() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -968,7 +967,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Skip(1) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -981,7 +980,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Take(1) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -994,7 +993,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Select(x => x * 2) };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.Items.Count(),
                             clonedValue.Items.Count());
@@ -1009,7 +1008,7 @@ namespace SerializerTests
             var testData = new List<int> { 1, 2, 3, 4, 5, 6 };
             System.Func<int, bool> instance = x => x > 3;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1025,7 +1024,7 @@ namespace SerializerTests
 
             Expression<System.Func<int, bool>> instance = x => x > 3;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1039,7 +1038,7 @@ namespace SerializerTests
         public void CloneAnonymousObject()
         {
             var instance = new { Property1 = "hello", Property2 = 123 };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Property1, clonedValue.Property1);
             Assert.AreEqual(instance.Property2, clonedValue.Property2);
 
@@ -1050,7 +1049,7 @@ namespace SerializerTests
         public void CloneArray()
         {
             var instance = new int[] { 123, 456 };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             CollectionAssert.AreEqual(instance, clonedValue);
         }
 
@@ -1058,7 +1057,7 @@ namespace SerializerTests
         public void CloneArrayWithNullablePrimitive()
         {
             var instance = new int?[] { 123, null, 456 };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             CollectionAssert.AreEqual(instance, clonedValue);
         }
 
@@ -1066,7 +1065,7 @@ namespace SerializerTests
         public void CloneArrayObject()
         {
             var instance = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(2, clonedValue.Length);
             Assert.AreEqual(123, clonedValue[0].PublicPropertyValue);
             Assert.AreEqual(456, clonedValue[1].PublicPropertyValue);
@@ -1078,7 +1077,7 @@ namespace SerializerTests
             var obj = new ClassWithGenericInt(123);
             var instance = new ClassWithGenericInt[] { obj, null };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1087,7 +1086,7 @@ namespace SerializerTests
         public void CloneArrayObjectHierarchy()
         {
             var instance = new SomeBaseClass[] { new ClassWithGenericInt(123), new ClassWithGenericDouble(3.38D) };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(2, clonedValue.Length);
             Assert.AreEqual(123, (clonedValue[0] as ClassWithGenericInt).Value);
             Assert.AreEqual(3.38D, (clonedValue[1] as ClassWithGenericDouble).Value);
@@ -1098,7 +1097,7 @@ namespace SerializerTests
         {
             var obj123 = new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 };
             var instance = new ClassWithoutSerializableAttribute[] { obj123, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 }, obj123 };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(3, clonedValue.Length);
             Assert.AreEqual(123, clonedValue[0].PublicPropertyValue);
             Assert.AreEqual(456, clonedValue[1].PublicPropertyValue);
@@ -1123,7 +1122,7 @@ namespace SerializerTests
             instance[2, 2] = 10;
             instance[2, 3] = 11;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
         }
 
@@ -1133,7 +1132,7 @@ namespace SerializerTests
             var instance = CreateMultiDimensionalArray<int>(8);
             SeedArray(instance);
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
         }
 
@@ -1144,7 +1143,7 @@ namespace SerializerTests
             instance.SetValue(new object(), new[] { 0, 0 });
             instance.SetValue(new object(), new[] { 1, 0 });
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsTrue(clonedValue.GetValue(new[] { 0, 0 }).GetType() == typeof(object));
             Assert.IsNull(clonedValue.GetValue(new[] { 0, 1 }));
@@ -1161,7 +1160,7 @@ namespace SerializerTests
             instance.SetValue(new ClassWithGenericInt(456), new[] { 1, 0 });
             instance.SetValue(obj, new[] { 1, 1 });
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             instance.Should().BeEquivalentTo(clonedValue);
             Assert.AreEqual(456, ((ClassWithGenericInt)clonedValue.GetValue(1, 0)).Value);
             Assert.IsTrue(ReferenceEquals(clonedValue.GetValue(0, 0), clonedValue.GetValue(1, 1)));
@@ -1205,7 +1204,7 @@ namespace SerializerTests
             instance[0] = new object[] { new object(), null };
             instance[1] = new object[] { new object(), null };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsTrue(clonedValue[0][0].GetType() == typeof(object));
             Assert.IsNull(clonedValue[0][1]);
@@ -1223,7 +1222,7 @@ namespace SerializerTests
             //instance[0] = new ClassWithGenericInt[] { obj, new ClassWithGenericInt(4563) };
             instance[1] = new ClassWithGenericInt[] { new ClassWithGenericInt(456), obj };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
 
@@ -1234,7 +1233,7 @@ namespace SerializerTests
             instance[0] = new ClassWithGenericInt[] { obj, new ClassWithGenericInt(4563) };
             instance[1] = new ClassWithGenericInt[] { new ClassWithGenericInt(456), obj };
 
-            clonedValue = ObjectCloner.Clone(instance);
+            clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1248,7 +1247,7 @@ namespace SerializerTests
             instance[0] = new SomeBaseClass[] { obj, new ClassWithGenericDouble(123.3D) };
             instance[1] = new SomeBaseClass[] { new ClassWithGenericInt(456), obj };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(123, ((ClassWithGenericInt)clonedValue[0][0]).Value);
             Assert.AreEqual(123.3D, ((ClassWithGenericDouble)clonedValue[0][1]).Value);
@@ -1262,7 +1261,7 @@ namespace SerializerTests
         {
             int[][] nullArray = null;
             var instance = new Wrapper<int[][]> { Value = nullArray };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue.Value);
         }
@@ -1272,7 +1271,7 @@ namespace SerializerTests
         {
             int[][][] instance = new [] { new int[2][], new int[3][] };
             instance[0][0] = new int[] { 123, 238 };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1281,7 +1280,7 @@ namespace SerializerTests
         public void CloneEmptyJaggedArray()
         {
             int[][] instance = new int[2][];
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
 
@@ -1289,7 +1288,7 @@ namespace SerializerTests
         public void CloneJaggedArray()
         {
             var instance = new int[][] { new int[] { 123, 238 }, new int[] { 456, 546, 784 }, null };
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.AreEqual(instance.Length, clonedValue.Length);
             instance.ShouldAllBeEquivalentTo(clonedValue);
         }
@@ -1304,7 +1303,7 @@ namespace SerializerTests
             instance1.Child = instance2;
             instance2.Child = instance3;
 
-            var clonedValue = ObjectCloner.Clone(instance1);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance1);
 
             CollectionAssert.AreEqual(arr, clonedValue.Child.Ids);
             Assert.IsTrue(ReferenceEquals(clonedValue.Child.Ids, clonedValue.Child.Child.Ids));
@@ -1315,7 +1314,7 @@ namespace SerializerTests
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(instance.Value, clonedValue.Value);
         }
@@ -1358,7 +1357,7 @@ namespace SerializerTests
             instance.Property4 = new object();
             instance.Property5 = null;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1378,7 +1377,7 @@ namespace SerializerTests
         {
             dynamic instance = new ExpandoObject();
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, (clonedValue as IDictionary<string, object>).Count);
@@ -1389,11 +1388,11 @@ namespace SerializerTests
         {
             ExpandoObject instance = null;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue2 = ObjectCloner.Clone(new Wrapper<ExpandoObject> { Value = instance });
+            var wrappedclonedValue2 = Cloning.ObjectCloner.Clone(new Wrapper<ExpandoObject> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue2.Value);
         }
@@ -1406,7 +1405,7 @@ namespace SerializerTests
             instance.Enqueue(2);
             instance.Enqueue(3);
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1425,7 +1424,7 @@ namespace SerializerTests
             instance.Enqueue("abc");
             instance.Enqueue(new ClassWithGenericInt(123));
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1443,7 +1442,7 @@ namespace SerializerTests
             instance.Push(2);
             instance.Push(3);
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1462,7 +1461,7 @@ namespace SerializerTests
             instance.Push("abc");
             instance.Push(new ClassWithGenericInt(123));
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1475,7 +1474,7 @@ namespace SerializerTests
         [TestMethod]
         public void CloneInParallel()
         {
-            ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
+            Cloning.ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
 
             for (int i = 0; i < 100; i++)
             {
@@ -1485,7 +1484,7 @@ namespace SerializerTests
                              {
                                  var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
 
-                                 var clonedValue = ObjectCloner.Clone(instance);
+                                 var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
                                  Assert.AreEqual(instance.Items.Count(),
                                                  clonedValue.Items.Count());
@@ -1500,7 +1499,7 @@ namespace SerializerTests
         {
             var instance = new Dictionary<EnumForTesting, int> { { EnumForTesting.One, 1 }, { EnumForTesting.Two, 2 } };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
 
@@ -1513,7 +1512,7 @@ namespace SerializerTests
         {
             var instance = new object();
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
         }
@@ -1523,7 +1522,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithObjectProperty();
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNull(clonedValue.Obj);
@@ -1534,7 +1533,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithObjectProperty { Obj = new object() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Obj);
@@ -1545,7 +1544,7 @@ namespace SerializerTests
         {
             var instance = new ClassWithObjectProperty { Obj = 123 };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(123, (int)clonedValue.Obj);
@@ -1557,7 +1556,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IList> { Value = list };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1574,7 +1573,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<ICollection> { Value = list };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1591,7 +1590,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IQueryable> { Value = list.AsQueryable() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue.Value);
@@ -1608,7 +1607,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             IQueryable<ClassWithoutSerializableAttribute> instance = list.AsQueryable();
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNotNull(clonedValue);
@@ -1625,7 +1624,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new List<GenericBaseClass<IQueryable>> { new GenericBaseClass<IQueryable> { Value = list.AsQueryable() } };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Count);
@@ -1643,7 +1642,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IQueryable>[] { new GenericBaseClass<IQueryable> { Value = list.AsQueryable() } };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Length);
@@ -1660,7 +1659,7 @@ namespace SerializerTests
         {
             var instance = new List<object> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(4, clonedValue.Count);
@@ -1673,7 +1672,7 @@ namespace SerializerTests
         {
             var instance = new List<object>();
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Count);
@@ -1686,11 +1685,11 @@ namespace SerializerTests
         {
             List<object> instance = null;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue = ObjectCloner.Clone(new Wrapper<List<object>> { Value = instance });
+            var wrappedclonedValue = Cloning.ObjectCloner.Clone(new Wrapper<List<object>> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue.Value);
         }
@@ -1700,7 +1699,7 @@ namespace SerializerTests
         {
             var instance = new object[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(4, clonedValue.Length);
@@ -1713,7 +1712,7 @@ namespace SerializerTests
         {
             var instance = new object[0];
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(0, clonedValue.Length);
@@ -1726,11 +1725,11 @@ namespace SerializerTests
         {
             object[] instance = null;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNull(clonedValue);
 
-            var wrappedclonedValue = ObjectCloner.Clone(new Wrapper<object[]> { Value = instance });
+            var wrappedclonedValue = Cloning.ObjectCloner.Clone(new Wrapper<object[]> { Value = instance });
 
             Assert.IsNull(wrappedclonedValue.Value);
         }
@@ -1741,7 +1740,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             List<IQueryable<ClassWithoutSerializableAttribute>> instance = new List<IQueryable<ClassWithoutSerializableAttribute>> { list.AsQueryable() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Count);
@@ -1758,7 +1757,7 @@ namespace SerializerTests
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             IQueryable<ClassWithoutSerializableAttribute>[] instance = new IQueryable<ClassWithoutSerializableAttribute>[] { list.AsQueryable() };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.AreEqual(1, clonedValue.Length);
@@ -1774,7 +1773,7 @@ namespace SerializerTests
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.IsNotNull(clonedValue);
             Assert.IsNull(clonedValue.Value);
@@ -1791,7 +1790,7 @@ namespace SerializerTests
             instance.Add("Key5", new object());
             instance.Add("Key6", new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 });
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             CompareDictionaries(instance,
                                 clonedValue);
@@ -1804,7 +1803,7 @@ namespace SerializerTests
             instance.SerializableProperty = 839;
             instance.NonSerializableProperty = 33534;
 
-            var clonedValue = ObjectCloner.Clone(instance);
+            var clonedValue = Cloning.ObjectCloner.Clone(instance);
 
             Assert.AreEqual(instance.SerializableProperty, clonedValue.SerializableProperty);
             Assert.AreEqual(0, clonedValue.NonSerializableProperty);
@@ -1812,22 +1811,41 @@ namespace SerializerTests
 
         [TestMethod]
         [ExpectedException(typeof(NotSupportedException))]
-        public unsafe void SerializingPointerTypeIsNotSupported()
+        public unsafe void ClonePointerTypeIsNotSupported()
         {
             int[] a = new int[5] { 10, 20, 30, 40, 50 };
             fixed (int* p = &a[0])
             {
                 var instance = new ClassWithPointer();
                 instance.Value = p;
-                ObjectCloner.Clone(instance);
+                Cloning.ObjectCloner.Clone(instance);
             }
+        }
+
+        [TestMethod]
+        public void CloneAutoInitializeList()
+        {
+            var instance = new ClassWithInitializedList();
+            instance.Values = null;
+            var clone = Cloning.ObjectCloner.Clone(instance);
+            Assert.IsNull(clone.Values);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void CloneGroupByContainedInAClass()
+        {
+            var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
+            var instance = new GenericBaseClass<IEnumerable<IGrouping<int, ClassWithoutSerializableAttribute>>> { Value = list.GroupBy(x => x.PublicPropertyValue) };
+
+            var bytes = Cloning.ObjectCloner.Clone(instance);
         }
 
         //[TestMethod]
         //public void KrakenSerializerShouldWork()
         //{
         //    var instance = new GenericBaseClass<IQueryable> { Value = null };
-            
+
         //    var clonedValue = KrakenObjectCloner.Clone(instance);
         //    var clonedValue = KrakenSerializer.Deserialize<GenericBaseClass<IQueryable>>(bytes);
 

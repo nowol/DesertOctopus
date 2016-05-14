@@ -22,8 +22,7 @@ namespace DesertOctopus.Utilities
                     return objToPrepare;
                 }
 
-                if (enumerableValue.GetType().DeclaringType == typeof(System.Linq.Enumerable)
-                    || (!String.IsNullOrWhiteSpace(enumerableValue.GetType().Namespace) && enumerableValue.GetType().Namespace.StartsWith("System.Linq")))
+                if (IsEnumeratingType(enumerableValue))
                 {
                     Type itemType = typeof(object);
 
@@ -44,6 +43,22 @@ namespace DesertOctopus.Utilities
 
 
             return objToPrepare;
+        }
+
+        internal static bool IsEnumeratingType(IEnumerable enumerableValue)
+        {
+            if (enumerableValue == null)
+            {
+                return false;
+            }
+            var type = enumerableValue.GetType();
+            return IsEnumeratingType(type);
+        }
+
+        internal static bool IsEnumeratingType(Type type)
+        {
+            return type.DeclaringType == typeof(System.Linq.Enumerable)
+                   || (!String.IsNullOrWhiteSpace(type.Namespace) && type.Namespace.StartsWith("System.Linq"));
         }
     }
 }

@@ -10,6 +10,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using DesertOctopus.Cloning;
 using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
@@ -226,6 +227,17 @@ namespace DesertOctopus.Serialization
             //{
             //    throw new NotSupportedException(type.ToString());
             //}
+
+            var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
+            if (enumerableType != null)
+            {
+                var genericArgument = enumerableType.GetGenericArguments()[0];
+                if (genericArgument.IsGenericType
+                    && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
+                {
+                    throw new NotSupportedException(type.ToString());
+                }
+            }
 
             if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
                      && type.IsGenericType && type.Name.Contains("AnonymousType")

@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus", "DesertOcto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Tests", "DesertOctopus.Tests\DesertOctopus.Tests.csproj", "{C302FA36-8B66-4C79-8966-D79734A52406}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1006FFC1-3831-4A24-8E7C-3BC52C1EA2CB}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Benchmark", "DesertOctopus.Benchmark\DesertOctopus.Benchmark.csproj", "{0747C3C7-4B11-4F06-8ACE-35A75FA69240}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +28,10 @@ Global
 		{C302FA36-8B66-4C79-8966-D79734A52406}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C302FA36-8B66-4C79-8966-D79734A52406}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C302FA36-8B66-4C79-8966-D79734A52406}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
