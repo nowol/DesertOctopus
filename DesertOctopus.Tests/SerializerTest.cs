@@ -2039,6 +2039,31 @@ namespace DesertOctopus.Tests
             Assert.IsTrue(ReferenceEquals(deserializedValue[0], deserializedValue[2]));
         }
 
+        [TestMethod]
+        public void TrackReferenceOfDictionary()
+        {
+            var dict = new Dictionary<string, object>();
+            dict.Add("Property1", 123);
+            dict.Add("Property2", "abc");
+            dict.Add("Property3", new ClassWithGenericInt(349));
+            dict.Add("Property4", new object());
+            dict.Add("Property5", null);
+
+            var instance = new List<object> { dict, null, dict };
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytes);
+
+            Assert.AreEqual(3, deserializedValue.Count);
+            Dictionary<string, object> clonedValue = (Dictionary<string, object>) deserializedValue[0];
+
+            Assert.AreEqual(dict["Property1"], clonedValue["Property1"]);
+            Assert.AreEqual(dict["Property2"], clonedValue["Property2"]);
+            Assert.AreEqual(dict["Property3"], clonedValue["Property3"]);
+            Assert.AreEqual(dict["Property4"], clonedValue["Property4"]);
+            Assert.AreEqual(dict["Property5"], clonedValue["Property5"]);
+            Assert.IsTrue(ReferenceEquals(deserializedValue[0], deserializedValue[2]));
+        }
+
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{

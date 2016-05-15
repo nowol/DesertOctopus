@@ -50,6 +50,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <Choose>
@@ -75,6 +76,7 @@
     <Compile Include="Models\ProductEntityType.cs" />
     <Compile Include="Models\ProductPriceEntry.cs" />
     <Compile Include="Models\rel.cs" />
+    <Compile Include="Models\ClassWithAllPrimitiveTypes.cs" />
     <Compile Include="Models\Variant.cs" />
     <Compile Include="SerializationBenchmarkTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
