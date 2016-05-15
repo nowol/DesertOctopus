@@ -2054,13 +2054,13 @@ namespace DesertOctopus.Tests
             var deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytes);
 
             Assert.AreEqual(3, deserializedValue.Count);
-            Dictionary<string, object> clonedValue = (Dictionary<string, object>) deserializedValue[0];
+            Dictionary<string, object> deserializedDict = (Dictionary<string, object>) deserializedValue[0];
 
-            Assert.AreEqual(dict["Property1"], clonedValue["Property1"]);
-            Assert.AreEqual(dict["Property2"], clonedValue["Property2"]);
-            Assert.AreEqual(dict["Property3"], clonedValue["Property3"]);
-            Assert.AreEqual(dict["Property4"], clonedValue["Property4"]);
-            Assert.AreEqual(dict["Property5"], clonedValue["Property5"]);
+            Assert.AreEqual(dict["Property1"], deserializedDict["Property1"]);
+            Assert.AreEqual(dict["Property2"], deserializedDict["Property2"]);
+            Assert.AreEqual(dict["Property3"], deserializedDict["Property3"]);
+            Assert.IsTrue(deserializedDict["Property4"].GetType() == typeof(object));
+            Assert.AreEqual(dict["Property5"], deserializedDict["Property5"]);
             Assert.IsTrue(ReferenceEquals(deserializedValue[0], deserializedValue[2]));
         }
 

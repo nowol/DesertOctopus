@@ -43,30 +43,33 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.EnumeratorType = typeof(SerializationInfoEnumerator);
             loopBodyCargo.KvpType = typeof(SerializationEntry);
 
-            var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
-            expressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
-            expressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
-            expressions.Add(Expression.Assign(iser, Expression.Convert(objToSerialize, typeof(ISerializable))));
-
-            expressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, context));
-            expressions.Add(Expression.Call(iser, ISerializableMIH.GetObjectData(), si, context));
-            expressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, context));
-
-            expressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsFullTypeNameSetExplicit")),
-                                              Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
-            expressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsAssemblyNameSetExplicit")),
-                                              Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
-
             var preLoopActions = new List<Expression>();
             preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMIH.MemberCount())));
 
-            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(variables,
-                                                                                                                     GetLoopBodyCargo(outputStream, objTracking),
-                                                                                                                     enumeratorMethod,
-                                                                                                                     preLoopActions,
-                                                                                                                     loopBodyCargo));
-            return Expression.Block(expressions);
+            var notTrackedExpressions = new List<Expression>();
+            notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
+            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
+            notTrackedExpressions.Add(Expression.Assign(iser, Expression.Convert(objToSerialize, typeof(ISerializable))));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, context));
+            notTrackedExpressions.Add(Expression.Call(iser, ISerializableMIH.GetObjectData(), si, context));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, context));
+            notTrackedExpressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsFullTypeNameSetExplicit")),
+                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
+            notTrackedExpressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsAssemblyNameSetExplicit")),
+                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
+            notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(variables,
+                                                                                                                               GetLoopBodyCargo(outputStream, objTracking),
+                                                                                                                               enumeratorMethod,
+                                                                                                                               preLoopActions,
+                                                                                                                               loopBodyCargo));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
+                                                                       objToSerialize,
+                                                                       objTracking,
+                                                                       notTrackedExpressions,
+                                                                       variables);
         }
 
         internal static ConstructorInfo GetSerializationConstructor(Type type)
@@ -83,8 +86,6 @@ namespace DesertOctopus.Serialization
                 return Expression.Block(Serializer.GenerateStringExpression(outputStream, keyExpression, objTracking),
                                         Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, typeof(object)));
             };
-
-            
 
             return loopBody;
         }

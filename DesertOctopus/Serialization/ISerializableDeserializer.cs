@@ -27,6 +27,7 @@ namespace DesertOctopus.Serialization
             var fc = Expression.Parameter(typeof(FormatterConverter), "fc");
             var context = Expression.Parameter(typeof(StreamingContext), "context");
             var si = Expression.Parameter(typeof(SerializationInfo), "si");
+            var trackType = Expression.Parameter(typeof(byte), "trackType");
 
             variables.Add(fc);
             variables.Add(context);
@@ -40,13 +41,7 @@ namespace DesertOctopus.Serialization
             variables.Add(typeExpr);
             variables.Add(newInstance);
             variables.Add(typeHashCode);
-
-            var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
-            expressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
-            expressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
-            expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
-            expressions.Add(Expression.Assign(i, Expression.Constant(0)));
+            variables.Add(trackType);
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
@@ -56,7 +51,6 @@ namespace DesertOctopus.Serialization
 
             var cond = Expression.LessThan(i, length);
             var loopBody = Expression.Block(loopExpressions);
-
             var breakLabel = Expression.Label("breakLabel");
             var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                              loopBody,
@@ -64,13 +58,29 @@ namespace DesertOctopus.Serialization
                                                             ),
                                         breakLabel);
 
-            expressions.Add(loop);
-            expressions.Add(Expression.Assign(newInstance, Expression.New(ISerializableSerializer.GetSerializationConstructor(type), si, context)));
-            expressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, context));
-            expressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
-            expressions.Add(newInstance);
+            var notTrackedExpressions = new List<Expression>();
 
-            return Expression.Block(expressions);
+
+            notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
+            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
+            notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
+            notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
+            notTrackedExpressions.Add(loop);
+            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(ISerializableSerializer.GetSerializationConstructor(type), si, context)));
+notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, context));
+            notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
+            notTrackedExpressions.Add(newInstance);
+
+
+            return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                         inputStream,
+                                                                         objTracking,
+                                                                         newInstance,
+                                                                         notTrackedExpressions,
+                                                                         trackType,
+                                                                         variables);
 
         }
     }
