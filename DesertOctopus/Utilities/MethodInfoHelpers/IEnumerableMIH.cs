@@ -5,8 +5,17 @@ using System.Reflection;
 
 namespace DesertOctopus.Utilities
 {
+    /// <summary>
+    /// Helper class for IEnumerable MethodInfo
+    /// </summary>
     internal static class IEnumerableMIH
     {
+        /// <summary>
+        /// Calls IEnumerable.SetValue
+        /// </summary>
+        /// <typeparam name="TKey">TKey can be any type</typeparam>
+        /// <typeparam name="TValue">TValue can be any type</typeparam>
+        /// <returns>The method info for IEnumerable.GetEnumerator</returns>
         public static MethodInfo GetEnumerator<TKey, TValue>()
         {
             return typeof(IEnumerable<KeyValuePair<TKey, TValue>>).GetMethod("GetEnumerator", new Type[0]);

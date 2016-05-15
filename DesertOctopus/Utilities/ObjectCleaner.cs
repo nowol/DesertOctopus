@@ -7,8 +7,16 @@ using System.Threading.Tasks;
 
 namespace DesertOctopus.Utilities
 {
+    /// <summary>
+    /// Helper class that help cleaning objects to serialize/clone
+    /// </summary>
     internal class ObjectCleaner
     {
+        /// <summary>
+        /// Convert an IEnumerable to an array
+        /// </summary>
+        /// <param name="objToPrepare">Object to convert</param>
+        /// <returns>The converted object</returns>
         internal static object PrepareObjectForSerialization(object objToPrepare)
         {
             var enumerableValue = objToPrepare as IEnumerable;
@@ -41,20 +49,30 @@ namespace DesertOctopus.Utilities
                 }
             }
 
-
             return objToPrepare;
         }
 
+        /// <summary>
+        /// Gets the type of the enumerating object
+        /// </summary>
+        /// <param name="enumerableValue">Object to analyze</param>
+        /// <returns>The type of the enumerating object</returns>
         internal static bool IsEnumeratingType(IEnumerable enumerableValue)
         {
             if (enumerableValue == null)
             {
                 return false;
             }
+
             var type = enumerableValue.GetType();
             return IsEnumeratingType(type);
         }
 
+        /// <summary>
+        /// Detect if the type is enumerating
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        /// <returns>True if the type is defined in System.Linq.Enumerable</returns>
         internal static bool IsEnumeratingType(Type type)
         {
             return type.DeclaringType == typeof(System.Linq.Enumerable)

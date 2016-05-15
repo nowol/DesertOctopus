@@ -8,11 +8,21 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle array deserialization
+    /// </summary>
     internal class ArrayDeserializer
     {
+        /// <summary>
+        /// Generate an expression tree to handle array deserialization
+        /// </summary>
+        /// <param name="type">Type of the array</param>
+        /// <param name="inputStream">Stream that is read from</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle array deserialization</returns>
         internal static Expression GenerateArrayOfKnownDimension(Type type,
-                                                                ParameterExpression inputStream,
-                                                                ParameterExpression objTracking)
+                                                                 ParameterExpression inputStream,
+                                                                 ParameterExpression objTracking)
         {
             List<ParameterExpression> variables = new List<ParameterExpression>();
 

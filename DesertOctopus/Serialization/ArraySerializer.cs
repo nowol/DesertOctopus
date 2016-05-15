@@ -7,15 +7,26 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle array serialization
+    /// </summary>
     internal class ArraySerializer
     {
+        /// <summary>
+        /// Generate an expression tree to handle array serialization
+        /// </summary>
+        /// <param name="type">Type of the array</param>
+        /// <param name="elementType">Type of the elements contained inside the array</param>
+        /// <param name="outputStream">Stream that is written to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle array serialization</returns>
         internal static Expression GenerateArrayOfKnownDimension(Type type,
-                                                              Type elementType,
-                                                              ParameterExpression outputStream,
-                                                              ParameterExpression objToSerialize,
-                                                              ParameterExpression objTracking)
+                                                                 Type elementType,
+                                                                 ParameterExpression outputStream,
+                                                                 ParameterExpression objToSerialize,
+                                                                 ParameterExpression objTracking)
         {
-            List<Expression> expressions = new List<Expression>();
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
@@ -79,7 +90,6 @@ namespace DesertOctopus.Serialization
                 innerExpression = Serializer.GetWriteClassTypeExpression(outputStream, objTracking, item, itemAsObj, typeExpr, serializer, elementType);
             }
 
-
             Func<int, Expression, Expression> makeArrayLoop = (loopRank,
                                                                innerExpr) =>
             {
@@ -99,8 +109,7 @@ namespace DesertOctopus.Serialization
                 var breakLabel = Expression.Label("breakLabel" + loopRank);
                 var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                                  loopBody,
-                                                                 Expression.Break(breakLabel)
-                                                                ),
+                                                                 Expression.Break(breakLabel)),
                                             breakLabel);
                 return Expression.Block(Expression.Assign(loopRankIndex, Expression.Constant(0)),
                                         loop);
@@ -117,10 +126,10 @@ namespace DesertOctopus.Serialization
         }
 
         private static IEnumerable<Expression> WriteDimensionalArrayLength(ParameterExpression outputStream,
-                                                                    Expression i,
-                                                                    ParameterExpression arr,
-                                                                    ParameterExpression lengths,
-                                                                    int rank)
+                                                                           Expression i,
+                                                                           ParameterExpression arr,
+                                                                           ParameterExpression lengths,
+                                                                           int rank)
         {
             var loopExpressions = new List<Expression>();
             var expressions = new List<Expression>();
@@ -137,8 +146,7 @@ namespace DesertOctopus.Serialization
             var cond = Expression.LessThan(i, Expression.Constant(rank));
             var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                              loopBody,
-                                                             Expression.Break(breakLabel)
-                                                            ),
+                                                             Expression.Break(breakLabel)),
                                        breakLabel);
             expressions.Add(loop);
 

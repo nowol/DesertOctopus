@@ -15,10 +15,22 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Serialization engine
+    /// </summary>
     internal static class Serializer
     {
+        private static readonly ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>> TypeSerializers = new ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>>();
+        private static readonly Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression>>> LazyPrimitiveMap = new Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression>>>(BuildPrimitiveMap);
+
+        /// <summary>
+        /// Serialize an object
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="obj">Object to serialize</param>
+        /// <returns>Byte array containing the serialized object</returns>
         public static byte[] Serialize<T>(T obj)
-            where T: class
+            where T : class
         {
             using (var ms = new MemoryStream())
             {
@@ -62,14 +74,19 @@ namespace DesertOctopus.Serialization
             }
         }
 
+        /// <summary>
+        /// Clear the serializer cache
+        /// </summary>
         public static void ClearTypeSerializersCache()
         {
             TypeSerializers.Clear();
         }
 
-        private static readonly ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>> TypeSerializers = new ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>>();
-        private static readonly Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression>>> LazyPrimitiveMap = new Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression>>>(BuildPrimitiveMap);
-
+        /// <summary>
+        /// Get the serializer for the specified type
+        /// </summary>
+        /// <param name="type">Type to serialize</param>
+        /// <returns>Serializer for the specified type</returns>
         internal static Action<Stream, object, SerializerObjectTracker> GetTypeSerializer(Type type)
         {
             return TypeSerializers.GetOrAdd(type, CreateTypeSerializer);
@@ -104,8 +121,8 @@ namespace DesertOctopus.Serialization
 
             map.TryAdd(typeof(double), PrimitiveHelpers.WriteDouble);
             map.TryAdd(typeof(double?), PrimitiveHelpers.WriteNullableDouble);
-            map.TryAdd(typeof(Decimal), PrimitiveHelpers.WriteDecimal);
-            map.TryAdd(typeof(Decimal?), PrimitiveHelpers.WriteNullableDecimal);
+            map.TryAdd(typeof(decimal), PrimitiveHelpers.WriteDecimal);
+            map.TryAdd(typeof(decimal?), PrimitiveHelpers.WriteNullableDecimal);
             map.TryAdd(typeof(float), PrimitiveHelpers.WriteSingle);
             map.TryAdd(typeof(float?), PrimitiveHelpers.WriteNullableSingle);
             map.TryAdd(typeof(DateTime), PrimitiveHelpers.WriteDateTime);
@@ -131,8 +148,6 @@ namespace DesertOctopus.Serialization
 
         private static Action<Stream, object, SerializerObjectTracker> CreateTypeSerializer(Type type)
         {
-            //System.Diagnostics.Debug.WriteLine("CreateTypeSerializer " + type);
-
             var variables = new List<ParameterExpression>();
             var expressions = new List<Expression>();
             var outputStream = Expression.Parameter(typeof(Stream), "outputStream");
@@ -163,7 +178,7 @@ namespace DesertOctopus.Serialization
             }
             else if (type == typeof(ExpandoObject))
             {
-                expressions.Add(ExpandoSerializer.GenerateExpandoObjectExpression(type, variables, outputStream, objToSerialize, objCargo));
+                expressions.Add(ExpandoSerializer.GenerateExpandoObjectExpression(variables, outputStream, objToSerialize, objCargo));
             }
             else if (type.IsArray)
             {
@@ -189,7 +204,6 @@ namespace DesertOctopus.Serialization
                 {
                     throw new NotSupportedException(type.ToString());
                 }
-
             }
             else
             {
@@ -248,9 +262,9 @@ namespace DesertOctopus.Serialization
         /// <summary>
         /// Used by ResolveIEnumerable using reflection
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="items"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="items">Items to convert to an array</param>
+        /// <returns>An array</returns>
         private static T[] ConvertEnumerableToArray<T>(IEnumerable items)
         {
             return items.Cast<T>().ToArray();
@@ -280,7 +294,18 @@ namespace DesertOctopus.Serialization
                                                                      objTracking);
             }
         }
-        
+
+        /// <summary>
+        /// Generates an expression tree to handle class type serialization
+        /// </summary>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="item">Source object</param>
+        /// <param name="itemAsObj">Source object as an object</param>
+        /// <param name="typeExpr">Type of the object as an expression</param>
+        /// <param name="serializer">Serializer temporary variable</param>
+        /// <param name="elementType">Type of the element</param>
+        /// <returns>An expression tree to handle class type serialization</returns>
         internal static Expression GetWriteClassTypeExpression(ParameterExpression outputStream,
                                                               ParameterExpression objTracking,
                                                               Expression item,
@@ -307,6 +332,14 @@ namespace DesertOctopus.Serialization
                                                           Expression.Invoke(serializer, outputStream, itemAsObj, objTracking)));
         }
 
+        /// <summary>
+        /// Generate an epxression tree to handle class serialization
+        /// </summary>
+        /// <param name="type">Type to serialize</param>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An epxression tree to handle class serialization</returns>
         internal static Expression GenerateClassExpression(Type type,
                                                            ParameterExpression outputStream,
                                                            Expression objToSerialize,
@@ -351,6 +384,13 @@ namespace DesertOctopus.Serialization
                                                             variables);
         }
 
+        /// <summary>
+        /// Generates an expression tree to handle string serialization
+        /// </summary>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle string serialization</returns>
         internal static Expression GenerateStringExpression(ParameterExpression outputStream,
                                                             Expression objToSerialize,
                                                             ParameterExpression objTracking)
@@ -369,6 +409,15 @@ namespace DesertOctopus.Serialization
                                                             variables);
         }
 
+        /// <summary>
+        /// Generates an expression to handle the 'is that object null' case
+        /// </summary>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="notTrackedExpressions">Expressions that must be executed if the object is not tracked</param>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <returns>An expression to handle the 'is that object null' case</returns>
         internal static Expression GenerateNullTrackedOrUntrackedExpression(ParameterExpression outputStream,
                                                                            Expression objToSerialize,
                                                                            ParameterExpression objTracking,
@@ -381,13 +430,13 @@ namespace DesertOctopus.Serialization
             var alreadyTrackedExpr = Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant(0)),
                                                       PrimitiveHelpers.WriteInt32(outputStream, Expression.Convert(trackedObjectPosition, typeof(int))));
 
-            var isNullExpr = PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte) 0, typeof(byte)));
+            var isNullExpr = PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0, typeof(byte)));
 
-            var isNotNullExpr = Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte) 1)),
-                                                 Expression.Assign(trackedObjectPosition, Expression.Call(objTracking, SerializerObjectTrackerMIH.GetTrackedObjectIndex(), objToSerialize)), 
+            var isNotNullExpr = Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
+                                                 Expression.Assign(trackedObjectPosition, Expression.Call(objTracking, SerializerObjectTrackerMIH.GetTrackedObjectIndex(), objToSerialize)),
                                                  Expression.IfThenElse(Expression.NotEqual(trackedObjectPosition, Expression.Constant(null, typeof(int?))),
                                                                        alreadyTrackedExpr,
-                                                                       Expression.Block(new [] { PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)) }.Concat(notTrackedExpressions))));
+                                                                       Expression.Block(new[] { PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)) }.Concat(notTrackedExpressions))));
 
             var ifIsNullExpr = Expression.IfThenElse(Expression.Equal(objToSerialize, Expression.Constant(null)),
                                                      isNullExpr,

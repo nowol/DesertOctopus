@@ -9,8 +9,20 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle ISerializable serialization
+    /// </summary>
     internal static class ISerializableSerializer
     {
+        /// <summary>
+        /// Generates an expression tree to handle ISerializable serialization
+        /// </summary>
+        /// <param name="type">Type of the object to serialize</param>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle ISerializable serialization</returns>
         public static Expression GenerateISerializableExpression(Type type,
                                                                  List<ParameterExpression> variables,
                                                                  ParameterExpression outputStream,
@@ -21,7 +33,7 @@ namespace DesertOctopus.Serialization
             {
                 throw new MissingConstructorException("Cannot serialize type " + type + " because it does not have the required constructor for ISerializable.  If you inherits from a class that implements ISerializable you have to expose the serialization constructor.");
             }
-            
+
             var fc = Expression.Parameter(typeof(FormatterConverter), "fc");
             var context = Expression.Parameter(typeof(StreamingContext), "context");
             var si = Expression.Parameter(typeof(SerializationInfo), "si");
@@ -37,9 +49,10 @@ namespace DesertOctopus.Serialization
             {
                 throw new Exception("Could not find GetEnumerator method.");
             }
+
             var enumeratorMethod = Expression.Call(si, getEnumeratorMethodInfo);
 
-            var loopBodyCargo = new EnumerableLoopBodyCargo<string, object>();
+            var loopBodyCargo = new EnumerableLoopBodyCargo();
             loopBodyCargo.EnumeratorType = typeof(SerializationInfoEnumerator);
             loopBodyCargo.KvpType = typeof(SerializationEntry);
 
@@ -72,14 +85,20 @@ namespace DesertOctopus.Serialization
                                                                        variables);
         }
 
+        /// <summary>
+        /// Gets the serialization constructor for the specified type
+        /// </summary>
+        /// <param name="type">Type that we want the constructor from</param>
+        /// <returns>The serialization constructor for the specified type</returns>
         internal static ConstructorInfo GetSerializationConstructor(Type type)
         {
-            return type.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new [] { typeof(SerializationInfo), typeof(StreamingContext) }, new ParameterModifier[0]);
+            return type.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(SerializationInfo), typeof(StreamingContext) }, new ParameterModifier[0]);
         }
 
-        private static Func<EnumerableLoopBodyCargo<string, object>, Expression> GetLoopBodyCargo(ParameterExpression outputStream, ParameterExpression objTracking)
+        private static Func<EnumerableLoopBodyCargo, Expression> GetLoopBodyCargo(ParameterExpression outputStream, ParameterExpression objTracking)
         {
-            Func<EnumerableLoopBodyCargo<string, object>, Expression> loopBody = cargo => {
+            Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
+            {
                 var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 

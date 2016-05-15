@@ -14,13 +14,21 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus
 {
-    public class ObjectCloner
+    /// <summary>
+    /// Object cloner that uses expression trees
+    /// </summary>
+    public static class ObjectCloner
     {
         private static readonly ConcurrentDictionary<Type, Func<object, ObjectClonerReferenceTracker, object>> Cloners = new ConcurrentDictionary<Type, Func<object, ObjectClonerReferenceTracker, object>>();
 
-
+        /// <summary>
+        /// Clone an object
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="obj">Object to clone</param>
+        /// <returns>The cloned object</returns>
         public static T Clone<T>(T obj)
-            where T: class
+            where T : class
         {
             if (obj == null)
             {
@@ -43,11 +51,19 @@ namespace DesertOctopus
             return (T)clone;
         }
 
+        /// <summary>
+        /// Clear the cloners cache
+        /// </summary>
         internal static void ClearTypeCache()
         {
             Cloners.Clear();
         }
 
+        /// <summary>
+        /// Gets or creates the cloner for the specified type
+        /// </summary>
+        /// <param name="type">Type to clone</param>
+        /// <returns>Cloner for the type</returns>
         internal static Func<object, ObjectClonerReferenceTracker, object> CloneImpl(Type type)
         {
             return Cloners.GetOrAdd(type, t => GenerateCloner(type));
@@ -117,8 +133,8 @@ namespace DesertOctopus
             {
                 isGenericList = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>);
                 targetType = targetType.BaseType;
-
-            } while (!isGenericList && targetType != null);
+            }
+            while (!isGenericList && targetType != null);
 
             return isGenericList;
         }
@@ -177,9 +193,19 @@ namespace DesertOctopus
             }
         }
 
+        /// <summary>
+        /// Generates null, tracked or untracked expression
+        /// </summary>
+        /// <param name="source">Source object</param>
+        /// <param name="clone">Clone object</param>
+        /// <param name="sourceType">Source object type</param>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <param name="untrackedExpression">Expression to execute if the object is not tracked</param>
+        /// <param name="trackedExpression">Expression to execute if the object is tracked</param>
+        /// <returns>Expression for the tracking of objects</returns>
         internal static Expression GenerateNullTrackedOrUntrackedExpression(Expression source,
                                                                             Expression clone,
-                                                                            Type cloneType,
+                                                                            Type sourceType,
                                                                             ParameterExpression refTrackerParam,
                                                                             Expression untrackedExpression,
                                                                             Func<Expression, Expression> trackedExpression = null)
@@ -187,7 +213,7 @@ namespace DesertOctopus
             var getEquivalentExpr = Expression.Call(refTrackerParam, typeof(ObjectClonerReferenceTracker).GetMethod("GetEquivalentTargetObject"), source);
             if (trackedExpression == null)
             {
-                trackedExpression = gett => Expression.Assign(clone, Expression.Convert(gett, cloneType));
+                trackedExpression = gett => Expression.Assign(clone, Expression.Convert(gett, sourceType));
             }
 
             return Expression.IfThenElse(Expression.Call(refTrackerParam, typeof(ObjectClonerReferenceTracker).GetMethod("IsSourceObjectTracked"), source),

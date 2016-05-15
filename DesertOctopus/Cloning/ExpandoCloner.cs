@@ -7,8 +7,19 @@ using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
+    /// <summary>
+    /// Helper class that handles ExpandoObject
+    /// </summary>
     internal static class ExpandoCloner
     {
+        /// <summary>
+        /// Generate an expression tree that clones ExpandoObject
+        /// </summary>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="source">Source object</param>
+        /// <param name="clone">Clone object</param>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <returns>An expression tree that clones ExpandoObject</returns>
         public static Expression GenerateExpandoObjectExpression(List<ParameterExpression> variables,
                                                                  ParameterExpression source,
                                                                  ParameterExpression clone,
@@ -27,16 +38,15 @@ namespace DesertOctopus.Cloning
             expressions.Add(Expression.Assign(cloneAsDict, Expression.Convert(clone, dictType)));
             expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
 
-
-            var loopBodyCargo = new EnumerableLoopBodyCargo<string, object>();
+            var loopBodyCargo = new EnumerableLoopBodyCargo();
             loopBodyCargo.EnumeratorType = typeof(IEnumerator<KeyValuePair<string, object>>);
             loopBodyCargo.KvpType = typeof(KeyValuePair<string, object>);
 
             expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
-                                                                                                                          CloneKeyValuePair(clone, refTrackerParam),
-                                                                                                                          enumeratorMethod,
-                                                                                                                          null,
-                                                                                                                          loopBodyCargo));
+                                                                                                                                   CloneKeyValuePair(clone, refTrackerParam),
+                                                                                                                                   enumeratorMethod,
+                                                                                                                                   null,
+                                                                                                                                   loopBodyCargo));
 
             return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
                                                                          clone,
@@ -45,31 +55,28 @@ namespace DesertOctopus.Cloning
                                                                          Expression.Block(expressions));
         }
 
-
-        public static Func<EnumerableLoopBodyCargo<string, object>, Expression> CloneKeyValuePair(ParameterExpression clone,
-                                                                                                  ParameterExpression refTrackerParam)
+        private static Func<EnumerableLoopBodyCargo, Expression> CloneKeyValuePair(ParameterExpression clone,
+                                                                                                   ParameterExpression refTrackerParam)
         {
-            Func<EnumerableLoopBodyCargo<string, object>, Expression> loopBody = cargo => {
-                                                                                              var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Key"));
-                                                                                              var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
+            Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
+            {
+                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Key"));
+                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 
-                                                                                              var addExpr = Expression.Call(clone,
-                                                                                                                            DictionaryMIH.Add<string, object>(),
-                                                                                                                            keyExpression,
-                                                                                                                            ClassCloner.CallCopyExpression(valueExpression,
-                                                                                                                                                           refTrackerParam)
-                                                                                                  );
-                                                                                              var addNullExpr = Expression.Call(clone,
-                                                                                                                                DictionaryMIH.Add<string, object>(),
-                                                                                                                                keyExpression,
-                                                                                                                                Expression.Constant(null)
-                                                                                                  );
+                var addExpr = Expression.Call(clone,
+                                            DictionaryMIH.Add<string, object>(),
+                                            keyExpression,
+                                            ClassCloner.CallCopyExpression(valueExpression,
+                                                                            refTrackerParam));
+                var addNullExpr = Expression.Call(clone,
+                                                DictionaryMIH.Add<string, object>(),
+                                                keyExpression,
+                                                Expression.Constant(null));
 
-
-                                                                                              return Expression.IfThenElse(Expression.NotEqual(valueExpression, Expression.Constant(null)),
-                                                                                                                              addExpr,
-                                                                                                                              addNullExpr);
-                                                                                            };
+                return Expression.IfThenElse(Expression.NotEqual(valueExpression, Expression.Constant(null)),
+                                                addExpr,
+                                                addNullExpr);
+            };
             return loopBody;
         }
     }

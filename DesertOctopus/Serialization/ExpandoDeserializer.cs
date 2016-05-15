@@ -8,10 +8,19 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle ExpandoObject deserialization
+    /// </summary>
     internal static class ExpandoDeserializer
     {
-        internal static Expression GenerateExpandoObjectExpression(Type type,
-                                                                   List<ParameterExpression> variables,
+        /// <summary>
+        /// Generates an expression tree to deserialize an ExpandoObject
+        /// </summary>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to deserialize an ExpandoObject</returns>
+        internal static Expression GenerateExpandoObjectExpression(List<ParameterExpression> variables,
                                                                    ParameterExpression inputStream,
                                                                    ParameterExpression objTracking)
         {
@@ -23,7 +32,7 @@ namespace DesertOctopus.Serialization
             var typeName = Expression.Parameter(typeof(string), "typeName");
             var typeExpr = Expression.Parameter(typeof(TypeWithHashCode), "type");
             var deserializer = Expression.Parameter(typeof(Func<Stream, List<object>, object>), "deserializer");
-            var newInstance = Expression.Parameter(type, "newInstance");
+            var newInstance = Expression.Parameter(typeof(ExpandoObject), "newInstance");
             var destDict = Expression.Parameter(dictType, "destDict");
             var typeHashCode = Expression.Parameter(typeof(int), "typeHashCode");
             var trackType = Expression.Parameter(typeof(byte), "trackType");
@@ -62,9 +71,8 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
 
             notTrackedExpressions.Add(loop);
-            //notTrackedExpressions.Add(newInstance);
 
-            return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
+            return Deserializer.GenerateNullTrackedOrUntrackedExpression(typeof(ExpandoObject),
                                                                          inputStream,
                                                                          objTracking,
                                                                          newInstance,

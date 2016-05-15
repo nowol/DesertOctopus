@@ -7,12 +7,20 @@ using System.Threading.Tasks;
 
 namespace DesertOctopus.Cloning
 {
+    /// <summary>
+    /// Helper class for IEnumerable
+    /// </summary>
     internal static class IEnumerableCloner
     {
-        internal static bool IsGenericIEnumerableType(Type sourceType)
+        /// <summary>
+        /// Detect is the type is an IEnumerabler&lt;&gt;
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        /// <returns>True if it is an IEnumerable&lt;&gt; otherwise false</returns>
+        internal static bool IsGenericIEnumerableType(Type type)
         {
-            return sourceType.IsGenericType
-                   && sourceType.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+            return type.IsGenericType
+                   && type.GetGenericTypeDefinition() == typeof(IEnumerable<>);
         }
     }
 }

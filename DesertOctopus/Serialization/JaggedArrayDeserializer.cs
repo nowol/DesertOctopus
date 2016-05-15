@@ -7,8 +7,18 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle jagged array deserialization
+    /// </summary>
     internal static class JaggedArrayDeserializer
     {
+        /// <summary>
+        /// Generates an expression tree to handle jagged array deserialization
+        /// </summary>
+        /// <param name="type">Type of array</param>
+        /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle jagged array deserialization</returns>
         public static Expression GenerateJaggedArray(Type type,
                                                      ParameterExpression inputStream,
                                                      ParameterExpression objTracking)
@@ -68,7 +78,7 @@ namespace DesertOctopus.Serialization
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
-            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.New(type.GetConstructor(new []{ typeof(int)}), length), type)));
+            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.New(type.GetConstructor(new[] { typeof(int) }), length), type)));
             expressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
 
             var loopExpressions = new List<Expression>();

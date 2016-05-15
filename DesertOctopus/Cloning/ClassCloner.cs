@@ -9,8 +9,20 @@ using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
+    /// <summary>
+    /// Helper class to clone classes
+    /// </summary>
     internal static class ClassCloner
     {
+        /// <summary>
+        /// Generate an expression tree to clone a class
+        /// </summary>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="sourceType">Type of the source object</param>
+        /// <param name="source">Source object</param>
+        /// <param name="clone">Clone object</param>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <returns>An expression tree that can clone a class</returns>
         internal static Expression GenerateClassExpressions(List<ParameterExpression> variables,
                                                             Type sourceType,
                                                             ParameterExpression source,
@@ -30,10 +42,9 @@ namespace DesertOctopus.Cloning
                                                                          sourceType,
                                                                          refTrackerParam,
                                                                          Expression.Block(copyExpressions));
-
         }
 
-        internal static void GenerateCopyFieldsExpressions(IEnumerable<FieldInfo> fields,
+        private static void GenerateCopyFieldsExpressions(IEnumerable<FieldInfo> fields,
                                                           ParameterExpression source,
                                                           ParameterExpression clone,
                                                           List<Expression> expressions,
@@ -77,13 +88,12 @@ namespace DesertOctopus.Cloning
                                                                           assignExpr(CallCopyExpression(sourceField, refTrackerParam)),
                                                                           assignNullExpr);
 
-
                         expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(sourceField,
                                                                         cloneField,
                                                                         field.FieldType,
                                                                         refTrackerParam,
                                                                         conditionalExpression,
-                                                                        trackedExpression: assignExpr)); // todo refactor this horrible method 
+                                                                        trackedExpression: assignExpr)); // todo refactor this horrible method
                     }
                     else
                     {
@@ -110,7 +120,6 @@ namespace DesertOctopus.Cloning
                             assignExpr = Expression.Assign(cloneField, Expression.Convert(CallCopyExpression(sourceField, refTrackerParam), field.FieldType));
                         }
 
-
                         var conditionalExpression = Expression.IfThenElse(Expression.Equal(sourceField, Expression.Constant(null)),
                                                                           Expression.Assign(cloneField, Expression.Constant(null, field.FieldType)),
                                                                           assignExpr);
@@ -123,23 +132,36 @@ namespace DesertOctopus.Cloning
                 }
             }
         }
-        
-        internal static Expression CallCopyExpression(Expression item, ParameterExpression refTrackerParam)
+
+        /// <summary>
+        /// Generate an expression that call the clone implementation method
+        /// </summary>
+        /// <param name="source">Source object</param>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <returns>An expression that call the clone implementation method</returns>
+        internal static Expression CallCopyExpression(Expression source, ParameterExpression refTrackerParam)
         {
-            var typeExpr = Expression.Call(item, ObjectMIH.GetTypeMethod());
+            var typeExpr = Expression.Call(source, ObjectMIH.GetTypeMethod());
             var generateTypeExpr = Expression.Call(ObjectClonerMIH.CloneImpl(), typeExpr);
-            return Expression.Call(generateTypeExpr, FuncMIH.CloneMethodInvoke(), Expression.Convert(item, typeof(object)), refTrackerParam);
+            return Expression.Call(generateTypeExpr, FuncMIH.CloneMethodInvoke(), Expression.Convert(source, typeof(object)), refTrackerParam);
         }
-        
+
+        /// <summary>
+        /// Generate an expression tree that handle classes
+        /// </summary>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <param name="source">Source object</param>
+        /// <param name="clone">Clone object</param>
+        /// <param name="sourceType">Type of the source object</param>
+        /// <returns>An expression tree that handle classes</returns>
         public static Expression GetCloneClassTypeExpression(ParameterExpression refTrackerParam,
-                                                             Expression item,
-                                                             ParameterExpression clonedItem,
-                                                             Type cloneType,
-                                                             Expression cloner)
+                                                             Expression source,
+                                                             ParameterExpression clone,
+                                                             Type sourceType)
         {
-            return Expression.IfThenElse(Expression.Equal(item, Expression.Constant(null)),
-                                         Expression.Assign(clonedItem, Expression.Constant(null, cloneType)),
-                                         Expression.Assign(clonedItem, Expression.Convert(CallCopyExpression(item, refTrackerParam), cloneType)));
+            return Expression.IfThenElse(Expression.Equal(source, Expression.Constant(null)),
+                                         Expression.Assign(clone, Expression.Constant(null, sourceType)),
+                                         Expression.Assign(clone, Expression.Convert(CallCopyExpression(source, refTrackerParam), sourceType)));
         }
     }
 }

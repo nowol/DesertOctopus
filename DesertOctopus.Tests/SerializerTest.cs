@@ -81,6 +81,17 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        public void SerializeDateTime()
+        {
+            var instance = new Wrapper<DateTime> { Value = DateTime.Now };
+            var bytes = Serializer.Serialize(instance);
+            var deserializedValue = Deserializer.Deserialize<Wrapper<DateTime>>(bytes);
+            Assert.IsNotNull(deserializedValue.Value);
+            Assert.AreEqual(instance.Value, deserializedValue.Value);
+            Assert.AreEqual(instance.Value.Kind, deserializedValue.Value.Kind);
+        }
+
+        [TestMethod]
         public void SerializeNullPrimitiveArray()
         {
             int[] nullArray = null;

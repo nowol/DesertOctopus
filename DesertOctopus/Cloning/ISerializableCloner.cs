@@ -9,8 +9,20 @@ using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
 {
+    /// <summary>
+    /// Helper class for ISerializable
+    /// </summary>
     internal static class ISerializableCloner
     {
+        /// <summary>
+        /// Generates an expression tree to clone an ISerializable
+        /// </summary>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="source">Source object</param>
+        /// <param name="clone">Clone object</param>
+        /// <param name="sourceType">Type of the source object</param>
+        /// <param name="refTrackerParam">Reference tracker</param>
+        /// <returns>An expression tree to clone an ISerializable</returns>
         public static Expression GenerateISerializableExpression(List<ParameterExpression> variables,
                                                                  ParameterExpression source,
                                                                  ParameterExpression clone,
@@ -22,6 +34,7 @@ namespace DesertOctopus.Cloning
             {
                 throw new MissingConstructorException("Cannot serialize type " + sourceType + " because it does not have the required constructor for ISerializable.  If you inherits from a class that implements ISerializable you have to expose the serialization constructor.");
             }
+
             var getEnumeratorMethodInfo = SerializationInfoMIH.GetEnumerator();
             if (getEnumeratorMethodInfo == null)
             {
@@ -47,7 +60,7 @@ namespace DesertOctopus.Cloning
             var enumeratorMethod = Expression.Call(siSource,
                                                    getEnumeratorMethodInfo);
 
-            var loopBodyCargo = new EnumerableLoopBodyCargo<string, object>();
+            var loopBodyCargo = new EnumerableLoopBodyCargo();
             loopBodyCargo.EnumeratorType = typeof(SerializationInfoEnumerator);
             loopBodyCargo.KvpType = typeof(SerializationEntry);
 
@@ -70,7 +83,7 @@ namespace DesertOctopus.Cloning
                                                                               Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
 
             expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(variables,
-                                                                                                                     GetLoopBodyCargo(siClone, cloner, clonedItem, refTrackerParam),
+                                                                                                                     GetLoopBodyCargo(siClone, clonedItem, refTrackerParam),
                                                                                                                      enumeratorMethod,
                                                                                                                      null,
                                                                                                                      loopBodyCargo));
@@ -87,21 +100,19 @@ namespace DesertOctopus.Cloning
                                                                          Expression.Block(expressions));
         }
 
-        private static Func<EnumerableLoopBodyCargo<string, object>, Expression> GetLoopBodyCargo(ParameterExpression siClone, ParameterExpression cloner, ParameterExpression clonedItem, ParameterExpression refTrackerParam)
+        private static Func<EnumerableLoopBodyCargo, Expression> GetLoopBodyCargo(ParameterExpression siClone, ParameterExpression clonedItem, ParameterExpression refTrackerParam)
         {
-            Func<EnumerableLoopBodyCargo<string, object>, Expression> loopBody = cargo => {
-                                                                                              var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
-                                                                                              var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
-                                                                                             
-                                                                                              var cloneValueExpr = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, valueExpression, clonedItem, typeof(object), cloner),
-                                                                                                                                    Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, clonedItem));
+            Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
+            {
+                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
+                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
+                var cloneValueExpr = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, valueExpression, clonedItem, typeof(object)),
+                                                    Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, clonedItem));
 
-                                                                                              return Expression.IfThenElse(Expression.Equal(valueExpression, Expression.Constant(null)),
-                                                                                                                           Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, Expression.Constant((object)null, typeof(object))),
-                                                                                                                           cloneValueExpr);
-                                                                                            };
-
-
+                return Expression.IfThenElse(Expression.Equal(valueExpression, Expression.Constant(null)),
+                                            Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, Expression.Constant((object)null, typeof(object))),
+                                            cloneValueExpr);
+            };
 
             return loopBody;
         }

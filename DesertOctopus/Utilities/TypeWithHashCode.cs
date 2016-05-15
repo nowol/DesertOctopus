@@ -4,11 +4,25 @@ using System.Linq;
 
 namespace DesertOctopus.Utilities
 {
+    /// <summary>
+    /// This class hold the hash code of a type
+    /// </summary>
     internal class TypeWithHashCode
     {
+        /// <summary>
+        /// Gets the type
+        /// </summary>
         public Type Type { get; private set; }
+
+        /// <summary>
+        /// Gets the hash code of the type
+        /// </summary>
         public int HashCode { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TypeWithHashCode"/> class.
+        /// </summary>
+        /// <param name="typeName">Name of the type</param>
         public TypeWithHashCode(string typeName)
         {
             try
@@ -21,9 +35,14 @@ namespace DesertOctopus.Utilities
                 // we ignore this error because this case is handled elsewhere
                 Type = null;
             }
+
             ComputeSerializationHashCode();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TypeWithHashCode"/> class.
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
         public TypeWithHashCode(Type type)
         {
             Type = type;
@@ -47,13 +66,17 @@ namespace DesertOctopus.Utilities
                     HashCode = 23;
                     foreach (char c in stringToHash)
                     {
-                        HashCode = HashCode * 31 + c;
+                        HashCode = (HashCode * 31) + c;
                     }
                 }
             }
         }
 
         private string _shortTypeName;
+
+        /// <summary>
+        /// Gets the short name of the type
+        /// </summary>
         public string ShortTypeName
         {
             get
@@ -70,8 +93,10 @@ namespace DesertOctopus.Utilities
                             _shortTypeName = Type.FullName;
                         }
                     }
+
                     _shortTypeName = SerializedTypeResolver.ApplyTypeReplacements(_shortTypeName);
                 }
+
                 return _shortTypeName;
             }
         }

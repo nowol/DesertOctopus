@@ -8,8 +8,20 @@ using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle jagged array serialization
+    /// </summary>
     internal static class JaggedArraySerializer
     {
+        /// <summary>
+        /// Generates an expression tree to handle jagged array serialization
+        /// </summary>
+        /// <param name="type">Type of array</param>
+        /// <param name="elementType">Type of the elements contained in the array</param>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objToSerialize">Object to serialize</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle jagged array serialization</returns>
         internal static Expression GenerateJaggedArray(Type type,
                                                        Type elementType,
                                                        ParameterExpression outputStream,
@@ -61,7 +73,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(PrimitiveHelpers.WriteInt32(outputStream, length));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
-            Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string));
+            Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string), "Type cannot be a primitive");
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, i)));   // uh?

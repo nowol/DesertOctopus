@@ -7,12 +7,21 @@ using DesertOctopus.Serialization;
 
 namespace DesertOctopus.Utilities
 {
+    /// <summary>
+    /// Helper class for enumerable loops
+    /// </summary>
     internal static class EnumerableLoopHelper
     {
-
-        public static Func<EnumerableLoopBodyCargo<string, object>, Expression> GetStringToSomethingWriter(ParameterExpression outputStream, ParameterExpression objTracking)
+        /// <summary>
+        /// Gets the standard string/object expression body
+        /// </summary>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>The standard string/object expression body</returns>
+        public static Func<EnumerableLoopBodyCargo, Expression> GetStringToSomethingWriter(ParameterExpression outputStream, ParameterExpression objTracking)
         {
-            Func<EnumerableLoopBodyCargo<string, object>, Expression> loopBody = cargo => {
+            Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
+            {
                 var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Key"));
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 
@@ -22,11 +31,23 @@ namespace DesertOctopus.Utilities
             return loopBody;
         }
 
+        /// <summary>
+        /// Generates an expression tree that represents an enumerator loop
+        /// </summary>
+        /// <typeparam name="TKey">TKey can be any type</typeparam>
+        /// <typeparam name="TValue">TValue can be any type</typeparam>
+        /// <typeparam name="TEnumeratorType">Enumerator type</typeparam>
+        /// <param name="variables">Global variables for the expression tree</param>
+        /// <param name="loopBody">Expression that represents the loop body</param>
+        /// <param name="getEnumeratorMethod">Expression that returns the enumerator</param>
+        /// <param name="preLoopActions">Expression that represents the action to execute before the loop</param>
+        /// <param name="loopBodyCargo">Helper class to hold loop body information</param>
+        /// <returns>An expression tree that represents an enumerator loop</returns>
         public static Expression GenerateEnumeratorLoop<TKey, TValue, TEnumeratorType>(List<ParameterExpression> variables,
-                                                                                       Func<EnumerableLoopBodyCargo<TKey, TValue>, Expression> loopBody,
+                                                                                       Func<EnumerableLoopBodyCargo, Expression> loopBody,
                                                                                        Expression getEnumeratorMethod,
                                                                                        IEnumerable<Expression> preLoopActions,
-                                                                                       EnumerableLoopBodyCargo<TKey, TValue> loopBodyCargo)
+                                                                                       EnumerableLoopBodyCargo loopBodyCargo)
         {
             var breakLabel = Expression.Label("breakLabel");
             var enumeratorVar = Expression.Parameter(typeof(TEnumeratorType), "enumeratorVar");
@@ -63,6 +84,7 @@ namespace DesertOctopus.Utilities
             {
                 expressions.AddRange(preLoopActions);
             }
+
             expressions.Add(Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, IEnumeratorMIH.MoveNext())),
                                                                                                 loopBody(loopBodyCargo),
                                                                                                 Expression.Break(breakLabel)),
@@ -70,15 +92,5 @@ namespace DesertOctopus.Utilities
             return Expression.TryFinally(Expression.Block(expressions),
                                          finallyExpr);
         }
-    }
-
-    internal class EnumerableLoopBodyCargo<TKey, TValue>
-    {
-        public ParameterExpression ItemAsObj { get; set; }
-        public ParameterExpression Enumerator { get; set; }
-        public Type EnumeratorType { get; set; }
-        public ParameterExpression TypeExpr { get; set; }
-        public ParameterExpression Serializer { get; set; }
-        public Type KvpType { get; set; }
     }
 }

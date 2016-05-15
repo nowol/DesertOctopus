@@ -22,6 +22,8 @@
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Debug\DesertOctopus.XML</DocumentationFile>
+    <CodeAnalysisRuleSet>DesertOctopus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,6 +34,8 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>bin\Release\DesertOctopus.XML</DocumentationFile>
+    <CodeAnalysisRuleSet>DesertOctopus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -57,6 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ArrayDeserializer.cs" />
     <Compile Include="Serialization\ArraySerializer.cs" />
+    <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />
@@ -102,7 +107,6 @@
     <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
     <Compile Include="Utilities\SerializedTypeResolver.cs" />
     <Compile Include="Utilities\TypeWithHashCode.cs" />
-    <Compile Include="Utilities\VariableHolder.cs" />
     <Compile Include="Utilities\InternalSerializationStuff.cs" />
     <Compile Include="Serialization\ISerializableDeserializer.cs" />
     <Compile Include="Serialization\ISerializableSerializer.cs" />
@@ -112,7 +116,17 @@
     <Compile Include="Serialization\Serializer.cs" />
     <Compile Include="Utilities\SerializerObjectTracker.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="DesertOctopus.ruleset" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.AnalyzerPowerPack.1.1.0\analyzers\dotnet\cs\Microsoft.AnalyzerPowerPack.Common.dll" />
+    <Analyzer Include="..\packages\Microsoft.AnalyzerPowerPack.1.1.0\analyzers\dotnet\cs\Microsoft.AnalyzerPowerPack.CSharp.dll" />
+    <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.0\analyzers\dotnet\cs\Newtonsoft.Json.dll" />
+    <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.0\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
+    <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.0\analyzers\dotnet\cs\StyleCop.Analyzers.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -5,11 +5,18 @@ using System.Reflection;
 
 namespace DesertOctopus.Utilities
 {
+    /// <summary>
+    /// Helper class for List MethodInfo
+    /// </summary>
     internal static class ListMIH
     {
+        /// <summary>
+        /// Calls List.Add
+        /// </summary>
+        /// <returns>The method info for List.Add</returns>
         public static MethodInfo ObjectListAdd()
         {
-            return typeof(List<object>).GetMethod("Add", new []{typeof(object)});
+            return typeof(List<object>).GetMethod("Add", new[] { typeof(object) });
         }
     }
 }

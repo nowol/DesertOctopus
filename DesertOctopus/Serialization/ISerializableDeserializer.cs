@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
 {
+    /// <summary>
+    /// Helper class to handle ISerializable deserialization
+    /// </summary>
     internal static class ISerializableDeserializer
     {
+        /// <summary>
+        /// Generates an expression tree to handle ISerializable deserialization
+        /// </summary>
+        /// <param name="type">Type to deserialize</param>
+        /// <param name="variables">Global variables for expression tree</param>
+        /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracking">Reference tracker</param>
+        /// <returns>An expression tree to handle ISerializable deserialization</returns>
         public static Expression GenerateISerializableExpression(Type type,
                                                                  List<ParameterExpression> variables,
                                                                  ParameterExpression inputStream,
@@ -54,12 +64,10 @@ namespace DesertOctopus.Serialization
             var breakLabel = Expression.Label("breakLabel");
             var loop = Expression.Loop(Expression.IfThenElse(cond,
                                                              loopBody,
-                                                             Expression.Break(breakLabel)
-                                                            ),
+                                                             Expression.Break(breakLabel)),
                                         breakLabel);
 
             var notTrackedExpressions = new List<Expression>();
-
 
             notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
             notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
@@ -68,11 +76,10 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(loop);
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(ISerializableSerializer.GetSerializationConstructor(type), si, context)));
-notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, context));
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
             notTrackedExpressions.Add(newInstance);
-
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
                                                                          inputStream,
@@ -81,7 +88,6 @@ notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), 
                                                                          notTrackedExpressions,
                                                                          trackType,
                                                                          variables);
-
         }
     }
 }
