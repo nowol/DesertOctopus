@@ -64,10 +64,11 @@ namespace DesertOctopus.Cloning
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 
                 var addExpr = Expression.Call(clone,
-                                            DictionaryMIH.Add<string, object>(),
-                                            keyExpression,
-                                            ClassCloner.CallCopyExpression(valueExpression,
-                                                                            refTrackerParam));
+                                              DictionaryMIH.Add<string, object>(),
+                                              keyExpression,
+                                              ClassCloner.CallCopyExpression(valueExpression,
+                                                                             refTrackerParam,
+                                                                             Expression.Call(valueExpression, ObjectMIH.GetTypeMethod())));
                 var addNullExpr = Expression.Call(clone,
                                                 DictionaryMIH.Add<string, object>(),
                                                 keyExpression,

@@ -36,7 +36,11 @@ namespace DesertOctopus.Utilities
                 Type = null;
             }
 
-            ComputeSerializationHashCode();
+            if (Type != null)
+            {
+                ComputeSerializationHashCode();
+                ComputeShortTypeName();
+            }
         }
 
         /// <summary>
@@ -47,6 +51,7 @@ namespace DesertOctopus.Utilities
         {
             Type = type;
             ComputeSerializationHashCode();
+            ComputeShortTypeName();
         }
 
         private void ComputeSerializationHashCode()
@@ -79,26 +84,25 @@ namespace DesertOctopus.Utilities
         /// </summary>
         public string ShortTypeName
         {
-            get
+            get { return _shortTypeName; }
+        }
+
+        private void ComputeShortTypeName()
+        {
+            _shortTypeName = Type.AssemblyQualifiedName;
+            if (!Type.IsGenericType
+                && Type.Namespace != null
+                && Type.Namespace.StartsWith("System."))
             {
-                if (_shortTypeName == null)
+                // try to resolve the type using only the FullName
+                var resolvedType = Type.GetType(Type.FullName);
+                if (resolvedType != null)
                 {
-                    _shortTypeName = Type.AssemblyQualifiedName;
-                    if (!Type.IsGenericType && Type.Namespace != null && Type.Namespace.StartsWith("System."))
-                    {
-                        // try to resolve the type using only the FullName
-                        var resolvedType = Type.GetType(Type.FullName);
-                        if (resolvedType != null)
-                        {
-                            _shortTypeName = Type.FullName;
-                        }
-                    }
-
-                    _shortTypeName = SerializedTypeResolver.ApplyTypeReplacements(_shortTypeName);
+                    _shortTypeName = Type.FullName;
                 }
-
-                return _shortTypeName;
             }
+
+            _shortTypeName = SerializedTypeResolver.ApplyTypeReplacements(_shortTypeName);
         }
     }
 }

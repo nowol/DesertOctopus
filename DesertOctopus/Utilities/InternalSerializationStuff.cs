@@ -1,7 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using DesertOctopus.Cloning;
 
 namespace DesertOctopus.Utilities
 {
@@ -50,6 +56,74 @@ namespace DesertOctopus.Utilities
             while (targetType != null);
 
             return fields.OrderBy(f => f.Name, StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// Throws an exception if the type is not supported for serialization or cloning
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        public static void ValidateSupportedTypes(Type type)
+        {
+            if (typeof(Expression).IsAssignableFrom(type))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            if (typeof(Delegate).IsAssignableFrom(type))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            if (type.IsPointer)
+            {
+                throw new NotSupportedException($"Pointer types such as {type} are not suported");
+            }
+
+            if (InternalSerializationStuff.GetFields(type).Any(x => x.FieldType.IsPointer))
+            {
+                throw new NotSupportedException($"Type {type} cannot contains fields that are pointers.");
+            }
+
+            if (type == typeof(IQueryable))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            if (type == typeof(IEnumerable))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
+            if (enumerableType != null)
+            {
+                var genericArgument = enumerableType.GetGenericArguments()[0];
+                if (genericArgument.IsGenericType
+                    && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
+                {
+                    throw new NotSupportedException(type.ToString());
+                }
+            }
+
+            if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
+                     && type.IsGenericType && type.Name.Contains("AnonymousType")
+                     && (type.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase)
+                        ||
+                        type.Name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
+                    && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic)
+            {
+                throw new NotSupportedException(type.ToString());
+            }
+
+            if (!type.IsArray
+                && type.Namespace != null
+                && (type.Namespace.StartsWith("System.") || type.Namespace.StartsWith("Microsoft."))
+                && type.GetCustomAttribute<SerializableAttribute>() == null
+                && type != typeof(ExpandoObject)
+                && type != typeof(BigInteger))
+            {
+                throw new NotSupportedException(type.ToString());
+            }
         }
     }
 }

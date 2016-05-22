@@ -31,6 +31,15 @@ namespace DesertOctopus.Utilities
         }
 
         /// <summary>
+        /// Calls Serializer.PrepareObjectForSerialization
+        /// </summary>
+        /// <returns>The method info for Serializer.PrepareObjectForSerialization</returns>
+        public static MethodInfo ConvertObjectToExpectedType()
+        {
+            return typeof(ObjectCleaner).GetMethod("ConvertObjectToExpectedType", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+        }
+
+        /// <summary>
         /// Calls Serializer.GetTypeSerializer
         /// </summary>
         /// <returns>The method info for Serializer.GetTypeSerializer</returns>

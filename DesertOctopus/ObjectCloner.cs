@@ -71,7 +71,7 @@ namespace DesertOctopus
 
         private static Func<object, ObjectClonerReferenceTracker, object> GenerateCloner(Type sourceType)
         {
-            ValidateSupportedTypes(sourceType);
+            InternalSerializationStuff.ValidateSupportedTypes(sourceType);
 
             ParameterExpression sourceParameter = Expression.Parameter(typeof(object), "sourceParam");
             ParameterExpression refTrackerParam = Expression.Parameter(typeof(ObjectClonerReferenceTracker), "refTrackerParam");
@@ -137,60 +137,6 @@ namespace DesertOctopus
             while (!isGenericList && targetType != null);
 
             return isGenericList;
-        }
-
-        private static void ValidateSupportedTypes(Type type)
-        {
-            if (typeof(Expression).IsAssignableFrom(type))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            if (typeof(Delegate).IsAssignableFrom(type))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            if (type.IsPointer)
-            {
-                throw new NotSupportedException($"Pointer types such as {type} are not suported");
-            }
-
-            if (InternalSerializationStuff.GetFields(type).Any(x => x.FieldType.IsPointer))
-            {
-                throw new NotSupportedException($"Type {type} cannot contains fields that are pointers.");
-            }
-
-            if (type == typeof(IQueryable))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            if (type == typeof(IEnumerable))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
-            if (enumerableType != null)
-            {
-                var genericArgument = enumerableType.GetGenericArguments()[0];
-                if (genericArgument.IsGenericType
-                    && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
-                {
-                    throw new NotSupportedException(type.ToString());
-                }
-            }
-
-            if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
-                     && type.IsGenericType && type.Name.Contains("AnonymousType")
-                     && (type.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase)
-                        ||
-                        type.Name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
-                    && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic)
-            {
-                throw new NotSupportedException(type.ToString());
-            }
         }
 
         /// <summary>

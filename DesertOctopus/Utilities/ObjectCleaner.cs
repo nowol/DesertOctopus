@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DesertOctopus.Cloning;
 
 namespace DesertOctopus.Utilities
 {
@@ -77,6 +78,40 @@ namespace DesertOctopus.Utilities
         {
             return type.DeclaringType == typeof(System.Linq.Enumerable)
                    || (!String.IsNullOrWhiteSpace(type.Namespace) && type.Namespace.StartsWith("System.Linq"));
+        }
+
+        /// <summary>
+        /// Convert an IEnumerable to an array
+        /// </summary>
+        /// <param name="obj">Object to convert</param>
+        /// <param name="expectedType">Expected type</param>
+        /// <returns>The converted object</returns>
+        internal static object ConvertObjectToExpectedType(object obj, Type expectedType)
+        {
+            if (obj == null)
+            {
+                return obj;
+            }
+
+            var objectType = obj.GetType();
+            if (objectType == expectedType
+                || objectType.IsSubclassOf(expectedType))
+            {
+                return obj;
+            }
+
+            if (IQueryableCloner.IsGenericIQueryableType(expectedType))
+            {
+                var m = QueryableMIH.AsQueryable(expectedType.GetGenericArguments()[0]);
+                return m.Invoke(null, new[] { obj });
+            }
+
+            if (typeof(IQueryable).IsAssignableFrom(expectedType))
+            {
+                return IQueryableCloner.ConvertToNonGenericQueryable(obj);
+            }
+
+            return obj;
         }
     }
 }

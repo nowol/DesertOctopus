@@ -29,13 +29,23 @@ namespace DesertOctopus.Cloning
                                                             ParameterExpression clone,
                                                             ParameterExpression refTrackerParam)
         {
+            var cloner = Expression.Parameter(typeof(Func<object, ObjectClonerReferenceTracker, object>), "cloner");
+            var clonedItem = Expression.Parameter(typeof(object), "clonedItem");
+            variables.Add(cloner);
+            variables.Add(clonedItem);
+
             var ctor = Expression.Call(FormatterServicesMIH.GetUninitializedObject(), Expression.Constant(sourceType));
 
             var copyExpressions = new List<Expression>();
             var fields = InternalSerializationStuff.GetFields(sourceType);
             copyExpressions.Add(Expression.Assign(clone, Expression.Convert(ctor, sourceType)));
             copyExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
-            GenerateCopyFieldsExpressions(fields, source, clone, copyExpressions, refTrackerParam);
+            GenerateCopyFieldsExpressions(fields,
+                                          source,
+                                          clone,
+                                          copyExpressions,
+                                          refTrackerParam,
+                                          clonedItem);
 
             return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
                                                                          clone,
@@ -48,7 +58,8 @@ namespace DesertOctopus.Cloning
                                                           ParameterExpression source,
                                                           ParameterExpression clone,
                                                           List<Expression> expressions,
-                                                          ParameterExpression refTrackerParam)
+                                                          ParameterExpression refTrackerParam,
+                                                          ParameterExpression clonedItem)
         {
             foreach (var field in fields)
             {
@@ -72,6 +83,25 @@ namespace DesertOctopus.Cloning
                 }
                 else
                 {
+                    var es = new List<Expression>();
+                    es.Add(Expression.Assign(clonedItem, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), sourceField)));
+                    es.Add(Expression.Assign(clonedItem, CallCopyExpression(clonedItem, refTrackerParam, Expression.Constant(field.FieldType))));
+
+                    if (IQueryableCloner.IsGenericIQueryableType(field.FieldType))
+                    {
+                        Type queryableInterface = IQueryableCloner.GetInterfaceType(field.FieldType, typeof(IQueryable<>));
+                        var genericArgumentType = queryableInterface.GetGenericArguments()[0];
+
+                        var copy2 = Expression.Convert(clonedItem, field.FieldType);
+                        var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(copy2, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
+                        es.Add(Expression.Assign(clonedItem, m));
+                    }
+
+                    if (field.FieldType == typeof(IQueryable))
+                    {
+                        es.Add(Expression.Assign(clonedItem, Expression.Call(IQueryableMIH.ConvertToNonGenericQueryable(), clonedItem)));
+                    }
+
                     if (field.IsInitOnly)
                     {
                         Func<Expression, Expression> assignExpr = exx => Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
@@ -84,8 +114,9 @@ namespace DesertOctopus.Cloning
                                                              Expression.Constant(null, typeof(object)),
                                                              clone);
 
+                        es.Add(clonedItem);
                         var conditionalExpression = Expression.IfThenElse(Expression.NotEqual(sourceField, Expression.Constant(null)),
-                                                                          assignExpr(CallCopyExpression(sourceField, refTrackerParam)),
+                                                                          assignExpr(Expression.Block(es)),
                                                                           assignNullExpr);
 
                         expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(sourceField,
@@ -97,32 +128,13 @@ namespace DesertOctopus.Cloning
                     }
                     else
                     {
-                        Expression assignExpr;
+                        es.Add(Expression.Assign(cloneField, Expression.Convert(clonedItem, field.FieldType)));
 
-                        if (IQueryableCloner.IsGenericIQueryableType(field.FieldType))
-                        {
-                            Type queryableInterface = IQueryableCloner.GetInterfaceType(field.FieldType, typeof(IQueryable<>));
-                            var genericArgumentType = queryableInterface.GetGenericArguments()[0];
-
-                            var copy = CallCopyExpression(Expression.Call(SerializerMIH.PrepareObjectForSerialization(), sourceField), refTrackerParam);
-                            var copy2 = Expression.Convert(copy, field.FieldType);
-
-                            var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(copy2, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
-                            assignExpr = Expression.Assign(cloneField, m);
-                        }
-                        else if (IEnumerableCloner.IsGenericIEnumerableType(field.FieldType))
-                        {
-                            var copy = CallCopyExpression(Expression.Call(SerializerMIH.PrepareObjectForSerialization(), sourceField), refTrackerParam);
-                            assignExpr = Expression.Assign(cloneField, Expression.Convert(copy, field.FieldType));
-                        }
-                        else
-                        {
-                            assignExpr = Expression.Assign(cloneField, Expression.Convert(CallCopyExpression(sourceField, refTrackerParam), field.FieldType));
-                        }
 
                         var conditionalExpression = Expression.IfThenElse(Expression.Equal(sourceField, Expression.Constant(null)),
                                                                           Expression.Assign(cloneField, Expression.Constant(null, field.FieldType)),
-                                                                          assignExpr);
+                                                                          Expression.Block(es));
+
                         expressions.Add(ObjectCloner.GenerateNullTrackedOrUntrackedExpression(sourceField,
                                                                          cloneField,
                                                                          field.FieldType,
@@ -138,12 +150,26 @@ namespace DesertOctopus.Cloning
         /// </summary>
         /// <param name="source">Source object</param>
         /// <param name="refTrackerParam">Reference tracker</param>
+        /// <param name="expectedType">Expected type....mostly used for IQueryable detection</param>
         /// <returns>An expression that call the clone implementation method</returns>
-        internal static Expression CallCopyExpression(Expression source, ParameterExpression refTrackerParam)
+        internal static Expression CallCopyExpression(Expression source, ParameterExpression refTrackerParam, Expression expectedType)
         {
-            var typeExpr = Expression.Call(source, ObjectMIH.GetTypeMethod());
-            var generateTypeExpr = Expression.Call(ObjectClonerMIH.CloneImpl(), typeExpr);
-            return Expression.Call(generateTypeExpr, FuncMIH.CloneMethodInvoke(), Expression.Convert(source, typeof(object)), refTrackerParam);
+            var itemAsObject = Expression.Parameter(typeof(object), "itemAsObject");
+            var variables = new List<ParameterExpression>();
+            variables.Add(itemAsObject);
+
+            var expressions = new List<Expression>();
+            expressions.Add(Expression.Assign(itemAsObject, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), source)));
+            expressions.Add(Expression.Assign(itemAsObject, Expression.Call(Expression.Call(ObjectClonerMIH.CloneImpl(),
+                                                                                            Expression.Call(itemAsObject, ObjectMIH.GetTypeMethod())),
+                                                                            FuncMIH.CloneMethodInvoke(),
+                                                                            Expression.Convert(itemAsObject, typeof(object)),
+                                                                            refTrackerParam)));
+            expressions.Add(Expression.Call(SerializerMIH.ConvertObjectToExpectedType(),
+                                            itemAsObject,
+                                            expectedType));
+
+            return Expression.Block(variables, expressions);
         }
 
         /// <summary>
@@ -161,7 +187,7 @@ namespace DesertOctopus.Cloning
         {
             return Expression.IfThenElse(Expression.Equal(source, Expression.Constant(null)),
                                          Expression.Assign(clone, Expression.Constant(null, sourceType)),
-                                         Expression.Assign(clone, Expression.Convert(CallCopyExpression(source, refTrackerParam), sourceType)));
+                                         Expression.Assign(clone, Expression.Convert(CallCopyExpression(source, refTrackerParam, Expression.Call(source, ObjectMIH.GetTypeMethod())), sourceType)));
         }
     }
 }

@@ -61,7 +61,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
+        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework">
+          <Private>False</Private>
+        </Reference>
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -87,6 +89,7 @@
     <Compile Include="TestObjects\HierarchyClasses.cs" />
     <Compile Include="TestObjects\TestStruct.cs" />
     <Compile Include="TestObjects\Wrapper.cs" />
+    <Compile Include="BaseDuplicationTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DesertOctopus\DesertOctopus.csproj">

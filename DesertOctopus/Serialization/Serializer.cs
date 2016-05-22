@@ -148,13 +148,13 @@ namespace DesertOctopus.Serialization
 
         private static Action<Stream, object, SerializerObjectTracker> CreateTypeSerializer(Type type)
         {
+            InternalSerializationStuff.ValidateSupportedTypes(type);
+
             var variables = new List<ParameterExpression>();
             var expressions = new List<Expression>();
             var outputStream = Expression.Parameter(typeof(Stream), "outputStream");
             var objToSerialize = Expression.Parameter(typeof(object), "objToSerialize");
             var objCargo = Expression.Parameter(typeof(SerializerObjectTracker), "objCargo");
-
-            ValidateSupportedTypes(type);
 
             var primitiveWriter = GetPrimitiveWriter(type);
             if (primitiveWriter != null)
@@ -213,50 +213,6 @@ namespace DesertOctopus.Serialization
             var block = Expression.Block(variables, expressions);
 
             return Expression.Lambda<Action<Stream, object, SerializerObjectTracker>>(block, outputStream, objToSerialize, objCargo).Compile();
-        }
-
-        private static void ValidateSupportedTypes(Type type)
-        {
-            if (typeof(Expression).IsAssignableFrom(type))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            if (typeof(Delegate).IsAssignableFrom(type))
-            {
-                throw new NotSupportedException(type.ToString());
-            }
-
-            if (type.IsPointer)
-            {
-                throw new NotSupportedException($"Pointer types such as {type} are not suported");
-            }
-
-            if (InternalSerializationStuff.GetFields(type).Any(x => x.FieldType.IsPointer))
-            {
-                throw new NotSupportedException($"Type {type} cannot contains fields that are pointers.");
-            }
-
-            var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
-            if (enumerableType != null)
-            {
-                var genericArgument = enumerableType.GetGenericArguments()[0];
-                if (genericArgument.IsGenericType
-                    && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
-                {
-                    throw new NotSupportedException(type.ToString());
-                }
-            }
-
-            if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
-                     && type.IsGenericType && type.Name.Contains("AnonymousType")
-                     && (type.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase)
-                        ||
-                        type.Name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
-                    && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic)
-            {
-                throw new NotSupportedException(type.ToString());
-            }
         }
 
         /// <summary>

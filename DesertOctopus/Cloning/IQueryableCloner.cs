@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
@@ -104,8 +106,31 @@ namespace DesertOctopus.Cloning
         /// <returns>True is type is  an IQueryable&lt;&gt;</returns>
         internal static bool IsGenericIQueryableType(Type type)
         {
-            return type.IsGenericType
-                   && type.GetGenericTypeDefinition() == typeof(IQueryable<>);
+            return GetInterfaceType(type, typeof(IQueryable<>)) != null;
+        }
+
+        /// <summary>
+        /// Convert the obj to IQueryable if it's a generic list
+        /// </summary>
+        /// <param name="obj">Object to convert</param>
+        /// <returns>Converted object</returns>
+        internal static object ConvertToNonGenericQueryable(object obj)
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+
+            var objectType = obj.GetType();
+
+            if (objectType != typeof(string)
+                && obj is IEnumerable)
+            {
+                var asq = typeof(Queryable).GetMethod("AsQueryable", BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(IEnumerable) }, null);
+                return asq.Invoke(null, new[] { obj });
+            }
+
+            return obj;
         }
     }
 }

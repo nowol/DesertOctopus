@@ -19,5 +19,14 @@ namespace DesertOctopus.Utilities
         {
             return typeof(IQueryableCloner).GetMethod("IsGenericIQueryableType", new[] { typeof(Type) });
         }
+
+        /// <summary>
+        /// Calls IQueryableCloner.ConvertToNonGenericQueryable
+        /// </summary>
+        /// <returns>The method info for IQueryableCloner.ConvertToNonGenericQueryable</returns>
+        public static MethodInfo ConvertToNonGenericQueryable()
+        {
+            return typeof(IQueryableCloner).GetMethod("ConvertToNonGenericQueryable", BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(object) }, new ParameterModifier[0]);
+        }
     }
 }

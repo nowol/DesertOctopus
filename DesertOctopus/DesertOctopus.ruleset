@@ -79,5 +79,14 @@
     <Rule Id="SA1124" Action="None" />
     <Rule Id="SA1121" Action="None" />
     <Rule Id="SA1201" Action="None" />
+    <Rule Id="SA1005" Action="None" />
+    <Rule Id="SA1512" Action="None" />
+    <Rule Id="SA1507" Action="None" />
+    <Rule Id="SA1515" Action="None" />
+    <Rule Id="SA1505" Action="None" />
+    <Rule Id="SA1111" Action="None" />
+    <Rule Id="SA1009" Action="None" />
+    <Rule Id="SA1115" Action="None" />
+    <Rule Id="SA1508" Action="None" />
   </Rules>
 </RuleSet>
