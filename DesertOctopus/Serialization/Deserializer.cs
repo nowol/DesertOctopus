@@ -288,11 +288,11 @@ namespace DesertOctopus.Serialization
                                                                                    Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
                                                                                    Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_String(), typeName)),
                                                                                    Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
-                                                                                                     Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr, typeName)))));
+                                                                                                     Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
 
             var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracking);
             Expression convertExpression;
-            
+
             convertExpression = Expression.Convert(Expression.Call(SerializerMIH.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(elementType)), elementType);
 
             return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
