@@ -7,10 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using DesertOctopus.Cloning;
 using DesertOctopus.Utilities;
 
 namespace DesertOctopus.Serialization
@@ -32,7 +29,7 @@ namespace DesertOctopus.Serialization
         public static byte[] Serialize<T>(T obj)
             where T : class
         {
-            using (var ms = new MemoryStream())
+            using (var ms = MemoryPool.GetStream())
             {
                 if (obj == null)
                 {

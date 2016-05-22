@@ -37,7 +37,17 @@
     <DocumentationFile>bin\Release\DesertOctopus.XML</DocumentationFile>
     <CodeAnalysisRuleSet>DesertOctopus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.IO.RecyclableMemoryStream, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IO.RecyclableMemoryStream.1.1.0.0\lib\net45\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -55,6 +65,7 @@
     <Compile Include="Cloning\IEnumerableCloner.cs" />
     <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
+    <Compile Include="Exceptions\InvalidSerializationVersionException.cs" />
     <Compile Include="KrakenSerializer.cs" />
     <Compile Include="ObjectCloner.cs" />
     <Compile Include="Cloning\ObjectClonerReferenceTracker.cs" />
@@ -62,6 +73,7 @@
     <Compile Include="Serialization\ArrayDeserializer.cs" />
     <Compile Include="Serialization\ArraySerializer.cs" />
     <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
+    <Compile Include="Utilities\MemoryPool.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />

@@ -86,7 +86,9 @@ namespace DesertOctopus.Serialization
 
             if (version != InternalSerializationStuff.Version)
             {
-                throw new Exception("wrong version?");
+                throw new InvalidSerializationVersionException(string.Format("Wrong serialization version. Was {0} and we expected {1}",
+                                                                             version,
+                                                                             InternalSerializationStuff.Version));
             }
 
             // if (serializationType == InternalSerializationStuff.SerializationType.ValueType
