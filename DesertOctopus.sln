@@ -14,6 +14,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Benchmark", "tests\DesertOctopus.Benchmark\DesertOctopus.Benchmark.csproj", "{0747C3C7-4B11-4F06-8ACE-35A75FA69240}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache", "src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj", "{141B4827-785B-4644-87F2-D54770CA4E9B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{520E6EF7-469D-4892-A6B8-976B73D5D82D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Tests", "tests\DesertOctopus.MammothCache.Tests\DesertOctopus.MammothCache.Tests.csproj", "{253CDEB9-46D5-453B-A801-A8AC4F7DF634}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Common", "src\DesertOctopus.MammothCache.Common\DesertOctopus.MammothCache.Common.csproj", "{7DC09C74-AE2A-4A2E-A411-69B9A261F694}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctupos.MammothCache.Redis", "src\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj", "{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +42,28 @@ Global
 		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0747C3C7-4B11-4F06-8ACE-35A75FA69240}.Release|Any CPU.Build.0 = Release|Any CPU
+		{141B4827-785B-4644-87F2-D54770CA4E9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{141B4827-785B-4644-87F2-D54770CA4E9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{141B4827-785B-4644-87F2-D54770CA4E9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{141B4827-785B-4644-87F2-D54770CA4E9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{253CDEB9-46D5-453B-A801-A8AC4F7DF634}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{253CDEB9-46D5-453B-A801-A8AC4F7DF634}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{253CDEB9-46D5-453B-A801-A8AC4F7DF634}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{253CDEB9-46D5-453B-A801-A8AC4F7DF634}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DC09C74-AE2A-4A2E-A411-69B9A261F694}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DC09C74-AE2A-4A2E-A411-69B9A261F694}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DC09C74-AE2A-4A2E-A411-69B9A261F694}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DC09C74-AE2A-4A2E-A411-69B9A261F694}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C302FA36-8B66-4C79-8966-D79734A52406} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
+		{253CDEB9-46D5-453B-A801-A8AC4F7DF634} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 	EndGlobalSection
 EndGlobal

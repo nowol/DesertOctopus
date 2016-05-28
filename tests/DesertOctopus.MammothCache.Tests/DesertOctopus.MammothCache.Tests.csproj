@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0747C3C7-4B11-4F06-8ACE-35A75FA69240}</ProjectGuid>
+    <ProjectGuid>{253CDEB9-46D5-453B-A801-A8AC4F7DF634}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DesertOctopus.Benchmark</RootNamespace>
-    <AssemblyName>DesertOctopus.Benchmark</AssemblyName>
+    <RootNamespace>DesertOctopus.MammothCache.Tests</RootNamespace>
+    <AssemblyName>DesertOctopus.MammothCache.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -42,23 +42,7 @@
     <AssemblyOriginatorKeyFile>..\..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BenchmarkDotNet, Version=0.9.6.0, Culture=neutral, PublicKeyToken=aa0ca2f9092cefc4, processorArchitecture=MSIL">
-      <HintPath>..\packages\BenchmarkDotNet.0.9.6\lib\net46\BenchmarkDotNet.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Orckestra.OmniSerializer">
-      <HintPath>Binaries\Orckestra.OmniSerializer.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Text, Version=4.0.0.0, Culture=neutral, PublicKeyToken=e06fbc6124f57c43, processorArchitecture=MSIL">
-      <HintPath>..\packages\ServiceStack.Text.Signed.4.0.56\lib\net40\ServiceStack.Text.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Management" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -68,33 +52,30 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
+        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework">
+          <Private>False</Private>
+        </Reference>
       </ItemGroup>
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Models\Category.cs" />
-    <Compile Include="Models\ILocalizable.cs" />
-    <Compile Include="Models\Localizable.cs" />
-    <Compile Include="Models\BaseEntity.cs" />
-    <Compile Include="Models\Product.cs" />
-    <Compile Include="Models\ProductEntityRelationship.cs" />
-    <Compile Include="Models\ProductEntityRelationshipComparer.cs" />
-    <Compile Include="Models\ProductEntityType.cs" />
-    <Compile Include="Models\ProductPriceEntry.cs" />
-    <Compile Include="Models\rel.cs" />
-    <Compile Include="Models\ClassWithAllPrimitiveTypes.cs" />
-    <Compile Include="Models\Variant.cs" />
-    <Compile Include="SerializationBenchmarkTest.cs" />
+    <Compile Include="MemoryCacheRepositoryTest.cs" />
+    <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SquirrelCacheTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\..\src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj">
+      <Project>{141b4827-785b-4644-87f2-d54770ca4e9b}</Project>
+      <Name>DesertOctopus.MammothCache</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\DesertOctopus\DesertOctopus.csproj">
       <Project>{7342e898-8ae6-4482-8a20-b54935dbecab}</Project>
       <Name>DesertOctopus</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj">
+      <Project>{c42cfb36-c60a-47fc-bf74-12d93c1e92e4}</Project>
+      <Name>DesertOctupos.MammothCache.Redis</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

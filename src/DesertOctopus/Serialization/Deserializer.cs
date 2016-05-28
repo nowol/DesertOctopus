@@ -26,20 +26,36 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="bytes">Byte array that contains the object to be deserialized</param>
-        /// <returns>The deserialized array</returns>
+        /// <returns>The deserialized object</returns>
         public static T Deserialize<T>(byte[] bytes)
             where T : class
         {
-            if (bytes == null || bytes.Length == 0)
+            var obj = Deserialize(bytes);
+            if (obj == null)
             {
                 return default(T);
+            }
+
+            return obj as T;
+        }
+
+        /// <summary>
+        /// Deserialize a byte array to create an object
+        /// </summary>
+        /// <param name="bytes">Byte array that contains the object to be deserialized</param>
+        /// <returns>The deserialized object</returns>
+        public static object Deserialize(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0)
+            {
+                return null;
             }
 
             using (var ms = new MemoryStream(bytes))
             {
                 var objs = new List<object>();
 
-                ValidateHeader<T>(ms, objs);
+                ValidateHeader(ms, objs);
 
                 Func<Stream, List<object>, object> stringDeserializerMethod = GetTypeDeserializer(typeof(string));
                 Func<Stream, List<object>, object> intDeserializerMethod = GetTypeDeserializer(typeof(int));
@@ -67,17 +83,13 @@ namespace DesertOctopus.Serialization
                 {
                     throw new Exception("unable to deserialize?");
                 }
-                else if (value == null)
-                {
-                    return default(T);
-                }
 
-                return (T)value;
+                return value;
             }
         }
 
-        private static void ValidateHeader<T>(MemoryStream ms,
-                                              List<object> objs)
+        private static void ValidateHeader(MemoryStream ms,
+                                           List<object> objs)
         {
             var int16Reader = GetTypeDeserializer(typeof(short));
             var byteReader = GetTypeDeserializer(typeof(byte));

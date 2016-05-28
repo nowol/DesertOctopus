@@ -29,11 +29,21 @@ namespace DesertOctopus
         /// </summary>
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="bytes">Byte array that contains the object to be deserialized</param>
-        /// <returns>The deserialized array</returns>
+        /// <returns>The deserialized object</returns>
         public static T Deserialize<T>(byte[] bytes)
             where T : class
         {
             return Deserializer.Deserialize<T>(bytes);
+        }
+
+        /// <summary>
+        /// Deserialize a byte array to create an object
+        /// </summary>
+        /// <param name="bytes">Byte array that contains the object to be deserialized</param>
+        /// <returns>The deserialized object</returns>
+        public static object Deserialize(byte[] bytes)
+        {
+            return Deserializer.Deserialize(bytes);
         }
     }
 }
