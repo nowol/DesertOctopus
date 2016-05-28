@@ -49,8 +49,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IWhatever.cs" />
+    <Compile Include="IFirstLevelCacheConfig.cs" />
+    <Compile Include="ISecondLevelCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DesertOctopus\DesertOctopus.csproj">
+      <Project>{7342e898-8ae6-4482-8a20-b54935dbecab}</Project>
+      <Name>DesertOctopus</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

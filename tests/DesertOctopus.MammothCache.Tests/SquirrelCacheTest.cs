@@ -55,7 +55,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value);
+            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]
@@ -63,11 +63,11 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value);
+            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
 
             Thread.Sleep(Convert.ToInt32(_config.AbsoluteExpiration.TotalMilliseconds + 2000));
 
-            Assert.IsNull(_cacheRepository.Get<CachingTestClass>(key));
+            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
         }
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsNull(_cacheRepository.Get<CachingTestClass>(key));
+            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
             Assert.AreEqual(0, _cacheRepository.EstimatedMemorySize);
         }
 
@@ -114,9 +114,9 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value);
+            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
             _cacheRepository.Remove(key);
-            Assert.IsNull(_cacheRepository.Get<CachingTestClass>(key));
+            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
         }
 
         [TestMethod]
@@ -164,7 +164,8 @@ namespace DesertOctopus.MammothCache.Tests
 
             Assert.AreEqual(969, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
-            Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2));
+            Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
         }
 
         [TestMethod]
@@ -189,7 +190,8 @@ namespace DesertOctopus.MammothCache.Tests
 
             foreach (var key in keys.Skip(5))
             {
-                Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key));
+                Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+                Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key).Value);
             }
         }
 

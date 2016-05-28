@@ -66,6 +66,7 @@
     <Compile Include="Cloning\IEnumerableCloner.cs" />
     <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
+    <Compile Include="ConditionalResult.cs" />
     <Compile Include="Exceptions\InvalidSerializationVersionException.cs" />
     <Compile Include="KrakenSerializer.cs" />
     <Compile Include="ObjectCloner.cs" />

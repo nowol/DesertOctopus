@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using DesertOctopus.MammothCache.Common;
 using Timer = System.Timers.Timer;
 
 namespace DesertOctopus.MammothCache
@@ -13,13 +14,13 @@ namespace DesertOctopus.MammothCache
 
     public interface IFirstLevelCache
     {
-        T Get<T>(string key)
+        ConditionalResult<T> Get<T>(string key)
             where T : class;
 
         void Remove(string key);
         void RemoveAll();
 
-        void Set(string key, byte[] serializedValue);
+        void Set(string key, byte[] serializedValue, TimeSpan? ttl = null);
     }
 
     /// <summary>
@@ -27,12 +28,12 @@ namespace DesertOctopus.MammothCache
     /// </summary>
     public sealed class SquirrelCache : IFirstLevelCache, IDisposable
     {
-        private readonly FirstLevelCacheConfig _config;
+        private readonly IFirstLevelCacheConfig _config;
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
         private readonly System.Timers.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
 
-        public SquirrelCache(FirstLevelCacheConfig config)
+        public SquirrelCache(IFirstLevelCacheConfig config)
         {
             _config = config;
 
@@ -62,17 +63,17 @@ namespace DesertOctopus.MammothCache
         public int NumberOfObjects { get { return (int)_cache.GetCount(); } }
         public int EstimatedMemorySize { get; private set; }
 
-        public T Get<T>(string key)
+        public ConditionalResult<T> Get<T>(string key)
              where T : class
         {
             var value = _cache.Get(key) as CachedObject;
             if (value == null
                 || value.Value == null)
             {
-                return default(T);
+                return ConditionalResult.CreateFailure<T>();
             }
 
-            return value.Value as T;
+            return ConditionalResult.CreateSuccessful(value.Value as T);
         }
 
         public void Remove(string key)
@@ -89,7 +90,7 @@ namespace DesertOctopus.MammothCache
             }
         }
 
-        public void Set(string key, byte[] serializedValue)
+        public void Set(string key, byte[] serializedValue, TimeSpan? ttl = null)
         {
             Remove(key); // removing the item first to decrease the estimated memory usage
 
@@ -98,7 +99,14 @@ namespace DesertOctopus.MammothCache
             var cacheItem = new CacheItem(key, co);
             var policy = new CacheItemPolicy();
             policy.Priority = CacheItemPriority.Default;
-            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.Add(_config.AbsoluteExpiration);
+            if (ttl.HasValue && ttl.Value < _config.AbsoluteExpiration)
+            {
+                policy.AbsoluteExpiration = DateTimeOffset.UtcNow.Add(ttl.Value);
+            }
+            else
+            {
+                policy.AbsoluteExpiration = DateTimeOffset.UtcNow.Add(_config.AbsoluteExpiration);
+            }
             policy.RemovedCallback += RemovedCallback;
 
             _cache.Set(cacheItem, policy);
