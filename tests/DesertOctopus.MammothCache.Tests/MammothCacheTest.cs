@@ -300,5 +300,77 @@ namespace DesertOctopus.MammothCache.Tests
                 Assert.IsFalse(_firstLevelCache.Get<object>(key).IsSuccessful);
             }
         }
+
+        [TestMethod]
+        public async Task GetOrAddShouldUseTheItemProviderByTheDelegateIfItIsMissingFromTheCacheAsync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var value = await _cache.GetOrAddAsync<CachingTestClass>(key,
+                                                                     () =>
+                                                                     {
+                                                                         delegateWasCalled = true;
+                                                                         return Task.FromResult(_testObject);
+                                                                     },
+                                                                     TimeSpan.FromSeconds(30))
+                                    .ConfigureAwait(false);
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(_testObject.Value, value.Value);
+        }
+
+        [TestMethod]
+        public void GetOrAddShouldUseTheItemProviderByTheDelegateIfItIsMissingFromTheCacheSync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var value = _cache.GetOrAdd<CachingTestClass>(key,
+                                                          () =>
+                                                          {
+                                                              delegateWasCalled = true;
+                                                              return _testObject;
+                                                          },
+                                                          TimeSpan.FromSeconds(30));
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(_testObject.Value, value.Value);
+        }
+
+        [TestMethod]
+        public async Task GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            _firstLevelCache.RemoveAll();
+
+            var value = await _cache.GetOrAddAsync<CachingTestClass>(key,
+                                                                     () =>
+                                                                     {
+                                                                         delegateWasCalled = true;
+                                                                         return Task.FromResult(_testObject);
+                                                                     },
+                                                                     TimeSpan.FromSeconds(30))
+                                    .ConfigureAwait(false);
+            Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(_testObject.Value, value.Value);
+        }
+
+        [TestMethod]
+        public void GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
+            _firstLevelCache.RemoveAll();
+
+            var value = _cache.GetOrAdd<CachingTestClass>(key,
+                                                          () =>
+                                                          {
+                                                              delegateWasCalled = true;
+                                                              return _testObject;
+                                                          },
+                                                          TimeSpan.FromSeconds(30));
+            Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(_testObject.Value, value.Value);
+        }
     }
 }

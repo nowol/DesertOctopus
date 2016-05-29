@@ -12,6 +12,9 @@ namespace DesertOctopus.MammothCache
         T Get<T>(string key) where T : class;
         Task<T> GetAsync<T>(string key) where T : class;
 
+        T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null) where T : class;
+        Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null) where T : class;
+
         void Set<T>(string key, T value, TimeSpan? ttl = null) where T : class;
         Task SetAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class;
 
@@ -40,6 +43,16 @@ namespace DesertOctopus.MammothCache
             SubscribeToEvents();
         }
 
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("This " + nameof(MammothCache) + " object is disposed.");
+            }
+
+            _secondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
+        }
+
         private void SubscribeToEvents()
         {
             _secondLevelCache.OnItemRemovedFromCache += OnItemRemovedFromSecondLevelCache;
@@ -59,9 +72,13 @@ namespace DesertOctopus.MammothCache
             }
 
             var bytes = _secondLevelCache.Get(key);
-            var ttl = _secondLevelCache.GetTimeToLive(key);
-            _firstLevelCache.Set(key, bytes, ttl: ttl);
-            return _serializationProvider.Deserialize<T>(bytes);
+            if (bytes != null)
+            {
+                var ttl = _secondLevelCache.GetTimeToLive(key);
+                _firstLevelCache.Set(key, bytes, ttl: ttl);
+                return _serializationProvider.Deserialize<T>(bytes);
+            }
+            return default(T);
         }
 
         public async Task<T> GetAsync<T>(string key) where T : class
@@ -72,9 +89,13 @@ namespace DesertOctopus.MammothCache
                 return firstLevelResult.Value;
             }
             var bytes = await _secondLevelCache.GetAsync(key).ConfigureAwait(false);
-            var ttl = await _secondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
-            _firstLevelCache.Set(key, bytes, ttl: ttl);
-            return _serializationProvider.Deserialize<T>(bytes);
+            if (bytes != null)
+            {
+                var ttl = await _secondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
+                _firstLevelCache.Set(key, bytes, ttl: ttl);
+                return _serializationProvider.Deserialize<T>(bytes);
+            }
+            return default(T);
         }
 
         public void Set<T>(string key,
@@ -131,14 +152,49 @@ namespace DesertOctopus.MammothCache
             return _secondLevelCache.RemoveAllAsync();
         }
 
-        public void Dispose()
+        public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null) 
+            where T : class
         {
-            if (_isDisposed)
+            if (getAction == null)
             {
-                throw new ObjectDisposedException("This " + nameof(MammothCache) + " object is disposed.");
+                throw new ArgumentNullException(nameof(getAction));
             }
 
-            _secondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
+            var value = Get<T>(key);
+            if (value != default(T))
+            {
+                return value;
+            }
+
+            value = getAction();
+            if (value != default(T))
+            {
+                Set(key, value, ttl: ttl);
+            }
+            return value;
+        }
+
+
+        public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null) 
+            where T : class
+        {
+            if (getActionAsync == null)
+            {
+                throw new ArgumentNullException(nameof(getActionAsync));
+            }
+
+            var value = await GetAsync<T>(key).ConfigureAwait(false);
+            if (value != default(T))
+            {
+                return value;
+            }
+
+            value = await getActionAsync().ConfigureAwait(false);
+            if (value != default(T))
+            {
+                await SetAsync(key, value, ttl: ttl).ConfigureAwait(false);
+            }
+            return value;
         }
     }
 }
