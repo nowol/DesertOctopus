@@ -59,6 +59,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="BaseTest.cs" />
     <Compile Include="MemoryCacheRepositoryTest.cs" />
     <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

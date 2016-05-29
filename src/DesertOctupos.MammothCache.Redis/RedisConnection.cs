@@ -1,15 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using DesertOctopus.MammothCache.Common;
 using Polly;
 using Polly.Retry;
 using StackExchange.Redis;
 
 namespace DesertOctupos.MammothCache.Redis
 {
-    public sealed class RedisConnection : IRedisConnection, IDisposable
+    public sealed class RedisConnection : IRedisConnection, ISecondLevelCache, IDisposable
     {
         private readonly string _connectionString;
         private readonly IRedisRetryPolicy _redisRetryPolicy;
@@ -17,6 +20,9 @@ namespace DesertOctupos.MammothCache.Redis
         private readonly ConnectionMultiplexer _multiplexer;
         private readonly RetryPolicy _retryPolicy;
         private readonly RetryPolicy _retryPolicyAsync;
+        private ISubscriber _subscriber;
+
+        public event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
 
         public RedisConnection(string connectionString, IRedisRetryPolicy redisRetryPolicy)
         {
@@ -34,10 +40,32 @@ namespace DesertOctupos.MammothCache.Redis
                                       .WaitAndRetryAsync(_redisRetryPolicy.SleepDurations);
 
             var options = ConfigurationOptions.Parse(connectionString);
-            ConfigureIfMissing(options, "abortConnect", connectionString,  o => { o.AbortOnConnectFail = false; });
-            ConfigureIfMissing(options, "allowAdmin", connectionString,  o => { o.AllowAdmin = true; });
+            ConfigureIfMissing(options, "abortConnect", connectionString, o => { o.AbortOnConnectFail = false; });
+            ConfigureIfMissing(options, "allowAdmin", connectionString, o => { o.AllowAdmin = true; });
 
             _multiplexer = ConnectionMultiplexer.Connect(options);
+            _multiplexer.PreserveAsyncOrder = false;
+
+            SubscribeToEvents();
+        }
+
+        private void SubscribeToEvents()
+        {
+            _subscriber = _multiplexer.GetSubscriber();
+            GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*del", OnKeyRemoveFromRedis));
+            GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*expired", OnKeyRemoveFromRedis));
+            GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*evicted", OnKeyRemoveFromRedis));
+        }
+
+        private void OnKeyRemoveFromRedis(RedisChannel redisChannel,
+                                          RedisValue redisValue)
+        {
+            var eventCopy = OnItemRemovedFromCache;
+            if (eventCopy != null
+                && redisValue.HasValue)
+            {
+                eventCopy(redisValue);
+            }
         }
 
         private void ConfigureIfMissing(ConfigurationOptions options,
@@ -54,6 +82,7 @@ namespace DesertOctupos.MammothCache.Redis
         public void Dispose()
         {
             GuardDisposed();
+            GetRetryPolicy().Execute(() => _subscriber.UnsubscribeAll());
             _multiplexer.Dispose();
             _isDisposed = true;
         }
@@ -83,14 +112,25 @@ namespace DesertOctupos.MammothCache.Redis
             return _multiplexer.GetDatabase();
         }
 
-        public RedisValue Get(string key)
+        public byte[] Get(string key)
         {
-            return GetRetryPolicy().Execute<RedisValue>(() => GetDatabase().StringGet(key));
+            var redisValue = GetRetryPolicy().Execute<RedisValue>(() => GetDatabase().StringGet(key));
+            if (redisValue.HasValue)
+            {
+                return redisValue;
+            }
+            return null;
         }
 
-        public Task<RedisValue> GetAsync(string key)
+        public async Task<byte[]> GetAsync(string key)
         {
-            return GetRetryPolicyAsync().ExecuteAsync<RedisValue>(() => GetDatabase().StringGetAsync(key));
+
+            var redisValue = await GetRetryPolicyAsync().ExecuteAsync<RedisValue>(() => GetDatabase().StringGetAsync(key)).ConfigureAwait(false);
+            if (redisValue.HasValue)
+            {
+                return redisValue;
+            }
+            return null;
         }
 
         public void Set(string key,
@@ -155,6 +195,40 @@ namespace DesertOctupos.MammothCache.Redis
         public Task<TimeSpan?> GetTimeToLiveAsync(string key)
         {
             return GetRetryPolicyAsync().ExecuteAsync<TimeSpan?>(() => GetDatabase().KeyTimeToLiveAsync(key));
+        }
+
+        private IServer GetServer(ConnectionMultiplexer muxer)
+        {
+            EndPoint[] endpoints = _multiplexer.GetEndPoints();
+            IServer result = null;
+            foreach (var endpoint in endpoints)
+            {
+                var server = muxer.GetServer(endpoint);
+                if (server.IsSlave
+                    || !server.IsConnected)
+                {
+                    continue;
+                }
+
+                if (result != null)
+                {
+                    throw new InvalidOperationException("Requires exactly one master endpoint (found " + server.EndPoint + " and " + result.EndPoint + ")");
+                }
+
+                result = server;
+            }
+            if (result == null) throw new InvalidOperationException("Requires exactly one master endpoint (found none)");
+            return result;
+        }
+
+        public KeyValuePair<string, string>[] GetConfig(string pattern = null)
+        {
+            return GetRetryPolicy().Execute(() => GetServer(_multiplexer).ConfigGet(pattern));
+        }
+
+        public Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern = null)
+        {
+            return GetRetryPolicyAsync().ExecuteAsync(() => GetServer(_multiplexer).ConfigGetAsync(pattern));
         }
     }
 }

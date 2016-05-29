@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctupos.MammothCache.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctupos.MammothCache.Redis.Tests", "tests\DesertOctupos.MammothCache.Redis.Tests\DesertOctupos.MammothCache.Redis.Tests.csproj", "{465618C0-B665-4C9B-A224-F83938AF0BC7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.WebSiteSimulator", "tests\DesertOctopus.MammothCache.WebSiteSimulator\DesertOctopus.MammothCache.WebSiteSimulator.csproj", "{8E5FAED5-2524-4ECE-B98B-7053A46E640A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,10 @@ Global
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E5FAED5-2524-4ECE-B98B-7053A46E640A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E5FAED5-2524-4ECE-B98B-7053A46E640A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E5FAED5-2524-4ECE-B98B-7053A46E640A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E5FAED5-2524-4ECE-B98B-7053A46E640A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,5 +78,6 @@ Global
 		{C302FA36-8B66-4C79-8966-D79734A52406} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 		{253CDEB9-46D5-453B-A801-A8AC4F7DF634} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 		{465618C0-B665-4C9B-A224-F83938AF0BC7} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
+		{8E5FAED5-2524-4ECE-B98B-7053A46E640A} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 	EndGlobalSection
 EndGlobal

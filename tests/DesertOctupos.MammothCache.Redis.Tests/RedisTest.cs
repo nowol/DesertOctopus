@@ -41,13 +41,13 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         [TestMethod]
         public async Task GetAnObjectThatDoNotExistsAsync()
         {
-            Assert.IsFalse((await _connection.GetAsync(RandomKey()).ConfigureAwait(false)).HasValue);
+            Assert.IsNull(await _connection.GetAsync(RandomKey()).ConfigureAwait(false));
         }
 
         [TestMethod]
         public void GetAnObjectThatDoNotExistsSync()
         {
-            Assert.IsFalse(_connection.Get(RandomKey()).HasValue);
+            Assert.IsNull(_connection.Get(RandomKey()));
         }
 
         [TestMethod]
@@ -56,7 +56,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             await _connection.SetAsync(key, _serializedTestObject, ttl: TimeSpan.FromSeconds(30)).ConfigureAwait(false);
             var redisVal = await _connection.GetAsync(key).ConfigureAwait(false);
-            Assert.IsTrue(redisVal.HasValue);
+            Assert.IsNotNull(redisVal);
             var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
             Assert.AreEqual(_testObject.Value, obj.Value);
             Assert.IsTrue((await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false)) > TimeSpan.FromSeconds(25));
@@ -68,7 +68,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             _connection.Set(key, _serializedTestObject, ttl: TimeSpan.FromSeconds(30));
             var redisVal = _connection.Get(key);
-            Assert.IsTrue(redisVal.HasValue);
+            Assert.IsNotNull(redisVal);
             var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
             Assert.AreEqual(_testObject.Value, obj.Value);
             Assert.IsTrue(_connection.GetTimeToLive(key) > TimeSpan.FromSeconds(25));
@@ -82,7 +82,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             {
                 await _connection.SetAsync(key, _serializedTestObject).ConfigureAwait(false);
                 var redisVal = await _connection.GetAsync(key).ConfigureAwait(false);
-                Assert.IsTrue(redisVal.HasValue);
+                Assert.IsNotNull(redisVal);
                 var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
                 Assert.AreEqual(_testObject.Value, obj.Value);
                 Assert.IsNull(await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false));
@@ -101,7 +101,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             {
                 _connection.Set(key, _serializedTestObject);
                 var redisVal = _connection.Get(key);
-                Assert.IsTrue(redisVal.HasValue);
+                Assert.IsNotNull(redisVal);
                 var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
                 Assert.AreEqual(_testObject.Value, obj.Value);
                 Assert.IsNull(_connection.GetTimeToLive(key));
@@ -118,10 +118,10 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             await _connection.SetAsync(key, _serializedTestObject, ttl: TimeSpan.FromSeconds(30)).ConfigureAwait(false);
             var redisVal = await _connection.GetAsync(key).ConfigureAwait(false);
-            Assert.IsTrue(redisVal.HasValue);
+            Assert.IsNotNull(redisVal);
             await _connection.RemoveAsync(key).ConfigureAwait(false);
             redisVal = await _connection.GetAsync(key).ConfigureAwait(false);
-            Assert.IsFalse(redisVal.HasValue);
+            Assert.IsNull(redisVal);
         }
 
         [TestMethod]
@@ -130,10 +130,30 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             _connection.Set(key, _serializedTestObject, ttl: TimeSpan.FromSeconds(30));
             var redisVal = _connection.Get(key);
-            Assert.IsTrue(redisVal.HasValue);
+            Assert.IsNotNull(redisVal);
             _connection.Remove(key);
             redisVal = _connection.Get(key);
-            Assert.IsFalse(redisVal.HasValue);
+            Assert.IsNull(redisVal);
+        }
+
+        [TestMethod]
+        public async Task GetTheConfigAsync()
+        {
+            var config = await _connection.GetConfigAsync().ConfigureAwait(false);
+            Assert.AreNotEqual(0, config.Length);
+
+            config = await _connection.GetConfigAsync(pattern: config[0].Key).ConfigureAwait(false);
+            Assert.AreEqual(1, config.Length);
+        }
+
+        [TestMethod]
+        public void GetTheConfigSync()
+        {
+            var config = _connection.GetConfig();
+            Assert.AreNotEqual(0, config.Length);
+
+            config = _connection.GetConfig(pattern: config[0].Key);
+            Assert.AreEqual(1, config.Length);
         }
 
     }

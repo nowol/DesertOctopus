@@ -4,18 +4,26 @@ using System.Threading.Tasks;
 
 namespace DesertOctopus.MammothCache.Common
 {
+    public delegate void ItemEvictedFromCacheEventHandler(string key);
+
     public interface ISecondLevelCache
     {
-        T Get<T>(string key) where T : class;
-        Task<T> GetAsync<T>(string key) where T : class;
+        byte[] Get(string key);
+        Task<byte[]> GetAsync(string key);
 
         void Set(string key, byte[] serializedValue, TimeSpan? ttl = null);
         Task SetAsync(string key, byte[] serializedValue, TimeSpan? ttl = null);
 
-        void Remove(string key);
-        Task RemoveAsync(string key);
+        bool Remove(string key);
+        Task<bool> RemoveAsync(string key);
 
         void RemoveAll();
         Task RemoveAllAsync();
+
+        TimeSpan? GetTimeToLive(string key);
+        Task<TimeSpan?> GetTimeToLiveAsync(string key);
+
+        event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
+
     }
 }

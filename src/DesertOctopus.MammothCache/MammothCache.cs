@@ -22,26 +22,32 @@ namespace DesertOctopus.MammothCache
         Task RemoveAllAsync();
     }
 
-    public interface IMammothCacheSerializationProvider
-    {
-        byte[] Serialize<T>(T value) where T : class;
-        object Deserialize(byte[] bytes);
-        T Deserialize<T>(byte[] bytes) where T : class;
-    }
-
-    public class MammothCache : IMammothCache
+    public sealed class MammothCache : IMammothCache, IDisposable
     {
         private readonly IFirstLevelCache _firstLevelCache;
         private readonly ISecondLevelCache _secondLevelCache;
         private readonly IMammothCacheSerializationProvider _serializationProvider;
+        private bool _isDisposed = false;
 
-        public MammothCache(IFirstLevelCache firstLevelCache, 
+        public MammothCache(IFirstLevelCache firstLevelCache,
                             ISecondLevelCache secondLevelCache,
                             IMammothCacheSerializationProvider serializationProvider)
         {
             _firstLevelCache = firstLevelCache;
             _secondLevelCache = secondLevelCache;
             _serializationProvider = serializationProvider;
+
+            SubscribeToEvents();
+        }
+
+        private void SubscribeToEvents()
+        {
+            _secondLevelCache.OnItemRemovedFromCache += OnItemRemovedFromSecondLevelCache;
+        }
+
+        private void OnItemRemovedFromSecondLevelCache(string key)
+        {
+            _firstLevelCache.Remove(key);
         }
 
         public T Get<T>(string key) where T : class
@@ -52,18 +58,23 @@ namespace DesertOctopus.MammothCache
                 return firstLevelResult.Value;
             }
 
-            return _secondLevelCache.Get<T>(key);
+            var bytes = _secondLevelCache.Get(key);
+            var ttl = _secondLevelCache.GetTimeToLive(key);
+            _firstLevelCache.Set(key, bytes, ttl: ttl);
+            return _serializationProvider.Deserialize<T>(bytes);
         }
 
-        public Task<T> GetAsync<T>(string key) where T : class
+        public async Task<T> GetAsync<T>(string key) where T : class
         {
             var firstLevelResult = _firstLevelCache.Get<T>(key);
             if (firstLevelResult.IsSuccessful)
             {
-                return Task.FromResult(firstLevelResult.Value);
+                return firstLevelResult.Value;
             }
-
-            return _secondLevelCache.GetAsync<T>(key);
+            var bytes = await _secondLevelCache.GetAsync(key).ConfigureAwait(false);
+            var ttl = await _secondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
+            _firstLevelCache.Set(key, bytes, ttl: ttl);
+            return _serializationProvider.Deserialize<T>(bytes);
         }
 
         public void Set<T>(string key,
@@ -118,6 +129,16 @@ namespace DesertOctopus.MammothCache
         {
             _firstLevelCache.RemoveAll();
             return _secondLevelCache.RemoveAllAsync();
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("This " + nameof(MammothCache) + " object is disposed.");
+            }
+
+            _secondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
         }
     }
 }

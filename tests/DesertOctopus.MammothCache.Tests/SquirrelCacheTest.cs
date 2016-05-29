@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -11,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace DesertOctopus.MammothCache.Tests
 {
     [TestClass]
-    public class SquirrelCacheTest
+    public class SquirrelCacheTest : BaseTest
     {
         private SquirrelCache _cacheRepository;
         private CachingTestClass _testObject;
@@ -34,20 +33,6 @@ namespace DesertOctopus.MammothCache.Tests
         public void Cleanup()
         {
             _cacheRepository.Dispose();
-        }
-
-        private void WaitFor(int seconds)
-        {
-            var sw = Stopwatch.StartNew();
-            while (sw.Elapsed.TotalSeconds <= seconds)
-            {
-                Thread.Sleep(50);
-            }
-        }
-
-        private void WaitFor(double seconds)
-        {
-            WaitFor(Convert.ToInt32(seconds));
         }
 
         [TestMethod]

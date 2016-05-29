@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IFirstLevelCacheConfig.cs" />
+    <Compile Include="IMammothCacheSerializationProvider.cs" />
     <Compile Include="ISecondLevelCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
