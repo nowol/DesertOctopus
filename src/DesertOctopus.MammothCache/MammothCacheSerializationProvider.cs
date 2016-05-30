@@ -7,19 +7,27 @@ using DesertOctopus.MammothCache.Common;
 
 namespace DesertOctopus.MammothCache
 {
+    /// <summary>
+    /// Provide the serialization/deserialization of objects
+    /// </summary>
     public class MammothCacheSerializationProvider : IMammothCacheSerializationProvider
     {
-        public byte[] Serialize<T>(T value) where T : class
+        /// <inheritdoc/>
+        public byte[] Serialize<T>(T value)
+            where T : class
         {
             return KrakenSerializer.Serialize(value);
         }
 
+        /// <inheritdoc/>
         public object Deserialize(byte[] bytes)
         {
             return KrakenSerializer.Deserialize(bytes);
         }
 
-        public T Deserialize<T>(byte[] bytes) where T : class
+        /// <inheritdoc/>
+        public T Deserialize<T>(byte[] bytes)
+            where T : class
         {
             return KrakenSerializer.Deserialize<T>(bytes);
         }

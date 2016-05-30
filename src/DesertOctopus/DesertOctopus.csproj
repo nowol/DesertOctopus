@@ -24,7 +24,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\Debug\DesertOctopus.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>DesertOctopus.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -36,7 +36,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DocumentationFile>bin\Release\DesertOctopus.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>DesertOctopus.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -131,7 +131,11 @@
     <Compile Include="Utilities\SerializerObjectTracker.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DesertOctopus.ruleset" />
+  
+    <AdditionalFiles Include="..\Common\stylecop.json">
+      <Link>stylecop.json</Link>
+    </AdditionalFiles>
+    <None Include="..\Common\DesertOctopus.ruleset" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

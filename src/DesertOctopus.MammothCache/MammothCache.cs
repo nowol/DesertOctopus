@@ -7,24 +7,9 @@ using DesertOctopus.MammothCache.Common;
 
 namespace DesertOctopus.MammothCache
 {
-    public interface IMammothCache
-    {
-        T Get<T>(string key) where T : class;
-        Task<T> GetAsync<T>(string key) where T : class;
-
-        T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null) where T : class;
-        Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null) where T : class;
-
-        void Set<T>(string key, T value, TimeSpan? ttl = null) where T : class;
-        Task SetAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class;
-
-        void Remove(string key);
-        Task RemoveAsync(string key);
-
-        void RemoveAll();
-        Task RemoveAllAsync();
-    }
-
+    /// <summary>
+    /// Distributed cache with 2 level of caching
+    /// </summary>
     public sealed class MammothCache : IMammothCache, IDisposable
     {
         private readonly IFirstLevelCache _firstLevelCache;
@@ -32,6 +17,12 @@ namespace DesertOctopus.MammothCache
         private readonly IMammothCacheSerializationProvider _serializationProvider;
         private bool _isDisposed = false;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MammothCache"/> class.
+        /// </summary>
+        /// <param name="firstLevelCache">First level of cache</param>
+        /// <param name="secondLevelCache">Second level of cache</param>
+        /// <param name="serializationProvider">Serialization provider</param>
         public MammothCache(IFirstLevelCache firstLevelCache,
                             ISecondLevelCache secondLevelCache,
                             IMammothCacheSerializationProvider serializationProvider)
@@ -43,6 +34,9 @@ namespace DesertOctopus.MammothCache
             SubscribeToEvents();
         }
 
+        /// <summary>
+        /// Dispose the object
+        /// </summary>
         public void Dispose()
         {
             if (_isDisposed)
@@ -63,7 +57,9 @@ namespace DesertOctopus.MammothCache
             _firstLevelCache.Remove(key);
         }
 
-        public T Get<T>(string key) where T : class
+        /// <inheritdoc/>
+        public T Get<T>(string key)
+            where T : class
         {
             var firstLevelResult = _firstLevelCache.Get<T>(key);
             if (firstLevelResult.IsSuccessful)
@@ -78,16 +74,20 @@ namespace DesertOctopus.MammothCache
                 _firstLevelCache.Set(key, bytes, ttl: ttl);
                 return _serializationProvider.Deserialize<T>(bytes);
             }
+
             return default(T);
         }
 
-        public async Task<T> GetAsync<T>(string key) where T : class
+        /// <inheritdoc/>
+        public async Task<T> GetAsync<T>(string key)
+            where T : class
         {
             var firstLevelResult = _firstLevelCache.Get<T>(key);
             if (firstLevelResult.IsSuccessful)
             {
                 return firstLevelResult.Value;
             }
+
             var bytes = await _secondLevelCache.GetAsync(key).ConfigureAwait(false);
             if (bytes != null)
             {
@@ -95,12 +95,15 @@ namespace DesertOctopus.MammothCache
                 _firstLevelCache.Set(key, bytes, ttl: ttl);
                 return _serializationProvider.Deserialize<T>(bytes);
             }
+
             return default(T);
         }
 
+        /// <inheritdoc/>
         public void Set<T>(string key,
                            T value,
-                           TimeSpan? ttl = null) where T : class
+                           TimeSpan? ttl = null)
+            where T : class
         {
             if (value == null)
             {
@@ -113,9 +116,11 @@ namespace DesertOctopus.MammothCache
             _secondLevelCache.Set(key, bytes, ttl: ttl);
         }
 
+        /// <inheritdoc/>
         public Task SetAsync<T>(string key,
                                 T value,
-                                TimeSpan? ttl = null) where T : class
+                                TimeSpan? ttl = null)
+            where T : class
         {
             if (value == null)
             {
@@ -128,31 +133,36 @@ namespace DesertOctopus.MammothCache
             return _secondLevelCache.SetAsync(key, bytes, ttl: ttl);
         }
 
+        /// <inheritdoc/>
         public void Remove(string key)
         {
             _firstLevelCache.Remove(key);
             _secondLevelCache.Remove(key);
         }
 
+        /// <inheritdoc/>
         public Task RemoveAsync(string key)
         {
             _firstLevelCache.Remove(key);
             return _secondLevelCache.RemoveAsync(key);
         }
 
+        /// <inheritdoc/>
         public void RemoveAll()
         {
             _firstLevelCache.RemoveAll();
             _secondLevelCache.RemoveAll();
         }
 
+        /// <inheritdoc/>
         public Task RemoveAllAsync()
         {
             _firstLevelCache.RemoveAll();
             return _secondLevelCache.RemoveAllAsync();
         }
 
-        public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null) 
+        /// <inheritdoc/>
+        public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null)
             where T : class
         {
             if (getAction == null)
@@ -171,11 +181,12 @@ namespace DesertOctopus.MammothCache
             {
                 Set(key, value, ttl: ttl);
             }
+
             return value;
         }
 
-
-        public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null) 
+        /// <inheritdoc/>
+        public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null)
             where T : class
         {
             if (getActionAsync == null)
@@ -194,6 +205,7 @@ namespace DesertOctopus.MammothCache
             {
                 await SetAsync(key, value, ttl: ttl).ConfigureAwait(false);
             }
+
             return value;
         }
     }
