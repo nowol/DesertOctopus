@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Tests.Models;
 using DesertOctupos.MammothCache.Redis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,6 +15,8 @@ namespace DesertOctopus.MammothCache.Tests
     {
         private SquirrelCache _firstLevelCache;
         private CachingTestClass _testObject;
+        private CachingTestClass _testObject2;
+        private CachingTestClass _testObject3;
         private byte[] _serializedTestObject;
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
 
@@ -26,12 +29,14 @@ namespace DesertOctopus.MammothCache.Tests
         [TestInitialize]
         public void Initialize()
         {
-            _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
+            _config.AbsoluteExpiration = TimeSpan.FromSeconds(20);
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 60;
 
             _firstLevelCache = new SquirrelCache(_config);
             _testObject = new CachingTestClass();
+            _testObject2 = new CachingTestClass();
+            _testObject3 = new CachingTestClass();
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
 
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
@@ -39,7 +44,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache = new MammothCache(_firstLevelCache, _secondLevelCache, new MammothCacheSerializationProvider());
         }
-
+        
         [TestCleanup]
         public void Cleanup()
         {
@@ -134,12 +139,13 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task ExpiredItemFromFirstLevelShouldStillExistInSecondLevelAsync()
         {
             var key = RandomKey();
-            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
             Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
@@ -147,12 +153,13 @@ namespace DesertOctopus.MammothCache.Tests
         public void ExpiredItemFromFirstLevelShouldStillExistInSecondLevelSync()
         {
             var key = RandomKey();
-            _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
+            _cache.Set(key, _testObject, TimeSpan.FromSeconds(60));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
             Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
@@ -160,7 +167,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheAsync()
         {
             var key = RandomKey();
-            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
@@ -177,7 +184,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheSync()
         {
             var key = RandomKey();
-            _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30));
+            _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(60));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
@@ -302,7 +309,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
-        public async Task GetOrAddShouldUseTheItemProviderByTheDelegateIfItIsMissingFromTheCacheAsync()
+        public async Task GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
             var key = RandomKey();
@@ -316,10 +323,12 @@ namespace DesertOctopus.MammothCache.Tests
                                     .ConfigureAwait(false);
             Assert.IsTrue(delegateWasCalled);
             Assert.AreEqual(_testObject.Value, value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]
-        public void GetOrAddShouldUseTheItemProviderByTheDelegateIfItIsMissingFromTheCacheSync()
+        public void GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
             var key = RandomKey();
@@ -332,6 +341,8 @@ namespace DesertOctopus.MammothCache.Tests
                                                           TimeSpan.FromSeconds(30));
             Assert.IsTrue(delegateWasCalled);
             Assert.AreEqual(_testObject.Value, value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]
@@ -351,7 +362,10 @@ namespace DesertOctopus.MammothCache.Tests
                                                                      TimeSpan.FromSeconds(30))
                                     .ConfigureAwait(false);
             Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(_testObject.Value, value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]
@@ -370,7 +384,428 @@ namespace DesertOctopus.MammothCache.Tests
                                                           },
                                                           TimeSpan.FromSeconds(30));
             Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(_testObject.Value, value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+        }
+
+        [TestMethod]
+        public async Task GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys, 
+                                                                      definitions =>
+                                                                      {
+                                                                          delegateWasCalled = true;
+                                                                          var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                                          results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                                          return Task.FromResult(results);
+                                                                      })
+                                     .ConfigureAwait(false);
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(1, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+        }
+
+        [TestMethod]
+        public void GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = _cache.GetOrAdd<CachingTestClass>(keys,
+                                                           definitions =>
+                                                           {
+                                                               delegateWasCalled = true;
+                                                               var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                               results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                               return results;
+                                                           });
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(1, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+        }
+
+        [TestMethod]
+        public async Task GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            await _cache.SetAsync(key1, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await _cache.SetAsync(key2, _testObject2, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await _cache.SetAsync(key3, _testObject3, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys,
+                                                                      definitions =>
+                                                                      {
+                                                                          delegateWasCalled = true;
+                                                                          var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                                          results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                                          return Task.FromResult(results);
+                                                                      })
+                                     .ConfigureAwait(false);
+            Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(3, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+        }
+
+        [TestMethod]
+        public void GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            _cache.Set(key1, _testObject, TimeSpan.FromSeconds(30));
+            _cache.Set(key2, _testObject2, TimeSpan.FromSeconds(30));
+            _cache.Set(key3, _testObject3, TimeSpan.FromSeconds(30));
+
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = _cache.GetOrAdd<CachingTestClass>(keys,
+                                                           definitions =>
+                                                           {
+                                                               delegateWasCalled = true;
+                                                               var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                               results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                               return results;
+                                                           });
+            Assert.IsFalse(delegateWasCalled);
+            Assert.AreEqual(3, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+        }
+
+        [TestMethod]
+        public async Task GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheAsync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            await _cache.SetAsync(key1, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await _cache.SetAsync(key2, _testObject2, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys,
+                                                                      definitions =>
+                                                                      {
+                                                                          Assert.AreEqual(1, definitions.Length);
+                                                                          delegateWasCalled = true;
+                                                                          var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                                          results.Add(definitions.Single(x => x.Key == key3), _testObject3);
+                                                                          return Task.FromResult(results);
+                                                                      })
+                                     .ConfigureAwait(false);
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(3, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+        }
+
+        [TestMethod]
+        public void GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheSync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            _cache.Set(key1, _testObject, TimeSpan.FromSeconds(30));
+            _cache.Set(key2, _testObject2, TimeSpan.FromSeconds(30));
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = _cache.GetOrAdd<CachingTestClass>(keys,
+                                                           definitions =>
+                                                           {
+                                                               Assert.AreEqual(1, definitions.Length);
+                                                               delegateWasCalled = true;
+                                                               var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                               results.Add(definitions.Single(x => x.Key == key3), _testObject3);
+                                                               return results;
+                                                           });
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(3, values.Count);
+            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+        }
+
+        [TestMethod]
+        public async Task GetMultipleValuesAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            _cache.Set(key1, _testObject, TimeSpan.FromSeconds(30));
+            _cache.Set(key2, testObject2, TimeSpan.FromSeconds(30));
+
+            _firstLevelCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            Dictionary<CacheItemDefinition, CachingTestClass> values = await _cache.GetAsync<CachingTestClass>(keys).ConfigureAwait(false);
+
+            Assert.AreEqual(2, values.Count);
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
+            Assert.AreEqual(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
+        }
+
+        [TestMethod]
+        public void GetMultipleValuesSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            _cache.Set(key1, _testObject, TimeSpan.FromSeconds(30));
+            _cache.Set(key2, testObject2, TimeSpan.FromSeconds(30));
+
+            _firstLevelCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            Dictionary<CacheItemDefinition, CachingTestClass> values = _cache.Get<CachingTestClass>(keys);
+
+            Assert.AreEqual(2, values.Count);
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
+            Assert.AreEqual(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
+        }
+
+        [TestMethod]
+        public async Task SetMultipleValuesAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            var values = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
+
+            await _cache.SetAsync(values).ConfigureAwait(false);
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            _firstLevelCache.RemoveAll();
+            Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
+            Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
+
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).Value.TotalSeconds > 25);
+            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2));
+        }
+
+        [TestMethod]
+        public void SetMultipleValuesSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            var values = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
+
+            _cache.Set(values);
+
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            _firstLevelCache.RemoveAll();
+            Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
+            Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
+
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).Value.TotalSeconds > 25);
+            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2));
+        }
+
+        [TestMethod]
+        public async Task MultipleItemsRetrievedShouldHaveTheirTtlSetAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            var values = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(5) }, _testObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
+
+            await _cache.SetAsync(values).ConfigureAwait(false);
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            _firstLevelCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            values = await _cache.GetAsync<CachingTestClass>(keys).ConfigureAwait(false);
+            _secondLevelCache.Set(key1, _serializedTestObject, TimeSpan.FromSeconds(30));
+
+            WaitFor(10);
+            _firstLevelCache.Get<CachingTestClass>(key1);
+            _firstLevelCache.Get<CachingTestClass>(key2);
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds);
+
+            _firstLevelCache.Get<CachingTestClass>(key1);
+            _firstLevelCache.Get<CachingTestClass>(key2);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public void MultipleItemsRetrievedShouldHaveTheirTtlSetSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var testObject2 = new CachingTestClass();
+
+            var values = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(5) }, _testObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
+
+            _cache.Set(values);
+            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            _firstLevelCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            values = _cache.Get<CachingTestClass>(keys);
+            _secondLevelCache.Set(key1, _serializedTestObject, TimeSpan.FromSeconds(30));
+
+            WaitFor(10);
+
+            _firstLevelCache.Get<CachingTestClass>(key1);
+            _firstLevelCache.Get<CachingTestClass>(key2);
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds);
+
+            _firstLevelCache.Get<CachingTestClass>(key1);
+            _firstLevelCache.Get<CachingTestClass>(key2);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
+            _cache.Get<CachingTestClass>(key);
+            otherCache.Get<CachingTestClass>(key);
+
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(1, otherFirstLevelCache.NumberOfObjects);
+
+            WaitFor(10);
+
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
+            _cache.Get<CachingTestClass>(key);
+            otherCache.Get<CachingTestClass>(key);
+
+            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(1, otherFirstLevelCache.NumberOfObjects);
+
+            _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
+
+            WaitFor(10);
+
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
         }
     }
 }

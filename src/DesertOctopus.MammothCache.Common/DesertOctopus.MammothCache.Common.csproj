@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CacheItemDefinition.cs" />
     <Compile Include="IFirstLevelCache.cs" />
     <Compile Include="IFirstLevelCacheConfig.cs" />
     <Compile Include="IMammothCache.cs" />

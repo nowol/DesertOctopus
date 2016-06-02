@@ -15,6 +15,9 @@ namespace DesertOctupos.MammothCache.Redis
         void Set(string key, byte[] serializedValue, TimeSpan? ttl = null);
         Task SetAsync(string key, byte[] serializedValue, TimeSpan? ttl = null);
 
+        void Set(Dictionary<CacheItemDefinition, byte[]> objects);
+        Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects);
+
         bool Remove(string key);
         Task<bool> RemoveAsync(string key);
 
@@ -28,5 +31,9 @@ namespace DesertOctupos.MammothCache.Redis
 
         KeyValuePair<string, string>[] GetConfig(string pattern);
         Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern);
+
+        Dictionary<CacheItemDefinition, byte[]> Get(ICollection<CacheItemDefinition> keys);
+        Task<Dictionary<CacheItemDefinition, byte[]>> GetAsync(ICollection<CacheItemDefinition> keys);
+
     }
 }

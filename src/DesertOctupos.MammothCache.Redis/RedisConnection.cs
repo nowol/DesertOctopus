@@ -122,6 +122,50 @@ namespace DesertOctupos.MammothCache.Redis
             return null;
         }
 
+        public Dictionary<CacheItemDefinition, byte[]> Get(ICollection<CacheItemDefinition> keys)
+        {
+            var redisResult = GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetMultipleGetScript(), keys: keys.Select(x => (RedisKey)x.Key).ToArray()));
+            return CreateCacheItemDefinitionArrayFromLuaScriptResult(keys, redisResult);
+        }
+
+        private static Dictionary<CacheItemDefinition, byte[]> CreateCacheItemDefinitionArrayFromLuaScriptResult(ICollection<CacheItemDefinition> keys,
+                                                                                                                 RedisResult redisResult)
+        {
+            if (redisResult == null)
+            {
+                throw new InvalidOperationException("Lua script did not return anything.");
+            }
+
+            var redisValues = (RedisValue[]) redisResult;
+
+            if (redisValues.Length != keys.Count * 2)
+            {
+                throw new InvalidOperationException("Lua script did not return the expected number of records.");
+            }
+            
+            var result = new Dictionary<CacheItemDefinition, byte[]>();
+            int cpt = 0;
+            foreach (var key in keys)
+            {
+                var cid = key.Clone();
+                int ttl = (int) redisValues[cpt + 1];
+                if (ttl <= 0)
+                {
+                    cid.TimeToLive = null;
+                }
+                else
+                {
+                    cid.TimeToLive = TimeSpan.FromSeconds(ttl);
+                }
+                result.Add(cid,
+                           redisValues[cpt]);
+
+                cpt += 2;
+            }
+
+            return result;
+        }
+
         public async Task<byte[]> GetAsync(string key)
         {
 
@@ -133,6 +177,12 @@ namespace DesertOctupos.MammothCache.Redis
             return null;
         }
 
+        public async Task<Dictionary<CacheItemDefinition, byte[]>> GetAsync(ICollection<CacheItemDefinition> keys)
+        {
+            var redisResult = await GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetMultipleGetScript(), keys: keys.Select(x => (RedisKey)x.Key).ToArray()));
+            return CreateCacheItemDefinitionArrayFromLuaScriptResult(keys, redisResult);
+        }
+
         public void Set(string key,
                         byte[] serializedValue,
                         TimeSpan? ttl = null)
@@ -140,11 +190,51 @@ namespace DesertOctupos.MammothCache.Redis
             GetRetryPolicy().Execute(() => GetDatabase().StringSet(key, serializedValue, expiry: ttl));
         }
 
+        public void Set(Dictionary<CacheItemDefinition, byte[]> objects)
+        {
+            RedisValue[] values;
+            RedisKey[] keys;
+            GetMultipleSetValues(objects, out keys, out values);
+
+            GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetMultipleSetScript(),
+                                                                                     keys: keys,
+                                                                                     values: values));
+        }
+
+        private static void GetMultipleSetValues(Dictionary<CacheItemDefinition, byte[]> objects,
+                                                 out RedisKey[] keys,
+                                                 out RedisValue[] values)
+        {
+            keys = new RedisKey[objects.Count];
+            values = new RedisValue[objects.Count * 2];
+            int cpt = 0;
+            foreach (var kvp in objects)
+            {
+                keys[cpt] = kvp.Key.Key;
+                values[cpt * 2] = kvp.Value;
+                values[cpt * 2 + 1] = kvp.Key.TimeToLive.HasValue
+                                          ? kvp.Key.TimeToLive.Value.TotalSeconds
+                                          : 0;
+                cpt++;
+            }
+        }
+
         public Task SetAsync(string key,
                              byte[] serializedValue,
                              TimeSpan? ttl = null)
         {
             return GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().StringSetAsync(key, serializedValue, expiry: ttl));
+        }
+
+        public Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects)
+        {
+            RedisValue[] values;
+            RedisKey[] keys;
+            GetMultipleSetValues(objects, out keys, out values);
+
+            return GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetMultipleSetScript(),
+                                                                                                           keys: keys,
+                                                                                                           values: values));
         }
 
         public bool Remove(string key)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,11 +18,25 @@ namespace DesertOctopus.MammothCache.Common
         byte[] Get(string key);
 
         /// <summary>
+        /// Gets objects from the cache
+        /// </summary>
+        /// <param name="keys">Keys of the objects</param>
+        /// <returns>Dictionary of byte array containing the serialized objects</returns>
+        Dictionary<CacheItemDefinition, byte[]> Get(ICollection<CacheItemDefinition> keys);
+
+        /// <summary>
         /// Gets an object from the cache
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <returns>Byte array containing the serialized object as an awaitable task</returns>
         Task<byte[]> GetAsync(string key);
+
+        /// <summary>
+        /// Gets objects from the cache
+        /// </summary>
+        /// <param name="keys">Keys of the objects</param>
+        /// <returns>Dictionary of byte array containing the serialized objects as an awaitable task</returns>
+        Task<Dictionary<CacheItemDefinition, byte[]>> GetAsync(ICollection<CacheItemDefinition> keys);
 
         /// <summary>
         /// Store an object in the cache
@@ -32,6 +47,12 @@ namespace DesertOctopus.MammothCache.Common
         void Set(string key, byte[] serializedValue, TimeSpan? ttl = null);
 
         /// <summary>
+        /// Store multiple objects in the cache
+        /// </summary>
+        /// <param name="objects">Objects to store in the cache</param>
+        void Set(Dictionary<CacheItemDefinition, byte[]> objects);
+
+        /// <summary>
         /// Store an object in the cache
         /// </summary>
         /// <param name="key">Key of the object</param>
@@ -39,6 +60,13 @@ namespace DesertOctopus.MammothCache.Common
         /// <param name="ttl">Optional time to live of the object</param>
         /// <returns>A task that can be awaited</returns>
         Task SetAsync(string key, byte[] serializedValue, TimeSpan? ttl = null);
+
+        /// <summary>
+        /// Store multiple objects in the cache
+        /// </summary>
+        /// <param name="objects">Objects to store in the cache</param>
+        /// <returns>A task that can be awaited</returns>
+        Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects);
 
         /// <summary>
         /// Remove an object from the cache

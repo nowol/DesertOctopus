@@ -2,8 +2,9 @@
 
 DesertOctopus is a .Net utility library that currently does the following:
 
-* Serialization
+* Serialization (KrakenSerializer)
 * Object Cloning
+* Distributed caching (MammothCache)
 
 
 ## Serialization / DesertOctopus.KrakenSerializer
@@ -162,3 +163,20 @@ Type=SimpleDtoWithEveryPrimitivesCloningBenchmark  Mode=Throughput
  Method |      Median |    StdDev |
 ------- |------------ |---------- |
   Clone | 338.9273 ns | 4.0972 ns |
+
+
+## Distributed Caching / MammothCache
+
+MammothCache is a distributed cache that uses Redis as its data store.  It consists of 2 levels of cache:
+
+* First level: in memory store
+* Second level: remote data store
+
+Its features are as follow:
+
+* Distributed cache (yes, really!)
+  * The default implementation that uses Redis but it is possible to use another data store if required.
+  * Objects can have an optional time to live
+* L1 cache in memory to speed up access for frequently used items
+  * If an object is removed from the remote data store (L2 cache) it will be removed from the L1 cache
+  * The L1 cache can be configured to use a small amount of memory
