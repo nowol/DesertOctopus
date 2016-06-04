@@ -17,6 +17,7 @@ namespace DesertOctopus.MammothCache.WebSiteSimulator.Controllers
         private static readonly IRedisRetryPolicy _redisRetryPolicy;
         private static readonly IMammothCache _cache;
         private static readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
+        private static readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
 
 
         static BenchmarkController()
@@ -28,7 +29,7 @@ namespace DesertOctopus.MammothCache.WebSiteSimulator.Controllers
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
             _connection = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
 
-            _cache = new MammothCache(new SquirrelCache(_config), _connection, new MammothCacheSerializationProvider());
+            _cache = new MammothCache(new SquirrelCache(_config, _noCloningProvider), _connection, new MammothCacheSerializationProvider());
         }
 
 

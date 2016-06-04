@@ -54,12 +54,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlwaysCloningProvider.cs" />
     <Compile Include="CachedObject.cs" />
     <Compile Include="CachedObjectQueue.cs" />
     <Compile Include="FirstLevelCacheConfig.cs" />
     <Compile Include="MammothCache.cs" />
     <Compile Include="MammothCacheSerializationProvider.cs" />
     <Compile Include="MultipleGetHelper.cs" />
+    <Compile Include="NamespacesBasedCloningProvider.cs" />
+    <Compile Include="NoCloningProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SquirrelCache.cs" />
   </ItemGroup>

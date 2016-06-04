@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Tests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,6 +17,8 @@ namespace DesertOctopus.MammothCache.Tests
         private CachingTestClass _testObject;
         private byte[] _serializedTestObject;
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
+        private readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
+        private readonly IFirstLevelCacheCloningProvider _alwaysCloningProvider = new AlwaysCloningProvider();
 
         [TestInitialize]
         public void Initialize()
@@ -24,7 +27,7 @@ namespace DesertOctopus.MammothCache.Tests
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 1;
 
-            _cacheRepository = new SquirrelCache(_config);
+            _cacheRepository = new SquirrelCache(_config, _noCloningProvider);
             _testObject = new CachingTestClass();
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
         }
@@ -193,6 +196,57 @@ namespace DesertOctopus.MammothCache.Tests
 
             Assert.AreEqual(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public void ObjectRetrievedFromFirstLevelCacheShouldNotNeverBeCloned()
+        {
+            var cache = new SquirrelCache(_config, _noCloningProvider);
+
+            var key = RandomKey();
+            cache.Set(key, _serializedTestObject);
+            var obj1 = cache.Get<object>(key).Value;
+            var obj2 = cache.Get<object>(key).Value;
+            Assert.IsNotNull(obj1);
+            Assert.IsTrue(ReferenceEquals(obj1, obj2));
+        }
+
+        [TestMethod]
+        public void ObjectRetrievedFromFirstLevelCacheShouldAlwaysBeCloned()
+        {
+            var cache = new SquirrelCache(_config, _alwaysCloningProvider);
+
+            var key = RandomKey();
+            cache.Set(key, _serializedTestObject);
+            var obj1 = cache.Get<object>(key).Value;
+            var obj2 = cache.Get<object>(key).Value;
+            Assert.IsNotNull(obj1);
+            Assert.IsFalse(ReferenceEquals(obj1, obj2));
+        }
+
+        [TestMethod]
+        public void ObjectRetrievedFromFirstLevelCacheShouldBeClonedIfTheyAreFromASpecificNameSpace()
+        {
+            var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
+            var cache = new SquirrelCache(_config, namespaceCloningProvider);
+
+            var testObject2 = EqualityComparer<string>.Default;
+            var serializedTestObject2 = KrakenSerializer.Serialize(testObject2);
+
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            cache.Set(key1, _serializedTestObject);
+            cache.Set(key2, serializedTestObject2);
+
+            var obj1_1 = cache.Get<object>(key1).Value;
+            var obj1_2 = cache.Get<object>(key1).Value;
+            Assert.IsNotNull(obj1_1);
+            Assert.IsFalse(ReferenceEquals(obj1_1, obj1_2));
+
+            var obj2_1 = cache.Get<object>(key2).Value;
+            var obj2_2 = cache.Get<object>(key2).Value;
+            Assert.IsNotNull(obj2_1);
+            Assert.IsTrue(ReferenceEquals(obj2_1, obj2_2));
         }
     }
 }

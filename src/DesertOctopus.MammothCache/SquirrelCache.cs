@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Caching;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using DesertOctopus.MammothCache.Common;
 using Timer = System.Timers.Timer;
@@ -17,6 +14,7 @@ namespace DesertOctopus.MammothCache
     public sealed class SquirrelCache : IFirstLevelCache, IDisposable
     {
         private readonly IFirstLevelCacheConfig _config;
+        private readonly IFirstLevelCacheCloningProvider _cloningProvider;
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
         private readonly System.Timers.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
@@ -25,9 +23,11 @@ namespace DesertOctopus.MammothCache
         /// Initializes a new instance of the <see cref="SquirrelCache"/> class.
         /// </summary>
         /// <param name="config">Configuration of the <see cref="SquirrelCache"/></param>
-        public SquirrelCache(IFirstLevelCacheConfig config)
+        /// <param name="cloningProvider">Cloning provider</param>
+        public SquirrelCache(IFirstLevelCacheConfig config, IFirstLevelCacheCloningProvider cloningProvider)
         {
             _config = config;
+            _cloningProvider = cloningProvider;
 
             _cleanUpTimer = new Timer(_config.TimerInterval);
             _cleanUpTimer.Elapsed += CleanUpTimerOnElapsed;
@@ -74,6 +74,11 @@ namespace DesertOctopus.MammothCache
                 || value.Value == null)
             {
                 return ConditionalResult.CreateFailure<T>();
+            }
+
+            if (_cloningProvider.RequireCloning(value.Value.GetType()))
+            {
+                return ConditionalResult.CreateSuccessful(_cloningProvider.Clone(value.Value as T));
             }
 
             return ConditionalResult.CreateSuccessful(value.Value as T);

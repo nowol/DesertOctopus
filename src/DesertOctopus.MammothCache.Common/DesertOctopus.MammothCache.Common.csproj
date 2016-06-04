@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="CacheItemDefinition.cs" />
     <Compile Include="IFirstLevelCache.cs" />
+    <Compile Include="IFirstLevelCacheCloningProvider.cs" />
     <Compile Include="IFirstLevelCacheConfig.cs" />
     <Compile Include="IMammothCache.cs" />
     <Compile Include="IMammothCacheSerializationProvider.cs" />

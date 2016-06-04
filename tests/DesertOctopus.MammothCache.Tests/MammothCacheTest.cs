@@ -19,6 +19,7 @@ namespace DesertOctopus.MammothCache.Tests
         private CachingTestClass _testObject3;
         private byte[] _serializedTestObject;
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
+        private readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
 
         private RedisConnection _secondLevelCache;
         private string _redisConnectionString = "172.16.100.100";
@@ -34,7 +35,7 @@ namespace DesertOctopus.MammothCache.Tests
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 60;
 
-            _firstLevelCache = new SquirrelCache(_config);
+            _firstLevelCache = new SquirrelCache(_config, _noCloningProvider);
             _testObject = new CachingTestClass();
             _testObject2 = new CachingTestClass();
             _testObject3 = new CachingTestClass();
@@ -784,7 +785,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestMethod]
         public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
             var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -805,7 +806,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestMethod]
         public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
             var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
