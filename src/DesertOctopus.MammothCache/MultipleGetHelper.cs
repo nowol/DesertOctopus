@@ -29,7 +29,17 @@ namespace DesertOctopus.MammothCache
         {
             foreach (var kvp in items)
             {
-                _mammothCache.FirstLevelCache.Set(kvp.Key.Key, _mammothCache.SerializationProvider.Serialize(kvp.Value), ttl: kvp.Key.TimeToLive);
+                if (kvp.Value != null)
+                {
+                    if (_mammothCache.SerializationProvider.CanSerialize(kvp.Value.GetType()))
+                    {
+                        _mammothCache.FirstLevelCache.Set(kvp.Key.Key, _mammothCache.SerializationProvider.Serialize(kvp.Value), ttl: kvp.Key.TimeToLive);
+                    }
+                    else
+                    {
+                        _mammothCache.NonSerializableCache.Set(kvp.Key.Key, kvp.Value, ttl: kvp.Key.TimeToLive);
+                    }
+                }
             }
         }
 
@@ -45,14 +55,13 @@ namespace DesertOctopus.MammothCache
             where T : class
         {
             var arrayKeys = keys.ToArray();
-            var firstLevelCachedItem = GetItemsFromFirstLevelCache<T>(arrayKeys);
-            var result = Get<T>(firstLevelCachedItem.ItemsToGetFromSecondLevelCache);
-            AddToDictionary(firstLevelCachedItem.ItemsFromFirstLevelCache, result);
+            var result = Get<T>(arrayKeys);
 
             var itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
             if (itemsStillMissingFromCache.Length > 0)
             {
                 var itemsFromAction = getAction(itemsStillMissingFromCache);
+                _mammothCache.Set(itemsFromAction);
                 AddToDictionary(itemsFromAction, result);
                 AddItemsToFirstLevelCache(itemsFromAction);
             }
@@ -65,14 +74,14 @@ namespace DesertOctopus.MammothCache
             where T : class
         {
             var arrayKeys = keys.ToArray();
-            var firstLevelCachedItem = GetItemsFromFirstLevelCache<T>(arrayKeys);
-            var result = await GetAsync<T>(firstLevelCachedItem.ItemsToGetFromSecondLevelCache).ConfigureAwait(false);
-            AddToDictionary(firstLevelCachedItem.ItemsFromFirstLevelCache, result);
+
+            var result = await GetAsync<T>(arrayKeys).ConfigureAwait(false);
 
             var itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
             if (itemsStillMissingFromCache.Length > 0)
             {
                 var itemsFromAction = await getActionAsync(itemsStillMissingFromCache).ConfigureAwait(false);
+                await _mammothCache.SetAsync(itemsFromAction).ConfigureAwait(false);
                 AddToDictionary(itemsFromAction, result);
                 AddItemsToFirstLevelCache(itemsFromAction);
             }
@@ -80,21 +89,29 @@ namespace DesertOctopus.MammothCache
             return result;
         }
 
-        private KeysAnalyzerFromFirstLevelCache<T> GetItemsFromFirstLevelCache<T>(CacheItemDefinition[] keys)
+        private KeysAnalyzerFromFirstLevelCache<T> GetItemsFromFirstLevelCache<T>(ICollection<CacheItemDefinition> keys)
             where T : class
         {
             var result = new KeysAnalyzerFromFirstLevelCache<T>();
 
             foreach (var cacheItemDefinition in keys)
             {
-                var cachedItemResult = _mammothCache.FirstLevelCache.Get<T>(cacheItemDefinition.Key);
+                var cachedItemResult = _mammothCache.NonSerializableCache.Get<T>(cacheItemDefinition.Key);
                 if (cachedItemResult.IsSuccessful)
                 {
                     result.ItemsFromFirstLevelCache.Add(cacheItemDefinition, cachedItemResult.Value);
                 }
                 else
                 {
-                    result.ItemsToGetFromSecondLevelCache.Add(cacheItemDefinition);
+                    cachedItemResult = _mammothCache.FirstLevelCache.Get<T>(cacheItemDefinition.Key);
+                    if (cachedItemResult.IsSuccessful)
+                    {
+                        result.ItemsFromFirstLevelCache.Add(cacheItemDefinition, cachedItemResult.Value);
+                    }
+                    else
+                    {
+                        result.ItemsToGetFromSecondLevelCache.Add(cacheItemDefinition);
+                    }
                 }
             }
 
@@ -118,15 +135,23 @@ namespace DesertOctopus.MammothCache
         public Dictionary<CacheItemDefinition, T> Get<T>(ICollection<CacheItemDefinition> keys)
             where T : class
         {
-            var itemsFromSecondLevelCache = _mammothCache.SecondLevelCache.Get(keys);
-            return ConvertItemsFromSecondLevelCacheToDeserializedDictionary<T>(itemsFromSecondLevelCache);
+            var firstLevelCachedItem = GetItemsFromFirstLevelCache<T>(keys);
+            var itemsFromSecondLevelCache = _mammothCache.SecondLevelCache.Get(firstLevelCachedItem.ItemsToGetFromSecondLevelCache);
+            var result = ConvertItemsFromSecondLevelCacheToDeserializedDictionary<T>(itemsFromSecondLevelCache);
+            AddToDictionary(firstLevelCachedItem.ItemsFromFirstLevelCache, result);
+
+            return result;
         }
 
         public async Task<Dictionary<CacheItemDefinition, T>> GetAsync<T>(ICollection<CacheItemDefinition> keys)
             where T : class
         {
-            var itemsFromSecondLevelCache = await _mammothCache.SecondLevelCache.GetAsync(keys).ConfigureAwait(false);
-            return ConvertItemsFromSecondLevelCacheToDeserializedDictionary<T>(itemsFromSecondLevelCache);
+            var firstLevelCachedItem = GetItemsFromFirstLevelCache<T>(keys);
+            var itemsFromSecondLevelCache = await _mammothCache.SecondLevelCache.GetAsync(firstLevelCachedItem.ItemsToGetFromSecondLevelCache).ConfigureAwait(false);
+            var result = ConvertItemsFromSecondLevelCacheToDeserializedDictionary<T>(itemsFromSecondLevelCache);
+            AddToDictionary(firstLevelCachedItem.ItemsFromFirstLevelCache, result);
+
+            return result;
         }
 
         private Dictionary<CacheItemDefinition, T> ConvertItemsFromSecondLevelCacheToDeserializedDictionary<T>(Dictionary<CacheItemDefinition, byte[]> itemsFromSecondLevelCache)
@@ -138,9 +163,13 @@ namespace DesertOctopus.MammothCache
             {
                 if (itemFromSll.Value != null)
                 {
-                    var value = _mammothCache.SerializationProvider.Deserialize<T>(itemFromSll.Value);
-                    result.Add(itemFromSll.Key, value);
-                    _mammothCache.FirstLevelCache.Set(itemFromSll.Key.Key, itemFromSll.Value, ttl: itemFromSll.Key.TimeToLive);
+                    var value = _mammothCache.SerializationProvider.Deserialize(itemFromSll.Value);
+
+                    if (!(value is NonSerializableObjectPlaceHolder))
+                    {
+                        result.Add(itemFromSll.Key, value as T);
+                        _mammothCache.FirstLevelCache.Set(itemFromSll.Key.Key, itemFromSll.Value, ttl: itemFromSll.Key.TimeToLive);
+                    }
                 }
             }
 

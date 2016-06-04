@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
@@ -20,6 +21,10 @@ namespace DesertOctopus.MammothCache.Tests
         private byte[] _serializedTestObject;
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
         private readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
+        private readonly INonSerializableCache _nonSerializableCache = new NonSerializableCache();
+        private readonly NotSerializableTestClass _nonSerializableTestObject = new NotSerializableTestClass();
+        private readonly NotSerializableTestClass _nonSerializableTestObject2 = new NotSerializableTestClass();
+        private readonly NotSerializableTestClass _nonSerializableTestObject3 = new NotSerializableTestClass();
 
         private RedisConnection _secondLevelCache;
         private string _redisConnectionString = "172.16.100.100";
@@ -45,7 +50,7 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
 
             _mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
-            _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _mammothCacheSerializationProvider);
+            _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _nonSerializableCache, _mammothCacheSerializationProvider);
         }
         
         [TestCleanup]
@@ -343,6 +348,11 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(_testObject.Value, value.Value);
             Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+
+            var bytes = await _secondLevelCache.GetAsync(key).ConfigureAwait(false);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
+            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
         }
 
         [TestMethod]
@@ -361,6 +371,11 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(_testObject.Value, value.Value);
             Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+
+            var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
+            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
         }
 
         [TestMethod]
@@ -437,6 +452,11 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
             Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+
+            var bytes = await _secondLevelCache.GetAsync(key1).ConfigureAwait(false);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
+            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
         }
 
         [TestMethod]
@@ -467,6 +487,11 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
             Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+
+            var bytes = _secondLevelCache.Get(key1);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
+            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
         }
 
         [TestMethod]
@@ -787,7 +812,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
             var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
-            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
             _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
@@ -808,7 +833,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
             var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
-            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, new MammothCacheSerializationProvider());
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
             _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
@@ -934,5 +959,388 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
 
-    }
+
+
+
+        [TestMethod]
+        public async Task CachingANonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
+
+            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+        }
+
+        [TestMethod]
+        public void CachingANonSerializableObjectShouldStoreItInNonSerializableCacheSync()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _nonSerializableTestObject);
+
+            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+        }
+
+        [TestMethod]
+        public async Task CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+            
+            await _cache.SetAsync(values).ConfigureAwait(false);
+
+            Assert.AreEqual(2, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            foreach (var key in new [] { key1, key2 })
+            {
+                var bytes = _secondLevelCache.Get(key);
+                Assert.IsNotNull(bytes);
+                var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            }
+        }
+
+        [TestMethod]
+        public void CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+            
+            _cache.Set(values);
+
+            Assert.AreEqual(2, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            foreach (var key in new [] { key1, key2 })
+            {
+                var bytes = _secondLevelCache.Get(key);
+                Assert.IsNotNull(bytes);
+                var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            }
+        }
+
+        [TestMethod]
+        public async Task RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+            await _cache.SetAsync(values).ConfigureAwait(false);
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            var objs = await _cache.GetAsync<NotSerializableTestClass>(keys).ConfigureAwait(false);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
+        }
+
+        [TestMethod]
+        public void RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+            _cache.Set(values);
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            var objs = _cache.Get<NotSerializableTestClass>(keys);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
+        }
+
+        [TestMethod]
+        public async Task RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
+            var obj = await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+        }
+
+        [TestMethod]
+        public void RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceSync()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _nonSerializableTestObject);
+            var obj = _cache.Get<NotSerializableTestClass>(key);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+        }
+
+        [TestMethod]
+        public async Task RetrievingANonSerializableObjectShouldReturnTheSameReferenceAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
+            var obj = await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+        }
+
+        [TestMethod]
+        public void RetrievingANonSerializableObjectShouldReturnTheSameReferenceSync()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _nonSerializableTestObject);
+            var obj = _cache.Get<NotSerializableTestClass>(key);
+            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+        }
+
+        [TestMethod]
+        public async Task RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
+            _nonSerializableCache.RemoveAll();
+            Assert.IsNull(await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false));
+            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public void RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _nonSerializableTestObject);
+            _nonSerializableCache.RemoveAll();
+            Assert.IsNull(_cache.Get<NotSerializableTestClass>(key));
+            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        public async Task RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+            await _cache.SetAsync(values).ConfigureAwait(false);
+            _nonSerializableCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            var objs = await _cache.GetAsync<NotSerializableTestClass>(keys).ConfigureAwait(false);
+            Assert.AreEqual(0, objs.Count);
+        }
+
+        [TestMethod]
+        public void RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
+            values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+            _cache.Set(values);
+            _nonSerializableCache.RemoveAll();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1 });
+            keys.Add(new CacheItemDefinition { Key = key2 });
+
+            var objs = _cache.Get<NotSerializableTestClass>(keys);
+            Assert.AreEqual(0, objs.Count);
+        }
+
+        [TestMethod]
+        public void RemovingANonSerializableObjectPlaceHolderFromSecondLevelCacheShouldRemoveItFromTheNonSerializableCache()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(5));
+            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+
+            WaitFor(10);
+
+            Assert.IsFalse(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+        }
+
+        [TestMethod]
+        public void ANonSerializableSystemTypeShouldBeStoredInTheNonSerializableCache()
+        {
+            using (var ms = new MemoryStream())
+            {
+                var obj = new System.IO.BinaryReader(ms);
+
+                var key = RandomKey();
+                _cache.Set(key, obj);
+                Assert.IsNull(_cache.Get<NotSerializableTestClass>(key));
+                Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
+                Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+                var bytes = _secondLevelCache.Get(key);
+                Assert.IsNotNull(bytes);
+                var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            }
+        }
+
+        [TestMethod]
+        public async Task ANonSerializableObjectShouldBeReturnedByGetOrAddAsync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var value = await _cache.GetOrAddAsync<NotSerializableTestClass>(key,
+                                                                     () =>
+                                                                     {
+                                                                         delegateWasCalled = true;
+                                                                         return Task.FromResult(_nonSerializableTestObject);
+                                                                     },
+                                                                     TimeSpan.FromSeconds(30))
+                                    .ConfigureAwait(false);
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(_nonSerializableTestObject.Value, value.Value);
+            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+        }
+
+        [TestMethod]
+        public void ANonSerializableObjectShouldBeReturnedByGetOrAddSync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var value =  _cache.GetOrAdd<NotSerializableTestClass>(key,
+                                                           () =>
+                                                           {
+                                                               delegateWasCalled = true;
+                                                               return _nonSerializableTestObject;
+                                                           },
+                                                           TimeSpan.FromSeconds(30));
+            Assert.IsTrue(delegateWasCalled);
+            Assert.AreEqual(_nonSerializableTestObject.Value, value.Value);
+            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.IsFalse(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+        }
+
+        [TestMethod]
+        public async Task MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddAsync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = await _cache.GetOrAddAsync<NotSerializableTestClass>(keys,
+                                                                              definitions =>
+                                                                              {
+                                                                                  delegateWasCalled = true;
+                                                                                  var results = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+                                                                                  results.Add(definitions.Single(x => x.Key == key1), _nonSerializableTestObject);
+
+                                                                                  return Task.FromResult(results);
+                                                                              })
+                                     .ConfigureAwait(false);
+
+            Assert.AreEqual(1, values.Count);
+            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            var bytes = _secondLevelCache.Get(key1);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+
+            Assert.IsNull(_secondLevelCache.Get(key2));
+            Assert.IsNull(_secondLevelCache.Get(key3));
+        }
+
+        [TestMethod]
+        public void MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddSync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values =  _cache.GetOrAdd<NotSerializableTestClass>(keys,
+                                                                    definitions =>
+                                                                    {
+                                                                        delegateWasCalled = true;
+                                                                        var results = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+                                                                        results.Add(definitions.Single(x => x.Key == key1), _nonSerializableTestObject);
+
+                                                                        return results;
+                                                                    });
+
+            Assert.AreEqual(1, values.Count);
+            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            var bytes = _secondLevelCache.Get(key1);
+            Assert.IsNotNull(bytes);
+            var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
+            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+
+            Assert.IsNull(_secondLevelCache.Get(key2));
+            Assert.IsNull(_secondLevelCache.Get(key3));
+        }
+        
+
+        /*
+                 storing a non serializable object should store a marker in 1st and 2nd level cache
+
+                removing key in redis should remove key in nonserializablecache
+
+                getting an object placeholder from redis should not store it in first level cache and should return null
+
+                do for multiple get/set / async/sync
+
+            get or add
+
+            nonserialized cache ttl
+
+                // are events serialized?
+                 */
+
+        }
 }

@@ -12,6 +12,8 @@ namespace DesertOctopus.MammothCache
     /// </summary>
     public sealed class MammothCache : IMammothCache, IDisposable
     {
+        internal INonSerializableCache NonSerializableCache { get; private set; }
+
         internal IFirstLevelCache FirstLevelCache { get; private set; }
 
         internal ISecondLevelCache SecondLevelCache { get; private set; }
@@ -25,11 +27,14 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         /// <param name="firstLevelCache">First level of cache</param>
         /// <param name="secondLevelCache">Second level of cache</param>
+        /// <param name="nonSerializableCache">Cache for objects that cannot be serialized</param>
         /// <param name="serializationProvider">Serialization provider</param>
         public MammothCache(IFirstLevelCache firstLevelCache,
                             ISecondLevelCache secondLevelCache,
+                            INonSerializableCache nonSerializableCache,
                             IMammothCacheSerializationProvider serializationProvider)
         {
+            NonSerializableCache = nonSerializableCache;
             FirstLevelCache = firstLevelCache;
             SecondLevelCache = secondLevelCache;
             SerializationProvider = serializationProvider;
@@ -65,6 +70,12 @@ namespace DesertOctopus.MammothCache
         public T Get<T>(string key)
             where T : class
         {
+            var nonSerializableResult = NonSerializableCache.Get<T>(key);
+            if (nonSerializableResult.IsSuccessful)
+            {
+                return nonSerializableResult.Value;
+            }
+
             var firstLevelResult = FirstLevelCache.Get<T>(key);
             if (firstLevelResult.IsSuccessful)
             {
@@ -74,9 +85,17 @@ namespace DesertOctopus.MammothCache
             var bytes = SecondLevelCache.Get(key);
             if (bytes != null)
             {
+                var deserializedValue = SerializationProvider.Deserialize(bytes);
+
+                if (deserializedValue is NonSerializableObjectPlaceHolder)
+                {
+                    return null;
+                }
+
                 var ttl = SecondLevelCache.GetTimeToLive(key);
                 FirstLevelCache.Set(key, bytes, ttl: ttl);
-                return SerializationProvider.Deserialize<T>(bytes);
+
+                return deserializedValue as T;
             }
 
             return default(T);
@@ -86,6 +105,12 @@ namespace DesertOctopus.MammothCache
         public async Task<T> GetAsync<T>(string key)
             where T : class
         {
+            var nonSerializableResult = NonSerializableCache.Get<T>(key);
+            if (nonSerializableResult.IsSuccessful)
+            {
+                return nonSerializableResult.Value;
+            }
+
             var firstLevelResult = FirstLevelCache.Get<T>(key);
             if (firstLevelResult.IsSuccessful)
             {
@@ -95,9 +120,17 @@ namespace DesertOctopus.MammothCache
             var bytes = await SecondLevelCache.GetAsync(key).ConfigureAwait(false);
             if (bytes != null)
             {
+                var deserializedValue = SerializationProvider.Deserialize(bytes);
+
+                if (deserializedValue is NonSerializableObjectPlaceHolder)
+                {
+                    return null;
+                }
+
                 var ttl = await SecondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
                 FirstLevelCache.Set(key, bytes, ttl: ttl);
-                return SerializationProvider.Deserialize<T>(bytes);
+
+                return deserializedValue as T;
             }
 
             return default(T);
@@ -114,10 +147,21 @@ namespace DesertOctopus.MammothCache
                 return;
             }
 
-            var bytes = SerializationProvider.Serialize(value);
+            if (SerializationProvider.CanSerialize(value.GetType()))
+            {
+                byte[] bytes = SerializationProvider.Serialize(value);
 
-            FirstLevelCache.Set(key, bytes, ttl: ttl);
-            SecondLevelCache.Set(key, bytes, ttl: ttl);
+                FirstLevelCache.Set(key, bytes, ttl: ttl);
+                SecondLevelCache.Set(key, bytes, ttl: ttl);
+            }
+            else
+            {
+                var ph = new NonSerializableObjectPlaceHolder();
+                NonSerializableCache.Set(key, value, ttl: ttl);
+
+                byte[] bytes = SerializationProvider.Serialize(ph);
+                SecondLevelCache.Set(key, bytes, ttl: ttl);
+            }
         }
 
         /// <inheritdoc/>
@@ -137,8 +181,18 @@ namespace DesertOctopus.MammothCache
             {
                 if (kvp.Value != null)
                 {
-                    serializedValues.Add(kvp.Key, SerializationProvider.Serialize(kvp.Value));
-                    FirstLevelCache.Set(kvp.Key.Key, serializedValues[kvp.Key], ttl: kvp.Key.TimeToLive);
+                    if (SerializationProvider.CanSerialize(kvp.Value.GetType()))
+                    {
+                        serializedValues.Add(kvp.Key, SerializationProvider.Serialize(kvp.Value));
+                        FirstLevelCache.Set(kvp.Key.Key, serializedValues[kvp.Key], ttl: kvp.Key.TimeToLive);
+                    }
+                    else
+                    {
+                        var ph = new NonSerializableObjectPlaceHolder();
+                        NonSerializableCache.Set(kvp.Key.Key, kvp.Value, ttl: kvp.Key.TimeToLive);
+                        byte[] bytes = SerializationProvider.Serialize(ph);
+                        serializedValues.Add(kvp.Key, bytes);
+                    }
                 }
             }
 
@@ -156,10 +210,21 @@ namespace DesertOctopus.MammothCache
                 return Task.FromResult(true);
             }
 
-            var bytes = SerializationProvider.Serialize(value);
+            if (SerializationProvider.CanSerialize(value.GetType()))
+            {
+                var bytes = SerializationProvider.Serialize(value);
 
-            FirstLevelCache.Set(key, bytes, ttl: ttl);
-            return SecondLevelCache.SetAsync(key, bytes, ttl: ttl);
+                FirstLevelCache.Set(key, bytes, ttl: ttl);
+                return SecondLevelCache.SetAsync(key, bytes, ttl: ttl);
+            }
+            else
+            {
+                var ph = new NonSerializableObjectPlaceHolder();
+                NonSerializableCache.Set(key, value, ttl: ttl);
+
+                byte[] bytes = SerializationProvider.Serialize(ph);
+                return SecondLevelCache.SetAsync(key, bytes, ttl: ttl);
+            }
         }
 
         /// <inheritdoc/>

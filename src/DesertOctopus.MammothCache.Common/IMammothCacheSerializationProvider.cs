@@ -18,7 +18,8 @@ namespace DesertOctopus.MammothCache.Common
             where T : class;
 
         /// <summary>
-        /// Deserialize the byte array to recreate the object
+        /// Deserialize the byte array to recreate the object.
+        /// This method can only be used with deserializers that stores the type to deserialize in their payload.
         /// </summary>
         /// <param name="bytes">Byte array containing the serialized object</param>
         /// <returns>The deserialized object</returns>
@@ -32,5 +33,12 @@ namespace DesertOctopus.MammothCache.Common
         /// <returns>The deserialized object</returns>
         T Deserialize<T>(byte[] bytes)
             where T : class;
+
+        /// <summary>
+        /// Detect if a type can be serialized
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        /// <returns>True if the type can be serialized otherwise false</returns>
+        bool CanSerialize(Type type);
     }
 }

@@ -54,11 +54,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheItemDefinition.cs" />
+    <Compile Include="NotSerializableAttribute.cs" />
     <Compile Include="IFirstLevelCache.cs" />
     <Compile Include="IFirstLevelCacheCloningProvider.cs" />
     <Compile Include="IFirstLevelCacheConfig.cs" />
     <Compile Include="IMammothCache.cs" />
     <Compile Include="IMammothCacheSerializationProvider.cs" />
+    <Compile Include="INonSerializableCache.cs" />
     <Compile Include="ISecondLevelCache.cs" />
     <Compile Include="ItemEvictedFromCacheEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

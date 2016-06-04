@@ -63,6 +63,8 @@
     <Compile Include="MultipleGetHelper.cs" />
     <Compile Include="NamespacesBasedCloningProvider.cs" />
     <Compile Include="NoCloningProvider.cs" />
+    <Compile Include="NonSerializableCache.cs" />
+    <Compile Include="NonSerializableObjectPlaceHolder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SquirrelCache.cs" />
   </ItemGroup>
