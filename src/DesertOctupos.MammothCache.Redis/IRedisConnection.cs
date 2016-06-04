@@ -35,5 +35,23 @@ namespace DesertOctupos.MammothCache.Redis
         Dictionary<CacheItemDefinition, byte[]> Get(ICollection<CacheItemDefinition> keys);
         Task<Dictionary<CacheItemDefinition, byte[]>> GetAsync(ICollection<CacheItemDefinition> keys);
 
+        
+        /// <summary>
+        /// Lock an object
+        /// </summary>
+        /// <param name="key">Key of the object to lock</param>
+        /// <param name="lockExpiry">Time that the lock will be acquired</param>
+        /// <param name="timeout">Timeout represents the time to wait for acquiring the lock</param>
+        /// <returns>An object that must be disposed of to release the lock</returns>
+        IDisposable AcquireLock(string key, TimeSpan lockExpiry, TimeSpan timeout);
+
+        /// <summary>
+        /// Lock an object
+        /// </summary>
+        /// <param name="key">Key of the object to lock</param>
+        /// <param name="lockExpiry">Time that the lock will be acquired</param>
+        /// <param name="timeout">Timeout represents the time to wait for acquiring the lock</param>
+        /// <returns>An object that must be disposed of to release the lock as an awaitable task</returns>
+        Task<IDisposable> AcquireLockAsync(string key, TimeSpan lockExpiry, TimeSpan timeout);
     }
 }

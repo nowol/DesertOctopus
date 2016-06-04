@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus;
 using DesertOctupos.MammothCache.Redis.Tests.Models;
@@ -42,6 +44,15 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         private static string RandomKey()
         {
             return Guid.NewGuid().ToString();
+        }
+
+        private void WaitFor(int seconds)
+        {
+            var sw = Stopwatch.StartNew();
+            while (sw.Elapsed.TotalSeconds <= seconds)
+            {
+                Thread.Sleep(50);
+            }
         }
 
         [TestMethod]
@@ -168,6 +179,101 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         {
             _connection.Dispose();
             _connection.Dispose();
+        }
+
+        [TestMethod]
+        public async Task AcquiringAndReleasingALockShouldCreateTheKeyInRedisAsync()
+        {
+            var key = RandomKey();
+            using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
+            {
+                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+            }
+            Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+        }
+
+        [TestMethod]
+        public void AcquiringAndReleasingALockShouldCreateTheKeyInRedisSync()
+        {
+            var key = RandomKey();
+            using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
+            {
+                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+            }
+            Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+        }
+
+        [TestMethod]
+        public async Task LockExpireAfterAGivenTimeAsync()
+        {
+            var key = RandomKey();
+            using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
+            {
+                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+
+                WaitFor(5);
+
+                Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+            }
+        }
+
+        [TestMethod]
+        public void LockExpireAfterAGivenTimeSync()
+        {
+            var key = RandomKey();
+            using (_connection.AcquireLock(key, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30)))
+            {
+                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+
+                WaitFor(5);
+
+                Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(UnableToAcquireLockException))]
+        public async Task AcquiringALockASecondTimeWillThrowAnExceptionIfTheLockCannotBeAcquiredAsync()
+        {
+            var key = RandomKey();
+            using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
+            {
+                var lock2 = await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(UnableToAcquireLockException))]
+        public void AcquiringALockASecondTimeWillThrowAnExceptionIfTheLockCannotBeAcquiredSync()
+        {
+            var key = RandomKey();
+            using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
+            {
+                var lock2 = _connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2));
+            }
+        }
+
+        [TestMethod]
+        public void AcquireLockInDifferentThreadsAsync()
+        {
+            var key = RandomKey();
+            int counter = 0;
+            bool inLock = false;
+            Parallel.For(0,
+                         10,
+                         i =>
+                         {
+                             using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
+                             {
+                                 Interlocked.Increment(ref counter);
+                                 Assert.IsFalse(inLock);
+                                 inLock = true;
+                                 Thread.Sleep(1000);
+                                 inLock = false;
+                             }
+                         });
+            Assert.IsFalse(inLock);
+            Assert.AreEqual(10, counter);
         }
     }
 }

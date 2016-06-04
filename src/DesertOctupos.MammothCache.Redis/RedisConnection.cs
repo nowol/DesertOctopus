@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,6 +22,7 @@ namespace DesertOctupos.MammothCache.Redis
         private readonly RetryPolicy _retryPolicy;
         private readonly RetryPolicy _retryPolicyAsync;
         private ISubscriber _subscriber;
+        private PolicyBuilder _baseRetryPolicy;
 
         public event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
 
@@ -28,16 +30,12 @@ namespace DesertOctupos.MammothCache.Redis
         {
             _connectionString = connectionString;
             _redisRetryPolicy = redisRetryPolicy;
-            _retryPolicy = Policy.Handle<TimeoutException>()
-                                 .Or<TimeoutException>()
-                                 .Or<SocketException>()
-                                 .Or<IOException>() // for async
-                                 .WaitAndRetry(_redisRetryPolicy.SleepDurations);
-            _retryPolicyAsync = Policy.Handle<TimeoutException>()
-                                      .Or<TimeoutException>()
-                                      .Or<SocketException>()
-                                      .Or<IOException>() // for async
-                                      .WaitAndRetryAsync(_redisRetryPolicy.SleepDurations);
+            _baseRetryPolicy = Policy.Handle<TimeoutException>()
+                                     .Or<TimeoutException>()
+                                     .Or<SocketException>()
+                                     .Or<IOException>();  // for async
+            _retryPolicy = _baseRetryPolicy.WaitAndRetry(_redisRetryPolicy.SleepDurations);
+            _retryPolicyAsync = _baseRetryPolicy.WaitAndRetryAsync(_redisRetryPolicy.SleepDurations);
 
             var options = ConfigurationOptions.Parse(connectionString);
             ConfigureIfMissing(options, "abortConnect", connectionString, o => { o.AbortOnConnectFail = false; });
@@ -95,19 +93,25 @@ namespace DesertOctupos.MammothCache.Redis
             }
         }
 
-        private RetryPolicy GetRetryPolicy()
+        internal PolicyBuilder GetBaseRetryPolicyBuilder()
+        {
+            GuardDisposed();
+            return _baseRetryPolicy;
+        }
+
+        internal RetryPolicy GetRetryPolicy()
         {
             GuardDisposed();
             return _retryPolicy;
         }
 
-        private RetryPolicy GetRetryPolicyAsync()
+        internal RetryPolicy GetRetryPolicyAsync()
         {
             GuardDisposed();
             return _retryPolicyAsync;
         }
 
-        private IDatabase GetDatabase()
+        internal IDatabase GetDatabase()
         {
             return _multiplexer.GetDatabase();
         }
@@ -319,6 +323,21 @@ namespace DesertOctupos.MammothCache.Redis
         public Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern = null)
         {
             return GetRetryPolicyAsync().ExecuteAsync(() => GetServer(_multiplexer).ConfigGetAsync(pattern));
+        }
+
+        public bool KeyExists(string key)
+        {
+            return GetRetryPolicy().Execute<bool>(() => GetDatabase().KeyExists(key));
+        }
+
+        public IDisposable AcquireLock(string key, TimeSpan lockExpiry, TimeSpan timeout)
+        {
+            return new RedisLock(this).AcquireLock(key, lockExpiry, timeout);
+        }
+
+        public Task<IDisposable> AcquireLockAsync(string key, TimeSpan lockExpiry, TimeSpan timeout)
+        {
+            return new RedisLock(this).AcquireLockAsync(key, lockExpiry, timeout);
         }
     }
 }
