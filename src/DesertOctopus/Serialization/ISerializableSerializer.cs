@@ -45,10 +45,6 @@ namespace DesertOctopus.Serialization
             variables.Add(iser);
 
             var getEnumeratorMethodInfo = SerializationInfoMIH.GetEnumerator();
-            if (getEnumeratorMethodInfo == null)
-            {
-                throw new Exception("Could not find GetEnumerator method.");
-            }
 
             var enumeratorMethod = Expression.Call(si, getEnumeratorMethodInfo);
 

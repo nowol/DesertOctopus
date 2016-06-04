@@ -155,6 +155,7 @@ namespace DesertOctopus.MammothCache
             }
 
             _cache.Dispose();
+            _isDisposed = true;
         }
     }
 }

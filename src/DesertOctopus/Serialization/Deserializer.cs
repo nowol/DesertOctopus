@@ -78,11 +78,7 @@ namespace DesertOctopus.Serialization
                 object value = deserializerMethod(ms, objs);
 
                 Debug.Assert(ms.Position == ms.Length, "Byte array was not read completely.");
-
-                if (value == null && !(type.Type.IsValueType || type.Type.IsPrimitive))
-                {
-                    throw new Exception("unable to deserialize?");
-                }
+                Debug.Assert(value != null, "unable to deserialize?");
 
                 return value;
             }

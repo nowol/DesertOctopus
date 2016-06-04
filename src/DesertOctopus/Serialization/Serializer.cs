@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -156,14 +157,8 @@ namespace DesertOctopus.Serialization
             var primitiveWriter = GetPrimitiveWriter(type);
             if (primitiveWriter != null)
             {
-                if (type.IsPrimitive || type.IsValueType)
-                {
-                    expressions.Add(primitiveWriter(outputStream, Expression.Unbox(objToSerialize, type)));
-                }
-                else
-                {
-                    expressions.Add(primitiveWriter(outputStream, objToSerialize));
-                }
+                Debug.Assert(type.IsPrimitive || type.IsValueType, "Value is not a primitive");
+                expressions.Add(primitiveWriter(outputStream, Expression.Unbox(objToSerialize, type)));
             }
             else if (type == typeof(string))
             {

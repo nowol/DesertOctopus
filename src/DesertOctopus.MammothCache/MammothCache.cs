@@ -48,6 +48,7 @@ namespace DesertOctopus.MammothCache
             }
 
             SecondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
+            _isDisposed = true;
         }
 
         private void SubscribeToEvents()

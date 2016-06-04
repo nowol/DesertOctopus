@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.Exceptions;
@@ -175,6 +176,21 @@ namespace DesertOctopus.Tests
             Assert.IsNull(duplicatedValueProperty6AsArray[1]);
             Assert.AreEqual(list[2].PublicPropertyValue, duplicatedValueProperty6AsArray[2].PublicPropertyValue);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidSerializationVersionException))]
+        public void UnexpectedVersionHeaderShouldThrowAnException()
+        {
+            ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
+            var bytes = Serializer.Serialize(instance);
+
+            // this is a hackish way to change the version of a serialized object
+            bytes[0] = (byte) (bytes[0] + 1);
+
+            Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
+        }
+
+
 
 
         //[TestMethod]

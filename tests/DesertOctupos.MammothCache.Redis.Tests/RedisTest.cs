@@ -29,8 +29,14 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         [TestCleanup]
         public void Cleanup()
         {
-            _connection.RemoveAll();
-            _connection.Dispose();
+            try
+            {
+                _connection.RemoveAll();
+                _connection.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
 
         private static string RandomKey()
@@ -156,5 +162,12 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             Assert.AreEqual(1, config.Length);
         }
 
+        [TestMethod]
+        [ExpectedException(typeof(ObjectDisposedException))]
+        public void DisposingTheConnectionTwiceShouldThrowAnException()
+        {
+            _connection.Dispose();
+            _connection.Dispose();
+        }
     }
 }

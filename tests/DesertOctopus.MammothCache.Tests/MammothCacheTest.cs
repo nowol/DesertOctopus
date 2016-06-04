@@ -25,6 +25,7 @@ namespace DesertOctopus.MammothCache.Tests
         private IRedisRetryPolicy _redisRetryPolicy;
 
         private MammothCache _cache;
+        private MammothCacheSerializationProvider _mammothCacheSerializationProvider;
 
         [TestInitialize]
         public void Initialize()
@@ -42,15 +43,31 @@ namespace DesertOctopus.MammothCache.Tests
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
             _secondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
 
-            _cache = new MammothCache(_firstLevelCache, _secondLevelCache, new MammothCacheSerializationProvider());
+            _mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
+            _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _mammothCacheSerializationProvider);
         }
         
         [TestCleanup]
         public void Cleanup()
         {
-            _firstLevelCache.Dispose();
+            try
+            {
+                _firstLevelCache.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
             _secondLevelCache.RemoveAll();
             _secondLevelCache.Dispose();
+
+            try
+            {
+                _cache.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
 
         [TestMethod]
@@ -807,5 +824,114 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
         }
+
+        [TestMethod]
+        public async Task RemoveAllAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+
+            await _cache.RemoveAllAsync().ConfigureAwait(false);
+
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.IsNull(_secondLevelCache.Get(key));
+        }
+
+        [TestMethod]
+        public void RemoveAll()
+        {
+            var key = RandomKey();
+            _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
+
+            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            var bytes = _secondLevelCache.Get(key);
+            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+
+            _cache.RemoveAll();
+
+            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.IsNull(_secondLevelCache.Get(key));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ObjectDisposedException))]
+        public void DisposingTheCacheTwiceShouldThrowAnException()
+        {
+            _cache.Dispose();
+            _cache.Dispose();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ObjectDisposedException))]
+        public void DisposingSquirrelCacheTwiceShouldThrowAnException()
+        {
+            _firstLevelCache.Dispose();
+            _firstLevelCache.Dispose();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public async Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
+        {
+            await _cache.GetOrAddAsync<CachingTestClass>(RandomKey(), null).ConfigureAwait(false);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionSync()
+        {
+            _cache.GetOrAdd<CachingTestClass>(RandomKey(), null);
+        }
+
+        [TestMethod]
+        public async Task ItemIsFetchedFromFirstLevelCacheAsync()
+        {
+            var key = RandomKey();
+            _firstLevelCache.Set(key, _serializedTestObject);
+
+            var obj = await _cache.GetAsync<CachingTestClass>(key).ConfigureAwait(false);
+            Assert.AreEqual(_testObject.Value, obj.Value);
+        }
+
+        [TestMethod]
+        public void ItemIsFetchedFromFirstLevelCacheSync()
+        {
+            var key = RandomKey();
+            _firstLevelCache.Set(key, _serializedTestObject);
+
+            var obj = _cache.Get<CachingTestClass>(key);
+            Assert.AreEqual(_testObject.Value, obj.Value);
+        }
+
+        [TestMethod]
+        public async Task CachingANullObjectDoesNothingAsync()
+        {
+            var key = RandomKey();
+            await _cache.SetAsync<CachingTestClass>(key, null).ConfigureAwait(false);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.IsNull(_secondLevelCache.Get(key));
+        }
+
+        [TestMethod]
+        public void CachingANullObjectDoesNothingSync()
+        {
+            var key = RandomKey();
+            _cache.Set<CachingTestClass>(key, null);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.IsNull(_secondLevelCache.Get(key));
+        }
+
+        [TestMethod]
+        public void DeserializeObject()
+        {
+            var obj = _mammothCacheSerializationProvider.Deserialize(_serializedTestObject) as CachingTestClass;
+            Assert.AreEqual(_testObject.Value, obj.Value);
+        }
+
+
     }
 }

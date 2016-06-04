@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -43,7 +44,10 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializationInfo.GetEnumerator</returns>
         public static MethodInfo GetEnumerator()
         {
-            return typeof(SerializationInfo).GetMethod("GetEnumerator", BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public, null, new Type[0], new ParameterModifier[0]);
+            var getEnumeratorMethodInfo = typeof(SerializationInfo).GetMethod("GetEnumerator", BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public, null, new Type[0], new ParameterModifier[0]);
+            Debug.Assert(getEnumeratorMethodInfo != null, "Could not find GetEnumerator method.");
+
+            return getEnumeratorMethodInfo;
         }
     }
 }
