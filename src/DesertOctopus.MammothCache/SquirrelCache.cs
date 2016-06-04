@@ -159,8 +159,18 @@ namespace DesertOctopus.MammothCache
                 throw new ObjectDisposedException(nameof(SquirrelCache));
             }
 
+            _cleanUpTimer.Stop();
+            _cleanUpTimer.Dispose();
             _cache.Dispose();
             _isDisposed = true;
+        }
+
+        /// <summary>
+        /// Gets the list of cached objects ordered by age.
+        /// </summary>
+        public CachedObjectQueue CachedObjectsByAge
+        {
+            get { return _cachedObjectsByAge; }
         }
     }
 }

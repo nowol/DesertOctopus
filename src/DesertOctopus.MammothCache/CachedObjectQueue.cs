@@ -5,11 +5,17 @@ using System.Threading;
 
 namespace DesertOctopus.MammothCache
 {
-    internal sealed class CachedObjectQueue
+    /// <summary>
+    /// List of queued items ordered by age
+    /// </summary>
+    public sealed class CachedObjectQueue
     {
         private readonly LinkedList<CachedObject> _cachedObjects = new LinkedList<CachedObject>();
         private readonly Semaphore _lockRoot = new Semaphore(1, 1);
 
+        /// <summary>
+        /// Gets the number of items in the cache
+        /// </summary>
         public int Count
         {
             get
@@ -26,6 +32,10 @@ namespace DesertOctopus.MammothCache
             }
         }
 
+        /// <summary>
+        /// Remove the oldest item from the list and return it
+        /// </summary>
+        /// <returns>Removed item</returns>
         public CachedObject Pop()
         {
             _lockRoot.WaitOne();
@@ -51,6 +61,10 @@ namespace DesertOctopus.MammothCache
             }
         }
 
+        /// <summary>
+        /// Add an item to the list
+        /// </summary>
+        /// <param name="value">Item to add</param>
         public void Add(CachedObject value)
         {
             _lockRoot.WaitOne();
@@ -64,6 +78,10 @@ namespace DesertOctopus.MammothCache
             }
         }
 
+        /// <summary>
+        /// Remove an item from the list
+        /// </summary>
+        /// <param name="value">Item to remove</param>
         public void Remove(CachedObject value)
         {
             _lockRoot.WaitOne();

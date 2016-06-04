@@ -248,5 +248,21 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.IsNotNull(obj2_1);
             Assert.IsTrue(ReferenceEquals(obj2_1, obj2_2));
         }
+
+        [TestMethod]
+        public void ObjectsRemoveFromSquirrelCacheAreRemovedFromTheByAgeCache()
+        {
+            var key = Guid.NewGuid().ToString();
+            _cacheRepository.Set(key, _serializedTestObject);
+            Assert.AreEqual(1, _cacheRepository.CachedObjectsByAge.Count);
+
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
+
+            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+
+            WaitFor(1);
+
+            Assert.AreEqual(0, _cacheRepository.CachedObjectsByAge.Count);
+        }
     }
 }
