@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace DesertOctupos.MammothCache.Redis
 {
+    /// <summary>
+    /// Provide a way to lock keys in Redis
+    /// </summary>
     public sealed class RedisLock : IDisposable
     {
+        private const string LockPrefix = "LOCK:";
         private readonly RedisConnection _connection;
         private readonly string _lockValue = Guid.NewGuid().ToString();
-        private const string LockPrefix = "LOCK:";
         private bool _lockIsAcquired = false;
         private string _key;
 
@@ -19,8 +22,15 @@ namespace DesertOctupos.MammothCache.Redis
             _connection = connection;
         }
 
+        /// <summary>
+        /// Acquire a lock synchronously
+        /// </summary>
+        /// <param name="key">Key to lock</param>
+        /// <param name="lockExpiry">Time that the lock will be hold</param>
+        /// <param name="timeout">Time wait while acquiring the lock</param>
+        /// <returns>A disposable object that represents the lock</returns>
         public async Task<IDisposable> AcquireLockAsync(string key,
-                                                        TimeSpan lockExpiry, 
+                                                        TimeSpan lockExpiry,
                                                         TimeSpan timeout)
         {
             _key = key;
@@ -45,8 +55,15 @@ namespace DesertOctupos.MammothCache.Redis
             return this;
         }
 
+        /// <summary>
+        /// Acquire a lock synchronously
+        /// </summary>
+        /// <param name="key">Key to lock</param>
+        /// <param name="lockExpiry">Time that the lock will be hold</param>
+        /// <param name="timeout">Time wait while acquiring the lock</param>
+        /// <returns>A disposable object that represents the lock as an awaitable task</returns>
         public IDisposable AcquireLock(string key,
-                                       TimeSpan lockExpiry, 
+                                       TimeSpan lockExpiry,
                                        TimeSpan timeout)
         {
             _key = key;
@@ -70,6 +87,9 @@ namespace DesertOctupos.MammothCache.Redis
             return this;
         }
 
+        /// <summary>
+        /// Release the Redis lock
+        /// </summary>
         public void Dispose()
         {
             if (_lockIsAcquired)

@@ -187,7 +187,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
             {
-                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+                Assert.IsTrue(await _connection.KeyExistsAsync("LOCK:" + key).ConfigureAwait(false));
             }
             Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
         }

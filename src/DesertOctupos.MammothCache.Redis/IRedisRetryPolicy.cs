@@ -4,23 +4,14 @@ using System.Linq;
 
 namespace DesertOctupos.MammothCache.Redis
 {
+    /// <summary>
+    /// Represents the contract for classes that wishes to provide a retry policy for Redis
+    /// </summary>
     public interface IRedisRetryPolicy
     {
+        /// <summary>
+        /// Gets the time to sleep when retrying
+        /// </summary>
         ICollection<TimeSpan> SleepDurations { get; }
-    }
-
-    public class RedisRetryPolicy : IRedisRetryPolicy
-    {
-        public ICollection<TimeSpan> SleepDurations { get; }
-
-        public RedisRetryPolicy(IEnumerable<TimeSpan> sleepDurations)
-        {
-            SleepDurations = sleepDurations.ToArray();
-        }
-
-        public RedisRetryPolicy(params int[] sleepDurationsInMs)
-        {
-            SleepDurations = sleepDurationsInMs.Select(x => TimeSpan.FromMilliseconds(x)).ToArray();
-        }
     }
 }

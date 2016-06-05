@@ -1257,7 +1257,9 @@ namespace DesertOctopus.MammothCache.Tests
         [TestMethod]
         public async Task MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddAsync()
         {
+#pragma warning disable 219
             bool delegateWasCalled = false;
+#pragma warning restore 219
             var key1 = RandomKey();
             var key2 = RandomKey();
             var key3 = RandomKey();
@@ -1293,7 +1295,9 @@ namespace DesertOctopus.MammothCache.Tests
         [TestMethod]
         public void MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddSync()
         {
+#pragma warning disable 219
             bool delegateWasCalled = false;
+#pragma warning restore 219
             var key1 = RandomKey();
             var key2 = RandomKey();
             var key3 = RandomKey();

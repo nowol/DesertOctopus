@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,19 +12,30 @@ using StackExchange.Redis;
 
 namespace DesertOctupos.MammothCache.Redis
 {
+    /// <summary>
+    /// Wrap StackExchange.Redis to add retry policy
+    /// </summary>
     public sealed class RedisConnection : IRedisConnection, ISecondLevelCache, IDisposable
     {
         private readonly string _connectionString;
         private readonly IRedisRetryPolicy _redisRetryPolicy;
-        private bool _isDisposed = false;
         private readonly ConnectionMultiplexer _multiplexer;
         private readonly RetryPolicy _retryPolicy;
         private readonly RetryPolicy _retryPolicyAsync;
+        private bool _isDisposed = false;
         private ISubscriber _subscriber;
         private PolicyBuilder _baseRetryPolicy;
 
+        /// <summary>
+        /// Triggered when an item is removed from redis
+        /// </summary>
         public event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RedisConnection"/> class.
+        /// </summary>
+        /// <param name="connectionString">Connection string to Redis</param>
+        /// <param name="redisRetryPolicy">Retry policy</param>
         public RedisConnection(string connectionString, IRedisRetryPolicy redisRetryPolicy)
         {
             _connectionString = connectionString;
@@ -77,6 +87,9 @@ namespace DesertOctupos.MammothCache.Redis
             }
         }
 
+        /// <summary>
+        /// Dispose the <see cref="RedisConnection"/>
+        /// </summary>
         public void Dispose()
         {
             GuardDisposed();
@@ -116,6 +129,7 @@ namespace DesertOctupos.MammothCache.Redis
             return _multiplexer.GetDatabase();
         }
 
+        /// <inheritdoc/>
         public byte[] Get(string key)
         {
             var redisValue = GetRetryPolicy().Execute<RedisValue>(() => GetDatabase().StringGet(key));
@@ -123,9 +137,11 @@ namespace DesertOctupos.MammothCache.Redis
             {
                 return redisValue;
             }
+
             return null;
         }
 
+        /// <inheritdoc/>
         public Dictionary<CacheItemDefinition, byte[]> Get(ICollection<CacheItemDefinition> keys)
         {
             var redisResult = GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetMultipleGetScript(), keys: keys.Select(x => (RedisKey)x.Key).ToArray()));
@@ -140,19 +156,19 @@ namespace DesertOctupos.MammothCache.Redis
                 throw new InvalidOperationException("Lua script did not return anything.");
             }
 
-            var redisValues = (RedisValue[]) redisResult;
+            var redisValues = (RedisValue[])redisResult;
 
             if (redisValues.Length != keys.Count * 2)
             {
                 throw new InvalidOperationException("Lua script did not return the expected number of records.");
             }
-            
+
             var result = new Dictionary<CacheItemDefinition, byte[]>();
             int cpt = 0;
             foreach (var key in keys)
             {
                 var cid = key.Clone();
-                int ttl = (int) redisValues[cpt + 1];
+                int ttl = (int)redisValues[cpt + 1];
                 if (ttl <= 0)
                 {
                     cid.TimeToLive = null;
@@ -161,8 +177,8 @@ namespace DesertOctupos.MammothCache.Redis
                 {
                     cid.TimeToLive = TimeSpan.FromSeconds(ttl);
                 }
-                result.Add(cid,
-                           redisValues[cpt]);
+
+                result.Add(cid, redisValues[cpt]);
 
                 cpt += 2;
             }
@@ -170,6 +186,7 @@ namespace DesertOctupos.MammothCache.Redis
             return result;
         }
 
+        /// <inheritdoc/>
         public async Task<byte[]> GetAsync(string key)
         {
 
@@ -178,15 +195,18 @@ namespace DesertOctupos.MammothCache.Redis
             {
                 return redisValue;
             }
+
             return null;
         }
 
+        /// <inheritdoc/>
         public async Task<Dictionary<CacheItemDefinition, byte[]>> GetAsync(ICollection<CacheItemDefinition> keys)
         {
             var redisResult = await GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetMultipleGetScript(), keys: keys.Select(x => (RedisKey)x.Key).ToArray()));
             return CreateCacheItemDefinitionArrayFromLuaScriptResult(keys, redisResult);
         }
 
+        /// <inheritdoc/>
         public void Set(string key,
                         byte[] serializedValue,
                         TimeSpan? ttl = null)
@@ -194,6 +214,7 @@ namespace DesertOctupos.MammothCache.Redis
             GetRetryPolicy().Execute(() => GetDatabase().StringSet(key, serializedValue, expiry: ttl));
         }
 
+        /// <inheritdoc/>
         public void Set(Dictionary<CacheItemDefinition, byte[]> objects)
         {
             RedisValue[] values;
@@ -216,13 +237,14 @@ namespace DesertOctupos.MammothCache.Redis
             {
                 keys[cpt] = kvp.Key.Key;
                 values[cpt * 2] = kvp.Value;
-                values[cpt * 2 + 1] = kvp.Key.TimeToLive.HasValue
-                                          ? kvp.Key.TimeToLive.Value.TotalSeconds
-                                          : 0;
+                values[(cpt * 2) + 1] = kvp.Key.TimeToLive.HasValue
+                                            ? kvp.Key.TimeToLive.Value.TotalSeconds
+                                            : 0;
                 cpt++;
             }
         }
 
+        /// <inheritdoc/>
         public Task SetAsync(string key,
                              byte[] serializedValue,
                              TimeSpan? ttl = null)
@@ -230,6 +252,7 @@ namespace DesertOctupos.MammothCache.Redis
             return GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().StringSetAsync(key, serializedValue, expiry: ttl));
         }
 
+        /// <inheritdoc/>
         public Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects)
         {
             RedisValue[] values;
@@ -241,16 +264,19 @@ namespace DesertOctupos.MammothCache.Redis
                                                                                                            values: values));
         }
 
+        /// <inheritdoc/>
         public bool Remove(string key)
         {
             return GetRetryPolicy().Execute<bool>(() => GetDatabase().KeyDelete(key));
         }
 
+        /// <inheritdoc/>
         public Task<bool> RemoveAsync(string key)
         {
             return GetRetryPolicyAsync().ExecuteAsync<bool>(() => GetDatabase().KeyDeleteAsync(key));
         }
 
+        /// <inheritdoc/>
         public void RemoveAll()
         {
             GetRetryPolicy()
@@ -265,6 +291,7 @@ namespace DesertOctupos.MammothCache.Redis
                          });
         }
 
+        /// <inheritdoc/>
         public async Task RemoveAllAsync()
         {
             await GetRetryPolicyAsync()
@@ -281,11 +308,13 @@ namespace DesertOctupos.MammothCache.Redis
                 .ConfigureAwait(false);
         }
 
+        /// <inheritdoc/>
         public TimeSpan? GetTimeToLive(string key)
         {
             return GetRetryPolicy().Execute<TimeSpan?>(() => GetDatabase().KeyTimeToLive(key));
         }
 
+        /// <inheritdoc/>
         public Task<TimeSpan?> GetTimeToLiveAsync(string key)
         {
             return GetRetryPolicyAsync().ExecuteAsync<TimeSpan?>(() => GetDatabase().KeyTimeToLiveAsync(key));
@@ -311,30 +340,46 @@ namespace DesertOctupos.MammothCache.Redis
 
                 result = server;
             }
-            if (result == null) throw new InvalidOperationException("Requires exactly one master endpoint (found none)");
+
+            if (result == null)
+            {
+                throw new InvalidOperationException("Requires exactly one master endpoint (found none)");
+            }
+
             return result;
         }
 
+        /// <inheritdoc/>
         public KeyValuePair<string, string>[] GetConfig(string pattern = null)
         {
             return GetRetryPolicy().Execute(() => GetServer(_multiplexer).ConfigGet(pattern));
         }
 
+        /// <inheritdoc/>
         public Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern = null)
         {
             return GetRetryPolicyAsync().ExecuteAsync(() => GetServer(_multiplexer).ConfigGetAsync(pattern));
         }
 
+        /// <inheritdoc/>
         public bool KeyExists(string key)
         {
             return GetRetryPolicy().Execute<bool>(() => GetDatabase().KeyExists(key));
         }
 
+        /// <inheritdoc/>
+        public Task<bool> KeyExistsAsync(string key)
+        {
+            return GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().KeyExistsAsync(key));
+        }
+
+        /// <inheritdoc/>
         public IDisposable AcquireLock(string key, TimeSpan lockExpiry, TimeSpan timeout)
         {
             return new RedisLock(this).AcquireLock(key, lockExpiry, timeout);
         }
 
+        /// <inheritdoc/>
         public Task<IDisposable> AcquireLockAsync(string key, TimeSpan lockExpiry, TimeSpan timeout)
         {
             return new RedisLock(this).AcquireLockAsync(key, lockExpiry, timeout);
