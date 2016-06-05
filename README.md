@@ -51,22 +51,22 @@ BenchmarkDotNet=v0.9.6.0
 OS=Microsoft Windows NT 6.3.9600.0
 Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
 Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
-HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
+HostCLR=MS.NET 4.0.30319.42000, Arch=64-bit RELEASE [RyuJIT]
 JitModules=clrjit-v4.6.1055.0
 
-Type=SerializationBenchMark  Mode=Throughput  
+Type=ProductSerializationBenchMark  Mode=Throughput  
 
 ```
                          Method |      Median |    StdDev |
 ------------------------------- |------------ |---------- |
-              JsonSerialization |  83.1897 us | 0.9590 us |
-            JsonDeserialization | 165.7533 us | 1.6285 us |
-              OmniSerialization | 199.7462 us | 1.5890 us |
-            OmniDeserialization |  79.5162 us | 0.7924 us |
-            KrakenSerialization | 520.9887 us | 5.2882 us |
-          KrakenDeserialization | 168.6924 us | 2.2030 us |
-   BinaryFormatterSerialization | 413.1625 us | 4.2110 us |
- BinaryFormatterDeserialization | 392.7262 us | 3.2117 us |
+              JsonSerialization |  91.9330 us | 4.9447 us |
+            JsonDeserialization | 176.9681 us | 5.0118 us |
+              OmniSerialization | 195.9051 us | 2.0565 us |
+            OmniDeserialization |  83.3034 us | 0.5823 us |
+            KrakenSerialization | 377.8699 us | 6.8978 us |
+          KrakenDeserialization | 199.7201 us | 3.3580 us |
+   BinaryFormatterSerialization | 417.4507 us | 6.7281 us |
+ BinaryFormatterDeserialization | 399.5219 us | 3.7520 us |
 
 
 This benchmark serialize and deserialize a normal sized object that contains all primitives types.

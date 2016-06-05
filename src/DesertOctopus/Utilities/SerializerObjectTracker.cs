@@ -32,9 +32,10 @@ namespace DesertOctopus.Utilities
                 return;
             }
 
+            _trackedObjects2.Add(obj);
+
             if (obj.GetType().IsClass)
             {
-                _trackedObjects2.Add(obj);
                 if (!_trackedObjects.ContainsKey(obj))
                 {
                     _trackedObjects.Add(obj,

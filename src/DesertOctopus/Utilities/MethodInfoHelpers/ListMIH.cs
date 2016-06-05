@@ -10,13 +10,13 @@ namespace DesertOctopus.Utilities
     /// </summary>
     internal static class ListMIH
     {
-        ///// <summary>
-        ///// Calls List.Add
-        ///// </summary>
-        ///// <returns>The method info for List.Add</returns>
-        //public static MethodInfo ObjectListAdd()
-        //{
-        //    return typeof(List<object>).GetMethod("Add", new[] { typeof(object) });
-        //}
+        /// <summary>
+        /// Calls List.Add
+        /// </summary>
+        /// <returns>The method info for List.Add</returns>
+        public static MethodInfo ObjectListAdd()
+        {
+            return typeof(List<object>).GetMethod("Add", new[] { typeof(object) });
+        }
     }
 }
