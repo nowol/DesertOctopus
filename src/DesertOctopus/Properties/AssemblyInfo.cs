@@ -7,12 +7,6 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyTitle("DesertOctopus")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DesertOctopus")]
-[assembly: AssemblyCopyright("Copyright © NoWoL 2016")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
@@ -22,17 +16,5 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("7342e898-8ae6-4482-8a20-b54935dbecab")]
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.0.1.0")]
-[assembly: AssemblyFileVersion("0.0.1.0")]
 
 [assembly: InternalsVisibleTo("DesertOctopus.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009fc3cb15513c12b94a084aa23884118da8c4a3beec42f138f7c638368611b75179b4159544f6114c0c2dc6ddb6e2eefa4dc5b3160627ec53fc2b239d616aee18c53c2a260fa3002ef965a57b33e0563af609dd016b600ad51b4067a268bc9cf51251a5568abe7ae0deddcddbb670fe9487a53121846bdca16f3d39f0048213cd")]
