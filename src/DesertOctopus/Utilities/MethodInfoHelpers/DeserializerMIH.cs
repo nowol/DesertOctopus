@@ -29,13 +29,13 @@ namespace DesertOctopus.Utilities
             return typeof(Deserializer).GetMethod("GetTypeDeserializer", BindingFlags.Static | BindingFlags.NonPublic);
         }
 
-        /// <summary>
-        /// Calls Deserializer.GetTrackedObject
-        /// </summary>
-        /// <returns>The method info for Deserializer.GetTrackedObject</returns>
-        public static MethodInfo GetTrackedObject()
-        {
-            return typeof(Deserializer).GetMethod("GetTrackedObject", BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(List<object>), typeof(int) }, new ParameterModifier[0]);
-        }
+        ///// <summary>
+        ///// Calls Deserializer.GetTrackedObject
+        ///// </summary>
+        ///// <returns>The method info for Deserializer.GetTrackedObject</returns>
+        //public static MethodInfo GetTrackedObject()
+        //{
+        //    return typeof(Deserializer).GetMethod("GetTrackedObject", BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(List<object>), typeof(int) }, new ParameterModifier[0]);
+        //}
     }
 }

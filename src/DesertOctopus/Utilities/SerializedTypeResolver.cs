@@ -11,6 +11,7 @@ namespace DesertOctopus.Utilities
     internal static class SerializedTypeResolver
     {
         private static readonly ConcurrentDictionary<string, TypeWithHashCode> TypesFromString = new ConcurrentDictionary<string, TypeWithHashCode>();
+        private static readonly ConcurrentDictionary<Type, string> TypeToFullName = new ConcurrentDictionary<Type, string>();
         private static readonly Lazy<List<TypeReplacement>> TypeReplacements = new Lazy<List<TypeReplacement>>(CreateTypeReplacements);
 
         /// <summary>
@@ -31,7 +32,9 @@ namespace DesertOctopus.Utilities
         /// <returns>The <see cref="TypeWithHashCode"/> for the specified name</returns>
         public static TypeWithHashCode GetTypeFromFullName(Type type)
         {
-            return TypesFromString.GetOrAdd(type.AssemblyQualifiedName,
+            var fullname = TypeToFullName.GetOrAdd(type, t => t.AssemblyQualifiedName);
+
+            return TypesFromString.GetOrAdd(fullname,
                                             name => new TypeWithHashCode(type));
         }
 

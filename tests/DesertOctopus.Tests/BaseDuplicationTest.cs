@@ -513,6 +513,24 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        public void DuplicateEmptyDictionary()
+        {
+            var instance = new Dictionary<string, int>();
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
+        [TestMethod]
         public void DuplicateWrappedCustomDictionary()
         {
             var instance = new Wrapper<CustomDictionary>

@@ -45,10 +45,6 @@
     <AssemblyOriginatorKeyFile>..\..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.IO.RecyclableMemoryStream, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.IO.RecyclableMemoryStream.1.1.0.0\lib\net45\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -78,7 +74,6 @@
     <Compile Include="Serialization\ArrayDeserializer.cs" />
     <Compile Include="Serialization\ArraySerializer.cs" />
     <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
-    <Compile Include="Utilities\MemoryPool.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />
@@ -115,6 +110,7 @@
     <Compile Include="Utilities\MethodInfoHelpers\SerializationInfoMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializedTypeResolverMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DeserializerObjectTrackerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializerObjectTrackerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\StreamingContextMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\StreamMIH.cs" />
@@ -123,6 +119,7 @@
     <Compile Include="Utilities\ObjectCleaner.cs" />
     <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
     <Compile Include="Utilities\SerializedTypeResolver.cs" />
+    <Compile Include="Utilities\DeserializerObjectTracker.cs" />
     <Compile Include="Utilities\TypeWithHashCode.cs" />
     <Compile Include="Utilities\InternalSerializationStuff.cs" />
     <Compile Include="Serialization\ISerializableDeserializer.cs" />

@@ -30,7 +30,7 @@ namespace DesertOctopus.Serialization
         public static byte[] Serialize<T>(T obj)
             where T : class
         {
-            using (var ms = MemoryPool.GetStream())
+            using (var ms = new MemoryStream())
             {
                 if (obj == null)
                 {
