@@ -56,18 +56,21 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetAnObjectThatDoNotExistsAsync()
         {
             Assert.IsNull(await _connection.GetAsync(RandomKey()).ConfigureAwait(false));
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetAnObjectThatDoNotExistsSync()
         {
             Assert.IsNull(_connection.Get(RandomKey()));
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task SetAnObjectWithTtlAsync()
         {
             var key = RandomKey();
@@ -80,6 +83,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void SetAnObjectWithTtlSync()
         {
             var key = RandomKey();
@@ -92,6 +96,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task SetAnObjectWithoutTtlAsync()
         {
             var key = RandomKey();
@@ -111,6 +116,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void SetAnObjectWithoutTtlSync()
         {
             var key = RandomKey();
@@ -130,6 +136,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RemoveAnObjectAsync()
         {
             var key = RandomKey();
@@ -142,6 +149,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemoveAnObjectSync()
         {
             var key = RandomKey();
@@ -154,6 +162,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetTheConfigAsync()
         {
             var config = await _connection.GetConfigAsync().ConfigureAwait(false);
@@ -164,6 +173,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetTheConfigSync()
         {
             var config = _connection.GetConfig();
@@ -174,6 +184,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(ObjectDisposedException))]
         public void DisposingTheConnectionTwiceShouldThrowAnException()
         {
@@ -182,6 +193,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task AcquiringAndReleasingALockShouldCreateTheKeyInRedisAsync()
         {
             var key = RandomKey();
@@ -193,6 +205,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void AcquiringAndReleasingALockShouldCreateTheKeyInRedisSync()
         {
             var key = RandomKey();
@@ -204,6 +217,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task LockExpireAfterAGivenTimeAsync()
         {
             var key = RandomKey();
@@ -218,6 +232,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void LockExpireAfterAGivenTimeSync()
         {
             var key = RandomKey();
@@ -232,6 +247,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(UnableToAcquireLockException))]
         public async Task AcquiringALockASecondTimeWillThrowAnExceptionIfTheLockCannotBeAcquiredAsync()
         {
@@ -243,6 +259,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(UnableToAcquireLockException))]
         public void AcquiringALockASecondTimeWillThrowAnExceptionIfTheLockCannotBeAcquiredSync()
         {
@@ -254,6 +271,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void AcquireLockInDifferentThreadsAsync()
         {
             var key = RandomKey();

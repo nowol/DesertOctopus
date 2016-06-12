@@ -18,6 +18,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void CloneInParallel()
         {
             ObjectCloner.ClearTypeCache(); // empty the Type cache to start from a fresh state.
@@ -41,6 +42,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void CloneIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -58,6 +60,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateIQueryableInsideExpandoObject()
         {
             var list = new List<ClassWithoutSerializableAttribute>

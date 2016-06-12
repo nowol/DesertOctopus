@@ -77,6 +77,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task AddingAnItemShouldAddItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
@@ -88,6 +89,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void AddingAnItemShouldAddItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
@@ -99,6 +101,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RemovingAnItemShouldRemoveItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
@@ -111,6 +114,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemovingAnItemShouldRemoveItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
@@ -123,6 +127,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task UpdatingAnItemShouldUpdateItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
@@ -141,6 +146,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void UpdatingAnItemShouldUpdateItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
@@ -159,6 +165,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ExpiredItemFromFirstLevelShouldStillExistInSecondLevelAsync()
         {
             var key = RandomKey();
@@ -173,6 +180,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ExpiredItemFromFirstLevelShouldStillExistInSecondLevelSync()
         {
             var key = RandomKey();
@@ -187,6 +195,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheAsync()
         {
             var key = RandomKey();
@@ -204,6 +213,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheSync()
         {
             var key = RandomKey();
@@ -221,6 +231,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RemovingAnItemFromTheSecondLevelCacheShouldRemoveItFromTheFirstLevelCacheAsync()
         {
             var key = RandomKey();
@@ -236,6 +247,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemovingAnItemFromTheSecondLevelCacheShouldRemoveItFromTheFirstLevelCacheSync()
         {
             var key = RandomKey();
@@ -251,6 +263,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ItemIsRemovedFromFirstLevelCacheIfItExpiresFromSecondLevelCacheAsync()
         {
             var key = RandomKey();
@@ -266,6 +279,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ItemIsRemovedFromFirstLevelCacheIfItExpiresFromSecondLevelCacheSync()
         {
             var key = RandomKey();
@@ -281,6 +295,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ItemsEvictedFromBecauseOfMemoryPressureShouldBeRemovedFromFirstLevelCacheAsync()
         {
             await _cache.RemoveAllAsync().ConfigureAwait(false);
@@ -332,6 +347,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -356,6 +372,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -379,6 +396,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
         {
             bool delegateWasCalled = false;
@@ -402,6 +420,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
         {
             bool delegateWasCalled = false;
@@ -424,6 +443,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -460,6 +480,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -495,6 +516,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
         {
             bool delegateWasCalled = false;
@@ -533,6 +555,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
         {
             bool delegateWasCalled = false;
@@ -570,6 +593,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -608,6 +632,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -644,6 +669,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetMultipleValuesAsync()
         {
             var key1 = RandomKey();
@@ -670,6 +696,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void GetMultipleValuesSync()
         {
             var key1 = RandomKey();
@@ -696,6 +723,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task SetMultipleValuesAsync()
         {
             var key1 = RandomKey();
@@ -717,6 +745,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void SetMultipleValuesSync()
         {
             var key1 = RandomKey();
@@ -739,6 +768,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task MultipleItemsRetrievedShouldHaveTheirTtlSetAsync()
         {
             var key1 = RandomKey();
@@ -773,6 +803,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void MultipleItemsRetrievedShouldHaveTheirTtlSetSync()
         {
             var key1 = RandomKey();
@@ -808,6 +839,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
@@ -829,6 +861,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
@@ -852,6 +885,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RemoveAllAsync()
         {
             var key = RandomKey();
@@ -868,6 +902,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemoveAll()
         {
             var key = RandomKey();
@@ -884,6 +919,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(ObjectDisposedException))]
         public void DisposingTheCacheTwiceShouldThrowAnException()
         {
@@ -892,6 +928,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(ObjectDisposedException))]
         public void DisposingSquirrelCacheTwiceShouldThrowAnException()
         {
@@ -900,6 +937,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(ArgumentNullException))]
         public async Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
         {
@@ -907,6 +945,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionSync()
         {
@@ -914,6 +953,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ItemIsFetchedFromFirstLevelCacheAsync()
         {
             var key = RandomKey();
@@ -924,6 +964,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ItemIsFetchedFromFirstLevelCacheSync()
         {
             var key = RandomKey();
@@ -934,6 +975,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task CachingANullObjectDoesNothingAsync()
         {
             var key = RandomKey();
@@ -943,6 +985,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void CachingANullObjectDoesNothingSync()
         {
             var key = RandomKey();
@@ -952,6 +995,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void DeserializeObject()
         {
             var obj = _mammothCacheSerializationProvider.Deserialize(_serializedTestObject) as CachingTestClass;
@@ -963,6 +1007,7 @@ namespace DesertOctopus.MammothCache.Tests
 
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task CachingANonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
         {
             var key = RandomKey();
@@ -977,6 +1022,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void CachingANonSerializableObjectShouldStoreItInNonSerializableCacheSync()
         {
             var key = RandomKey();
@@ -991,6 +1037,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
         {
             var key1 = RandomKey();
@@ -1014,6 +1061,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheSync()
         {
             var key1 = RandomKey();
@@ -1037,6 +1085,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key1 = RandomKey();
@@ -1058,6 +1107,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key1 = RandomKey();
@@ -1079,6 +1129,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key = RandomKey();
@@ -1088,6 +1139,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key = RandomKey();
@@ -1097,6 +1149,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RetrievingANonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key = RandomKey();
@@ -1106,6 +1159,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RetrievingANonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key = RandomKey();
@@ -1115,6 +1169,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
         {
             var key = RandomKey();
@@ -1126,6 +1181,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
         {
             var key = RandomKey();
@@ -1137,6 +1193,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
         {
             var key1 = RandomKey();
@@ -1158,6 +1215,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
         {
             var key1 = RandomKey();
@@ -1179,6 +1237,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void RemovingANonSerializableObjectPlaceHolderFromSecondLevelCacheShouldRemoveItFromTheNonSerializableCache()
         {
             var key = RandomKey();
@@ -1191,6 +1250,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ANonSerializableSystemTypeShouldBeStoredInTheNonSerializableCache()
         {
             using (var ms = new MemoryStream())
@@ -1210,6 +1270,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task ANonSerializableObjectShouldBeReturnedByGetOrAddAsync()
         {
             bool delegateWasCalled = false;
@@ -1233,6 +1294,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void ANonSerializableObjectShouldBeReturnedByGetOrAddSync()
         {
             bool delegateWasCalled = false;
@@ -1255,6 +1317,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddAsync()
         {
 #pragma warning disable 219
@@ -1293,6 +1356,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddSync()
         {
 #pragma warning disable 219

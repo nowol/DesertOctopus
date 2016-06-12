@@ -65,6 +65,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTuple()
         {
             PrimitiveTestSuite<Tuple<int, string>>(new Tuple<int, string>(1, "a"), new Tuple<int, string>(2, "b"));
@@ -73,6 +74,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void SerializeUtcDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.UtcNow };
@@ -83,6 +85,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void SerializeDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.Now };
@@ -93,6 +96,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullPrimitiveArray()
         {
             int[] nullArray = null;
@@ -101,6 +105,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyObjectArray()
         {
             Object[] emptyArray = new Object[0];
@@ -110,6 +115,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullObjectArray()
         {
             Object[] nullArray = null;
@@ -118,6 +124,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyPrimitiveArray()
         {
             int[] emptyArray = new int[0];
@@ -127,6 +134,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectArrayWithNullValues()
         {
             var array = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -138,6 +146,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullPrimitiveList()
         {
             List<int> nullList = null;
@@ -146,6 +155,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyObjectList()
         {
             List<Object> emptyList = new List<Object>();
@@ -155,6 +165,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullObjectList()
         {
             List<object> nullList = null;
@@ -163,6 +174,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyPrimitiveList()
         {
             List<int> emptyList = new List<int>();
@@ -172,6 +184,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectListWithNullValues()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -254,6 +267,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateStruct()
         {
             var instance = new Wrapper<StructForTesting> { Value = new StructForTesting { Value = 1 } };
@@ -262,6 +276,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateShortString()
         {
             var duplicatedValue = Duplicate("abc");
@@ -270,6 +285,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateMediumString()
         {
             var str = RandomString(3000);
@@ -278,6 +294,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateLongString()
         {
             var str = RandomString(100000);
@@ -293,6 +310,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTestClass()
         {
             ClassWithDifferentAccessModifiers classInstance = new ClassWithDifferentAccessModifiers
@@ -322,6 +340,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         //[ExpectedException(typeof(ObjectExistsInCurrentSerializationGraphException))]
         public void DuplicateCircularReference()
         {
@@ -341,6 +360,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTrackMultipleReference()
         {
             var instance = new ClassWithGenericInt(123);
@@ -359,6 +379,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTrackSamePrimitiveMultipleTimes()
         {
             // this case exists to make sure that the ReferenceWatcher only tracks classes
@@ -379,6 +400,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateClassWithoutSerializableAttribute()
         {
             var instance = new ClassWithoutSerializableAttribute
@@ -393,6 +415,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateClassWithGenericBase()
         {
             var instance = new ClassWithGenericInt()
@@ -407,6 +430,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateGenericClass()
         {
             var instance = new GenericBaseClass<int>()
@@ -421,6 +445,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateDictionaryStringObject()
         {
             var instance = new Dictionary<string, object>()
@@ -444,6 +469,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateDictionaryIntString()
         {
             var instance = new Dictionary<int, string>()
@@ -467,6 +493,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateDictionaryGuidString()
         {
             var instance = new Dictionary<Guid, string>()
@@ -490,6 +517,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionary()
         {
             var instance = new CustomDictionary
@@ -519,6 +547,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateDictionaries()
         {
             var cargoes = new TypeValueCargo[]
@@ -603,6 +632,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectKeyDictionary()
         {
             var instance = new Dictionary<object, int>();
@@ -623,6 +653,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyDictionary()
         {
             var instance = new Dictionary<string, int>();
@@ -641,6 +672,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateWrappedCustomDictionary()
         {
             var instance = new Wrapper<CustomDictionary>
@@ -667,6 +699,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionaryWithComparer()
         {
             var instance = new CustomDictionary(StringComparer.CurrentCultureIgnoreCase)
@@ -692,6 +725,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateDictionaryWithCustomComparer()
         {
             var instance = new Dictionary<StructForTesting, object>(new StructForTestingComparer())
@@ -718,6 +752,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(MissingConstructorException))]
         public void DuplicateCustomDictionaryWithoutPublicParameterlessConstructor()
         {
@@ -733,6 +768,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesWithCallback()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesWithOverridingOnDeserializedCallback
@@ -759,6 +795,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesWithoutCallback()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback
@@ -785,6 +822,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionaryWithDictionaryProperty()
         {
             var instance = new CustomDictionaryWithDictionaryProperty<string, object>
@@ -838,6 +876,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesAndGenerics()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<string, int>
@@ -864,6 +903,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyCustomDictionaryWithAdditionalPropertiesAndGenerics()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<string, int>();
@@ -885,6 +925,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateListWithMultipleTypes()
         {
             var list = new List<IHierarchy>
@@ -904,6 +945,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithListAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 } };
@@ -917,6 +959,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithHashsetAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int>
@@ -933,6 +976,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateHashSetWithEqualityComparer()
         {
             var instance = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { "a", "b", "C" };
@@ -948,6 +992,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithEnumProperty()
         {
             var instance = new GenericBaseClass<EnumForTesting> { Value = EnumForTesting.Two };
@@ -959,6 +1004,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateHashtable()
         {
             var instance = new Hashtable
@@ -976,6 +1022,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateHashtableWithEqualityComparer()
         {
             var instance = new Hashtable(StringComparer.CurrentCultureIgnoreCase)
@@ -1010,6 +1057,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithArrayAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new[] { 1, 2, 3 } };
@@ -1023,6 +1071,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithDistinctIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
@@ -1036,6 +1085,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithWhereIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Where(x => x > 1) };
@@ -1049,6 +1099,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithOrderByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OrderBy(x => x) };
@@ -1062,6 +1113,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithDefaultIfEmptyIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.DefaultIfEmpty(123) };
@@ -1075,6 +1127,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithExceptIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Except(new[] { 2 }) };
@@ -1088,6 +1141,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithUnionIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Union(new[] { 4 }) };
@@ -1101,6 +1155,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithIntersectIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Intersect(new[] { 2 }) };
@@ -1114,6 +1169,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithOfTypeIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OfType<int>() };
@@ -1127,6 +1183,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithSkipByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Skip(1) };
@@ -1140,6 +1197,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithTakeByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Take(1) };
@@ -1153,6 +1211,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithSelectByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Select(x => x * 2) };
@@ -1166,6 +1225,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void DuplicateSimpleFunc()
         {
@@ -1181,6 +1241,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void DuplicateSimpleExpression()
         {
@@ -1198,6 +1259,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void DuplicateAnonymousObject()
         {
@@ -1210,6 +1272,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArray()
         {
             var instance = new int[] { 123, 456 };
@@ -1218,6 +1281,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayWithNullablePrimitive()
         {
             var instance = new int?[] { 123, null, 456 };
@@ -1226,6 +1290,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayObject()
         {
             var instance = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1236,6 +1301,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayOfClassWithGenericInt()
         {
             var obj = new ClassWithGenericInt(123);
@@ -1247,6 +1313,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayObjectHierarchy()
         {
             var instance = new SomeBaseClass[] { new ClassWithGenericInt(123), new ClassWithGenericDouble(3.38D) };
@@ -1257,6 +1324,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateSameObjectMultipleTimeInArray()
         {
             var obj123 = new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 };
@@ -1270,6 +1338,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTwoDimensionalArray()
         {
             var instance = new int[3, 4];
@@ -1291,6 +1360,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateMultiDimensionalArray()
         {
             var instance = CreateMultiDimensionalArray<int>(8);
@@ -1301,6 +1371,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateMultiDimensionalArrayOfObjects()
         {
             var instance = CreateMultiDimensionalArray<Object>(2);
@@ -1316,6 +1387,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateMultiDimensionalArrayOfClass()
         {
             var instance = CreateMultiDimensionalArray<ClassWithGenericInt>(2);
@@ -1362,6 +1434,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateJaggedArrayObject()
         {
             var instance = new object[2][];
@@ -1378,6 +1451,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateJaggedArrayClass()
         {
             var obj = new ClassWithGenericInt(123);
@@ -1404,6 +1478,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateJaggedArrayClassInheritance()
         {
             var obj = new ClassWithGenericInt(123);
@@ -1421,6 +1496,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullJaggedArray()
         {
             int[][] nullArray = null;
@@ -1431,6 +1507,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateThreeDimensionJaggedArray()
         {
             int[][][] instance = new[] { new int[2][], new int[3][] };
@@ -1441,6 +1518,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyJaggedArray()
         {
             int[][] instance = new int[2][];
@@ -1449,6 +1527,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateJaggedArray()
         {
             var instance = new int[][] { new int[] { 123, 238 }, new int[] { 456, 546, 784 }, null };
@@ -1458,6 +1537,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void TrackArrayInMultipleObjects()
         {
             int[] arr = new[] { 1, 2, 3 };
@@ -1474,6 +1554,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateClassWithDynamicObject()
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
@@ -1483,6 +1564,7 @@ namespace DesertOctopus.Tests
             Assert.AreEqual(instance.Value, duplicatedValue.Value);
         }
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateExpandoObject()
         {
             dynamic instance = new ExpandoObject();
@@ -1508,6 +1590,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyExpandoObject()
         {
             dynamic instance = new ExpandoObject();
@@ -1519,6 +1602,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullExpandoObject()
         {
             ExpandoObject instance = null;
@@ -1533,6 +1617,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTypedQueue()
         {
             var instance = new Queue<int>();
@@ -1551,6 +1636,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateUntypedQueue()
         {
             var instance = new Queue();
@@ -1570,6 +1656,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTypedStack()
         {
             var instance = new Stack<int>();
@@ -1588,6 +1675,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateUntypedStack()
         {
             var instance = new Stack();
@@ -1608,6 +1696,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEnumEqualityComparer()
         {
             var instance = new Dictionary<EnumForTesting, int> { { EnumForTesting.One, 1 }, { EnumForTesting.Two, 2 } };
@@ -1621,6 +1710,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateAnObject()
         {
             var instance = new object();
@@ -1631,6 +1721,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateAClassWithANullObjectProperty()
         {
             var instance = new ClassWithObjectProperty();
@@ -1642,6 +1733,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateAClassWithANotNullObjectProperty()
         {
             var instance = new ClassWithObjectProperty { Obj = new object() };
@@ -1653,6 +1745,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateAClassWithAnBoxedInt()
         {
             var instance = new ClassWithObjectProperty { Obj = 123 };
@@ -1664,6 +1757,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateIList()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1681,6 +1775,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateICollection()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1698,6 +1793,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1716,6 +1812,7 @@ namespace DesertOctopus.Tests
 
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateListOfIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1734,6 +1831,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayOfIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1752,6 +1850,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateListOfMultipleObjects()
         {
             var instance = new List<object> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
@@ -1765,6 +1864,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyList()
         {
             var instance = new List<object>();
@@ -1778,6 +1878,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullList()
         {
             List<object> instance = null;
@@ -1792,6 +1893,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayOfMultipleObjects()
         {
             var instance = new object[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
@@ -1805,6 +1907,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateEmptyArray()
         {
             var instance = new object[0];
@@ -1818,6 +1921,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullArray()
         {
             object[] instance = null;
@@ -1832,6 +1936,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateListOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1849,6 +1954,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateArrayOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1866,6 +1972,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateJaggedArrayOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -1889,6 +1996,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateNullIQueryableContainedInAClass()
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
@@ -1900,6 +2008,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateObjectWithISerializable()
         {
             var instance = new Dictionary<string, object>();
@@ -1917,6 +2026,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateClassWithNonSerializableProperty()
         {
             var instance = new ClassWithNonSerializableField();
@@ -1930,6 +2040,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public unsafe void DuplicatePointerTypeIsNotSupported()
         {
@@ -1943,6 +2054,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateAutoInitializeList()
         {
             var instance = new ClassWithInitializedList();
@@ -1952,6 +2064,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void TrackReferenceOfExpandoObject()
         {
             dynamic eo = new ExpandoObject();
@@ -1976,6 +2089,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void TrackReferenceOfDictionary()
         {
             var dict = new Dictionary<string, object>();
@@ -2000,6 +2114,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void DuplicateGroupByContainedInAClass()
         {

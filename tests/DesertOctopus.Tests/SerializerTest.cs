@@ -22,8 +22,8 @@ namespace DesertOctopus.Tests
             return Deserializer.Deserialize<T>(bytes);
         }
 
-
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(TypeNotFoundException))]
         public void DeserializeUnknownType()
         {
@@ -35,6 +35,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(TypeWasModifiedSinceSerializationException))]
         public void DeserializeTypeThatWasModified()
         {
@@ -52,6 +53,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void SerializeInParallel()
         {
             Serializer.ClearTypeSerializersCache(); // empty the serialization Type to TypeData dictionary to start from a fresh state.
@@ -77,6 +79,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void SerializeGroupByContainedInAClass()
         {
@@ -86,6 +89,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(NotSupportedException))]
         public void SerializeIQueryableDirectly()
         {
@@ -105,6 +109,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void KrakenSerializerShouldWork()
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
@@ -117,6 +122,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void StringShouldNotBeSerializedTwice()
         {
             var str = RandomString(1000);
@@ -134,6 +140,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void SerializeClassWithAllPrimitiveTypes()
         {
             var instance = new ClassWithAllPrimitiveTypes();
@@ -143,6 +150,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateIQueryableInsideExpandoObject()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -178,6 +186,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(InvalidSerializationVersionException))]
         public void UnexpectedVersionHeaderShouldThrowAnException()
         {
@@ -191,24 +200,28 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DictionaryIsDetectedAsNormalDictionary()
         {
             Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<int, int>()));
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void CustomDictionaryIsDetectedAsNormalDictionary()
         {
             Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionary()));
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DictionaryWithCustomComparerIsNotDetectedAsNormalDictionary()
         {
             Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DictionaryAdditionalPropertiesAsNormalDictionary()
         {
             Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
@@ -218,6 +231,7 @@ namespace DesertOctopus.Tests
 
 
         //[TestMethod]
+        //[TestCategory("Unit")]
         //[ExpectedException(typeof(NotSupportedException))]
         //public void SerializingAStreamIsNotSupported()
         //{
@@ -229,6 +243,7 @@ namespace DesertOctopus.Tests
 
 
         //[TestMethod]
+        //[TestCategory("Unit")]
         //public void z_AdditionalTestsToImplements()
         //{
         //    // mix primitive and class in array/list
