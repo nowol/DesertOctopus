@@ -565,7 +565,7 @@ namespace DesertOctopus.Tests
                                 new TypeValueCargo { Type = typeof(double), Values = new double[] { double.MinValue, double.MaxValue, 3.34D, 0, -3.34D } },
                                 new TypeValueCargo { Type = typeof(Decimal), Values = new Decimal[] { Decimal.MinValue, Decimal.MaxValue, 3.34M, 0, -3.34M } },
                                 new TypeValueCargo { Type = typeof(Single), Values = new Single[] { Single.MinValue, Single.MaxValue, 3.34F, 0, -3.34F } },
-                                new TypeValueCargo { Type = typeof(DateTime), Values = new DateTime[] { DateTime.MaxValue, DateTime.MinValue, DateTime.Now, DateTime.UtcNow } },
+                                new TypeValueCargo { Type = typeof(DateTime), Values = new DateTime[] { DateTime.MaxValue, DateTime.MinValue, DateTime.Now } },
                                 new TypeValueCargo { Type = typeof(TimeSpan), Values = new TimeSpan[] { TimeSpan.MaxValue, TimeSpan.MinValue, TimeSpan.FromSeconds(30) } },
                                 new TypeValueCargo { Type = typeof(BigInteger), Values = new BigInteger[] { BigInteger.MinusOne, BigInteger.One, BigInteger.Zero, 98, -1928 } },
                                 new TypeValueCargo { Type = typeof(Tuple<int, string>), Values = new Tuple<int, string>[] { new Tuple<int, string>(1, "a"), new Tuple<int, string>(2, "b") } }
@@ -615,15 +615,7 @@ namespace DesertOctopus.Tests
             var instance = new Dictionary<TKey, TValue>();
             foreach (var key in vk)
             {
-                var value = valuesForValues[rnd.Next(0, valuesForValues.Length)];
-                try
-                {
-                    instance.Add((TKey)key, value);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("key = " + key.ToString() + " value = " + value, ex);
-                }
+                instance.Add((TKey)key, valuesForValues[rnd.Next(0, valuesForValues.Length)]);
             }
 
             var duplicatedValue = Duplicate(instance);
