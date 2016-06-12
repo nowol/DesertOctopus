@@ -42,8 +42,8 @@
     <AssemblyOriginatorKeyFile>..\..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BenchmarkDotNet, Version=0.9.6.0, Culture=neutral, PublicKeyToken=aa0ca2f9092cefc4, processorArchitecture=MSIL">
-      <HintPath>..\packages\BenchmarkDotNet.0.9.6\lib\net46\BenchmarkDotNet.dll</HintPath>
+    <Reference Include="BenchmarkDotNet, Version=0.9.7.0, Culture=neutral, PublicKeyToken=aa0ca2f9092cefc4, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\BenchmarkDotNet.0.9.7\lib\net40\BenchmarkDotNet.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
@@ -92,9 +92,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\DesertOctopus.MammothCache.Common\DesertOctopus.MammothCache.Common.csproj">
+      <Project>{7DC09C74-AE2A-4A2E-A411-69B9A261F694}</Project>
+      <Name>DesertOctopus.MammothCache.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj">
+      <Project>{141B4827-785B-4644-87F2-D54770CA4E9B}</Project>
+      <Name>DesertOctopus.MammothCache</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\DesertOctopus\DesertOctopus.csproj">
       <Project>{7342e898-8ae6-4482-8a20-b54935dbecab}</Project>
       <Name>DesertOctopus</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj">
+      <Project>{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}</Project>
+      <Name>DesertOctupos.MammothCache.Redis</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

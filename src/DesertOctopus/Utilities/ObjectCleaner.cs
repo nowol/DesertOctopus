@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -69,6 +70,8 @@ namespace DesertOctopus.Utilities
             return IsEnumeratingType(type);
         }
 
+        private static readonly ConcurrentDictionary<Type, bool> IsEnumeratingTypeCached = new ConcurrentDictionary<Type, bool>();
+
         /// <summary>
         /// Detect if the type is enumerating
         /// </summary>
@@ -76,8 +79,9 @@ namespace DesertOctopus.Utilities
         /// <returns>True if the type is defined in System.Linq.Enumerable</returns>
         internal static bool IsEnumeratingType(Type type)
         {
-            return type.DeclaringType == typeof(System.Linq.Enumerable)
-                   || (!String.IsNullOrWhiteSpace(type.Namespace) && type.Namespace.StartsWith("System.Linq"));
+            return IsEnumeratingTypeCached.GetOrAdd(type,
+                                                    t => t.DeclaringType == typeof(System.Linq.Enumerable)
+                                                         || (!String.IsNullOrWhiteSpace(t.Namespace) && t.Namespace.StartsWith("System.Linq")));
         }
 
         /// <summary>

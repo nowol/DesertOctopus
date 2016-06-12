@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.Serialization;
 using DesertOctopus.Utilities;
 
@@ -25,6 +26,96 @@ namespace DesertOctopus.Serialization
                                                                  ParameterExpression inputStream,
                                                                  ParameterExpression objTracking)
         {
+            var newInstance = Expression.Parameter(type, "newInstance");
+            var trackType = Expression.Parameter(typeof(byte), "trackType");
+            variables.Add(newInstance);
+            variables.Add(trackType);
+
+            var dictionaryType = DictionaryHelper.GetDictionaryType(type, throwIfNotADictionary: false);
+            var notTrackedExpressions = new List<Expression>();
+
+            if (dictionaryType == null)
+            {
+                notTrackedExpressions.Add(PrimitiveHelpers.ReadByte(inputStream));
+                notTrackedExpressions.Add(DeserializeISerializable(type, variables, inputStream, objTracking, newInstance));
+            }
+            else
+            {
+                notTrackedExpressions.Add(Expression.IfThenElse(Expression.Equal(PrimitiveHelpers.ReadByte(inputStream), Expression.Constant((int)1, typeof(int))),
+                                                                DeserializeDictionary(type, variables, inputStream, objTracking, newInstance),
+                                                                DeserializeISerializable(type, variables, inputStream, objTracking, newInstance)));
+            }
+
+            return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                         inputStream,
+                                                                         objTracking,
+                                                                         newInstance,
+                                                                         notTrackedExpressions,
+                                                                         trackType,
+                                                                         variables);
+        }
+
+        private static Expression DeserializeDictionary(Type type,
+                                                        List<ParameterExpression> variables,
+                                                        ParameterExpression inputStream,
+                                                        ParameterExpression objTracking,
+                                                        ParameterExpression newInstance)
+        {
+            var dictionaryType = DictionaryHelper.GetDictionaryType(type);
+            var keyType = dictionaryType.GetGenericArguments()[0];
+            var valueType = dictionaryType.GetGenericArguments()[1];
+
+            var i = Expression.Parameter(typeof(int), "i");
+            var length = Expression.Parameter(typeof(int), "length");
+            var key = Expression.Parameter(keyType, "key");
+            var value = Expression.Parameter(dictionaryType.GetGenericArguments()[1], "value");
+            var typeName = Expression.Parameter(typeof(string), "typeName");
+            var typeExpr = Expression.Parameter(typeof(TypeWithHashCode), "type");
+            var deserializer = Expression.Parameter(typeof(Func<Stream, List<object>, object>), "deserializer");
+            var typeHashCode = Expression.Parameter(typeof(int), "typeHashCode");
+
+            variables.Add(i);
+            variables.Add(length);
+            variables.Add(key);
+            variables.Add(value);
+            variables.Add(typeName);
+            variables.Add(typeExpr);
+            variables.Add(deserializer);
+            variables.Add(typeHashCode);
+
+            var loopExpressions = new List<Expression>();
+
+            GetReadExpression(inputStream, objTracking, keyType, loopExpressions, key, typeExpr, typeName, typeHashCode, deserializer);
+            GetReadExpression(inputStream, objTracking, valueType, loopExpressions, value, typeExpr, typeName, typeHashCode, deserializer);
+            loopExpressions.Add(Expression.Call(newInstance, DictionaryMIH.Add(dictionaryType, keyType, dictionaryType.GetGenericArguments()[1]), key, value));
+            loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
+
+            var cond = Expression.LessThan(i, length);
+            var loopBody = Expression.Block(loopExpressions);
+            var breakLabel = Expression.Label("breakLabel");
+            var loop = Expression.Loop(Expression.IfThenElse(cond,
+                                                             loopBody,
+                                                             Expression.Break(breakLabel)),
+                                        breakLabel);
+
+            var notTrackedExpressions = new List<Expression>();
+            notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
+            notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
+            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(type.GetConstructor(new Type[0]))));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(loop);
+            notTrackedExpressions.Add(newInstance);
+
+            return Expression.Block(notTrackedExpressions);
+
+        }
+
+        private static Expression DeserializeISerializable(Type type,
+                                                           List<ParameterExpression> variables,
+                                                           ParameterExpression inputStream,
+                                                           ParameterExpression objTracking,
+                                                           ParameterExpression newInstance)
+        {
             var length = Expression.Parameter(typeof(int), "length");
             var i = Expression.Parameter(typeof(int), "i");
             var key = Expression.Parameter(typeof(string), "key");
@@ -32,12 +123,10 @@ namespace DesertOctopus.Serialization
             var typeName = Expression.Parameter(typeof(string), "typeName");
             var typeExpr = Expression.Parameter(typeof(TypeWithHashCode), "type");
             var deserializer = Expression.Parameter(typeof(Func<Stream, List<object>, object>), "deserializer");
-            var newInstance = Expression.Parameter(type, "newInstance");
             var typeHashCode = Expression.Parameter(typeof(int), "typeHashCode");
             var fc = Expression.Parameter(typeof(FormatterConverter), "fc");
             var context = Expression.Parameter(typeof(StreamingContext), "context");
             var si = Expression.Parameter(typeof(SerializationInfo), "si");
-            var trackType = Expression.Parameter(typeof(byte), "trackType");
 
             variables.Add(fc);
             variables.Add(context);
@@ -49,13 +138,12 @@ namespace DesertOctopus.Serialization
             variables.Add(deserializer);
             variables.Add(typeName);
             variables.Add(typeExpr);
-            variables.Add(newInstance);
             variables.Add(typeHashCode);
-            variables.Add(trackType);
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
-            loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
+
+            GetReadExpression(inputStream, objTracking, typeof(string), loopExpressions, key, typeExpr, typeName, typeHashCode, deserializer);
+            GetReadExpression(inputStream, objTracking, typeof(object), loopExpressions, value, typeExpr, typeName, typeHashCode, deserializer);
             loopExpressions.Add(Expression.Call(si, SerializationInfoMIH.AddValue(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
@@ -68,7 +156,6 @@ namespace DesertOctopus.Serialization
                                         breakLabel);
 
             var notTrackedExpressions = new List<Expression>();
-
             notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
             notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
             notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
@@ -81,13 +168,32 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
             notTrackedExpressions.Add(newInstance);
 
-            return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
-                                                                         inputStream,
-                                                                         objTracking,
-                                                                         newInstance,
-                                                                         notTrackedExpressions,
-                                                                         trackType,
-                                                                         variables);
+            return Expression.Block(notTrackedExpressions);
+        }
+
+        private static void GetReadExpression(ParameterExpression inputStream,
+                                              ParameterExpression objTracking,
+                                              Type expectedType,
+                                              List<Expression> loopExpressions,
+                                              ParameterExpression tmpVariable,
+                                              ParameterExpression typeExpr,
+                                              ParameterExpression typeName,
+                                              ParameterExpression typeHashCode,
+                                              ParameterExpression deserializer)
+        {
+            if (expectedType == typeof(string))
+            {
+                loopExpressions.Add(Expression.Assign(tmpVariable, Deserializer.GenerateStringExpression(inputStream, objTracking)));
+            }
+            else if (expectedType.IsPrimitive || expectedType.IsValueType)
+            {
+                Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(expectedType);
+                loopExpressions.Add(Expression.Assign(tmpVariable, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), expectedType)));
+            }
+            else
+            {
+                loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, tmpVariable, typeExpr, typeName, typeHashCode, deserializer, expectedType));
+            }
         }
     }
 }

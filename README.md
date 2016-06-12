@@ -43,15 +43,15 @@ The mains cons are:
 
 ### Benchmark
 
-This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.  A big performance hit is the handling of `ISerializable`
+This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.
 
 ```ini
 
-BenchmarkDotNet=v0.9.6.0
+BenchmarkDotNet=v0.9.7.0
 OS=Microsoft Windows NT 6.3.9600.0
-Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
 Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
-HostCLR=MS.NET 4.0.30319.42000, Arch=64-bit RELEASE [RyuJIT]
+HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
 JitModules=clrjit-v4.6.1055.0
 
 Type=ProductSerializationBenchMark  Mode=Throughput  
@@ -59,40 +59,40 @@ Type=ProductSerializationBenchMark  Mode=Throughput
 ```
                          Method |      Median |    StdDev |
 ------------------------------- |------------ |---------- |
-              JsonSerialization |  91.9330 us | 4.9447 us |
-            JsonDeserialization | 176.9681 us | 5.0118 us |
-              OmniSerialization | 195.9051 us | 2.0565 us |
-            OmniDeserialization |  83.3034 us | 0.5823 us |
-            KrakenSerialization | 377.8699 us | 6.8978 us |
-          KrakenDeserialization | 199.7201 us | 3.3580 us |
-   BinaryFormatterSerialization | 417.4507 us | 6.7281 us |
- BinaryFormatterDeserialization | 399.5219 us | 3.7520 us |
+              JsonSerialization |  83.3844 us | 1.6567 us |
+            JsonDeserialization | 166.0238 us | 1.8122 us |
+              OmniSerialization | 201.3290 us | 1.3124 us |
+            OmniDeserialization |  85.1688 us | 2.3745 us |
+            KrakenSerialization | 236.1410 us | 1.2424 us |
+          KrakenDeserialization | 143.4187 us | 1.2910 us |
+   BinaryFormatterSerialization | 420.0934 us | 3.5034 us |
+ BinaryFormatterDeserialization | 390.0488 us | 5.1521 us |
 
 
 This benchmark serialize and deserialize a normal sized object that contains all primitives types.
 
 ```ini
 
-BenchmarkDotNet=v0.9.6.0
+BenchmarkDotNet=v0.9.7.0
 OS=Microsoft Windows NT 6.3.9600.0
-Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
 Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
 HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
 JitModules=clrjit-v4.6.1055.0
 
-Type=SimpleDtoWithEveryPrimitivesBenchmark  Mode=Throughput  
+Type=SimpleDtoWithEveryPrimitivesSerializationBenchmark  Mode=Throughput  
 
 ```
                          Method |     Median |    StdDev |
 ------------------------------- |----------- |---------- |
-              JsonSerialization | 14.1693 us | 0.1343 us |
-            JsonDeserialization | 15.4511 us | 0.2316 us |
-              OmniSerialization |  1.7784 us | 0.0244 us |
-            OmniDeserialization |  1.1477 us | 0.0077 us |
-            KrakenSerialization |  6.0231 us | 0.0789 us |
-          KrakenDeserialization |  3.6023 us | 0.0296 us |
-   BinaryFormatterSerialization | 43.3992 us | 0.2911 us |
- BinaryFormatterDeserialization | 23.6350 us | 0.1203 us |
+              JsonSerialization | 14.2249 us | 0.1102 us |
+            JsonDeserialization | 15.1895 us | 0.1149 us |
+              OmniSerialization |  1.7736 us | 0.0130 us |
+            OmniDeserialization |  1.1721 us | 0.0074 us |
+            KrakenSerialization |  5.7288 us | 0.0518 us |
+          KrakenDeserialization |  3.6326 us | 0.0418 us |
+   BinaryFormatterSerialization | 43.1586 us | 0.3241 us |
+ BinaryFormatterDeserialization | 23.2617 us | 0.2351 us |
 
 
 
@@ -131,19 +131,19 @@ This benchmark clones a fairly large object containing array, lists and dictiona
 
 ```ini
 
-BenchmarkDotNet=v0.9.6.0
+BenchmarkDotNet=v0.9.7.0
 OS=Microsoft Windows NT 6.3.9600.0
-Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
 Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
 HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
 JitModules=clrjit-v4.6.1055.0
 
-Type=CloningBenchMark  Mode=Throughput  
+Type=ProductCloningBenchMark  Mode=Throughput  
 
 ```
  Method |     Median |    StdDev |
 ------- |----------- |---------- |
-  Clone | 63.6519 us | 0.4349 us |
+  Clone | 91.6395 us | 0.5154 us |
 
 
 This benchmark clone a normal sized object that contains all primitives types.
@@ -154,7 +154,7 @@ BenchmarkDotNet=v0.9.6.0
 OS=Microsoft Windows NT 6.3.9600.0
 Processor=Intel(R) Core(TM) i5-4690 CPU @ 3.50GHz, ProcessorCount=4
 Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
-HostCLR=MS.NET 4.0.30319.42000, Arch=32-bit RELEASE
+HostCLR=MS.NET 4.0.30319.42000, Arch=64-bit RELEASE [RyuJIT]
 JitModules=clrjit-v4.6.1055.0
 
 Type=SimpleDtoWithEveryPrimitivesCloningBenchmark  Mode=Throughput  
@@ -162,7 +162,7 @@ Type=SimpleDtoWithEveryPrimitivesCloningBenchmark  Mode=Throughput
 ```
  Method |      Median |    StdDev |
 ------- |------------ |---------- |
-  Clone | 338.9273 ns | 4.0972 ns |
+  Clone | 316.8997 ns | 4.2676 ns |
 
 
 ## Distributed Caching / MammothCache

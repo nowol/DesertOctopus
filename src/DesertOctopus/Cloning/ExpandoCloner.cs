@@ -42,11 +42,11 @@ namespace DesertOctopus.Cloning
             loopBodyCargo.EnumeratorType = typeof(IEnumerator<KeyValuePair<string, object>>);
             loopBodyCargo.KvpType = typeof(KeyValuePair<string, object>);
 
-            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
-                                                                                                                                   CloneKeyValuePair(clone, refTrackerParam),
-                                                                                                                                   enumeratorMethod,
-                                                                                                                                   null,
-                                                                                                                                   loopBodyCargo));
+            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
+                                                                        CloneKeyValuePair(clone, refTrackerParam),
+                                                                        enumeratorMethod,
+                                                                        null,
+                                                                        loopBodyCargo));
 
             return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
                                                                          clone,

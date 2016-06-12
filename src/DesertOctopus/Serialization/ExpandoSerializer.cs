@@ -37,11 +37,11 @@ namespace DesertOctopus.Serialization
 
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
-            notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, IEnumerator<KeyValuePair<string, object>>>(variables,
-                                                                                                                                             EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
-                                                                                                                                             enumeratorMethod,
-                                                                                                                                             preLoopActions,
-                                                                                                                                             loopBodyCargo));
+            notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
+                                                                                  EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
+                                                                                  enumeratorMethod,
+                                                                                  preLoopActions,
+                                                                                  loopBodyCargo));
 
             return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
                                                                        objToSerialize,

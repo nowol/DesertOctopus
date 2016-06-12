@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -37,25 +38,34 @@ namespace DesertOctopus.Utilities
             Class = 1
         }
 
+        public static readonly ConcurrentDictionary<Type, FieldInfo[]> FieldsForType = new ConcurrentDictionary<Type, FieldInfo[]>();
+
         /// <summary>
         /// Gets the fields of a type that can be serialized
         /// </summary>
         /// <param name="type">Type to analyze</param>
         /// <returns>The fields of a type</returns>
-        public static IEnumerable<FieldInfo> GetFields(Type type)
+        public static FieldInfo[] GetFields(Type type)
         {
-            var fields = new List<FieldInfo>();
-            var targetType = type;
+            return FieldsForType.GetOrAdd(type,
+                                          t =>
+                                          {
+                                              var fields = new List<FieldInfo>();
+                                              var targetType = t;
 
-            do
-            {
-                fields.AddRange(targetType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                                          .Where(fi => (fi.Attributes & FieldAttributes.NotSerialized) == 0));
-                targetType = targetType.BaseType;
-            }
-            while (targetType != null);
+                                              do
+                                              {
+                                                  fields.AddRange(targetType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
+                                                                                       | BindingFlags.DeclaredOnly)
+                                                                            .Where(fi => (fi.Attributes & FieldAttributes.NotSerialized) == 0));
+                                                  targetType = targetType.BaseType;
+                                              }
+                                              while (targetType != null);
 
-            return fields.OrderBy(f => f.Name, StringComparer.Ordinal);
+                                              return fields.OrderBy(f => f.Name,
+                                                                    StringComparer.Ordinal)
+                                                           .ToArray();
+                                          });
         }
 
         /// <summary>
@@ -124,6 +134,11 @@ namespace DesertOctopus.Utilities
             {
                 throw new NotSupportedException(type.ToString());
             }
+        }
+
+        internal static Expression TraceWriteLine(Expression value)
+        {
+            return Expression.Call(typeof(System.Diagnostics.Trace).GetMethod("WriteLine", BindingFlags.Public | BindingFlags.Static, null, CallingConventions.Any, new[] { typeof(string) }, new ParameterModifier[0]), value);
         }
     }
 }

@@ -6,6 +6,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using DesertOctopus.Benchmark.Models;
+using DesertOctopus.MammothCache;
+using DesertOctopus.MammothCache.Common;
+using DesertOctupos.MammothCache.Redis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.Benchmark
@@ -23,6 +26,7 @@ namespace DesertOctopus.Benchmark
             System.IO.File.WriteAllBytes(@"d:\z.bin", krakenBytes);
 
             DesertOctopus.KrakenSerializer.Deserialize<Product>(krakenBytes);
+            DesertOctopus.ObjectCloner.Clone(product);
 
             Stopwatch sw = Stopwatch.StartNew();
 
@@ -30,12 +34,22 @@ namespace DesertOctopus.Benchmark
             {
                 //krakenBytes = DesertOctopus.KrakenSerializer.Serialize(product);
                 DesertOctopus.KrakenSerializer.Deserialize<Product>(krakenBytes);
+                //DesertOctopus.ObjectCloner.Clone(product);
             }
 
             sw.Stop();
             Assert.Fail(sw.Elapsed.ToString());
         }
 
+        [TestMethod]
+        public void PrintProductSerializationSizes()
+        {
+            var b = new ProductSerializationBenchMark();
+            Console.WriteLine("JsonSerialization: {0}", b.JsonSerialization().Length);
+            Console.WriteLine("OmniSerialization: {0}", b.OmniSerialization().Length);
+            Console.WriteLine("KrakenSerialization: {0}", b.KrakenSerialization().Length);
+            Console.WriteLine("BinaryFormatterSerialization: {0}", b.BinaryFormatterSerialization().Length);
+        }
 
         [TestMethod]
         public void ProductSerializationBenchmark()
@@ -49,6 +63,8 @@ namespace DesertOctopus.Benchmark
             {
                 Console.WriteLine(validationError.Message);
             }
+
+            PrintProductSerializationSizes();
 
             Assert.Fail(k.First());
         }
@@ -108,6 +124,84 @@ namespace DesertOctopus.Benchmark
             var product = ServiceStack.Text.JsonSerializer.DeserializeFromString<Product>(json);
             var krakenBytes = DesertOctopus.KrakenSerializer.Serialize(product);
 
+        }
+
+        [TestMethod]
+        public void MammothCacheBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<MammothCacheBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+    }
+
+    public class MammothCacheBenchmark
+    {
+        private static readonly RedisConnection _connection;
+        private static string _redisConnectionString = "172.16.100.100";
+        private static readonly IRedisRetryPolicy _redisRetryPolicy;
+        private static readonly IMammothCache _cache;
+        private static readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
+        private static readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
+        private static readonly INonSerializableCache _nonSerializableCache = new NonSerializableCache();
+
+
+        static MammothCacheBenchmark()
+        {
+            _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
+            _config.MaximumMemorySize = 1000;
+            _config.TimerInterval = 1;
+
+            _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
+            _connection = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+
+            //var firstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var firstLevelCache = new DummyCache();
+            _cache = new MammothCache.MammothCache(firstLevelCache, _connection, _nonSerializableCache, new MammothCacheSerializationProvider());
+
+            var p = _cache.GetOrAdd("key",
+                                    () =>
+                                    {
+                                        var product = ServiceStack.Text.JsonSerializer.DeserializeFromString<Product>(ProductSerializationBenchMark.JsonProduct);
+                                        return product;
+                                    });
+
+        }
+
+
+        [Benchmark]
+        public Product GetFromCache()
+        {
+            return _cache.GetOrAdd("key",
+                                   () =>
+                                   {
+                                       var product = ServiceStack.Text.JsonSerializer.DeserializeFromString<Product>(ProductSerializationBenchMark.JsonProduct);
+                                       return product;
+                                   });
+        }
+
+        public class DummyCache : IFirstLevelCache
+        {
+            public ConditionalResult<T> Get<T>(string key) where T : class
+            {
+                return ConditionalResult.CreateFailure<T>();
+            }
+
+            public void Remove(string key) { }
+
+            public void RemoveAll() { }
+
+            public void Set(string key,
+                            byte[] serializedValue,
+                            TimeSpan? ttl = null) { }
         }
     }
 

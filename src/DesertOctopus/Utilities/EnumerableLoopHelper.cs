@@ -34,23 +34,20 @@ namespace DesertOctopus.Utilities
         /// <summary>
         /// Generates an expression tree that represents an enumerator loop
         /// </summary>
-        /// <typeparam name="TKey">TKey can be any type</typeparam>
-        /// <typeparam name="TValue">TValue can be any type</typeparam>
-        /// <typeparam name="TEnumeratorType">Enumerator type</typeparam>
         /// <param name="variables">Global variables for the expression tree</param>
         /// <param name="loopBody">Expression that represents the loop body</param>
         /// <param name="getEnumeratorMethod">Expression that returns the enumerator</param>
         /// <param name="preLoopActions">Expression that represents the action to execute before the loop</param>
         /// <param name="loopBodyCargo">Helper class to hold loop body information</param>
         /// <returns>An expression tree that represents an enumerator loop</returns>
-        public static Expression GenerateEnumeratorLoop<TKey, TValue, TEnumeratorType>(List<ParameterExpression> variables,
-                                                                                       Func<EnumerableLoopBodyCargo, Expression> loopBody,
-                                                                                       Expression getEnumeratorMethod,
-                                                                                       IEnumerable<Expression> preLoopActions,
-                                                                                       EnumerableLoopBodyCargo loopBodyCargo)
+        public static Expression GenerateEnumeratorLoop(List<ParameterExpression> variables,
+                                                        Func<EnumerableLoopBodyCargo, Expression> loopBody,
+                                                        Expression getEnumeratorMethod,
+                                                        IEnumerable<Expression> preLoopActions,
+                                                        EnumerableLoopBodyCargo loopBodyCargo)
         {
             var breakLabel = Expression.Label("breakLabel");
-            var enumeratorVar = Expression.Parameter(typeof(TEnumeratorType), "enumeratorVar");
+            var enumeratorVar = Expression.Parameter(loopBodyCargo.EnumeratorType, "enumeratorVar");
 
             var serializer = Expression.Parameter(typeof(Action<Stream, object, SerializerObjectTracker>), "serializer");
             var typeExpr = Expression.Parameter(typeof(Type), "typeExpr");
@@ -66,16 +63,8 @@ namespace DesertOctopus.Utilities
             loopBodyCargo.ItemAsObj = itemAsObj;
             loopBodyCargo.Serializer = serializer;
 
-            Expression finallyExpr;
-            if (typeof(IDisposable).IsAssignableFrom(typeof(TEnumeratorType)))
-            {
-                finallyExpr = Expression.IfThen(Expression.NotEqual(enumeratorVar, Expression.Constant(null)),
-                                                Expression.Call(enumeratorVar, IDisposableMIH.Dispose()));
-            }
-            else
-            {
-                finallyExpr = Expression.Empty();
-            }
+            Expression finallyExpr = Expression.IfThen(Expression.TypeIs(enumeratorVar, typeof(IDisposable)),
+                                                       Expression.Call(Expression.Convert(enumeratorVar, typeof(IDisposable)), IDisposableMIH.Dispose()));
 
             var expressions = new List<Expression>();
 
@@ -88,7 +77,7 @@ namespace DesertOctopus.Utilities
             expressions.Add(Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, IEnumeratorMIH.MoveNext())),
                                                                                                 loopBody(loopBodyCargo),
                                                                                                 Expression.Break(breakLabel)),
-                                                                          breakLabel));
+                                            breakLabel));
             return Expression.TryFinally(Expression.Block(expressions),
                                          finallyExpr);
         }

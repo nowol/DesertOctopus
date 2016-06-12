@@ -82,11 +82,11 @@ namespace DesertOctopus.Cloning
                                               Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(),
                                                                               Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
 
-            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop<string, object, SerializationInfoEnumerator>(variables,
-                                                                                                                     GetLoopBodyCargo(siClone, clonedItem, refTrackerParam),
-                                                                                                                     enumeratorMethod,
-                                                                                                                     null,
-                                                                                                                     loopBodyCargo));
+            expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
+                                                                        GetLoopBodyCargo(siClone, clonedItem, refTrackerParam),
+                                                                        enumeratorMethod,
+                                                                        null,
+                                                                        loopBodyCargo));
 
             expressions.Add(Expression.Assign(clone, Expression.New(serializationConstructor, siClone, context)));
             expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));

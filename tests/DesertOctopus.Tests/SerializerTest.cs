@@ -190,6 +190,30 @@ namespace DesertOctopus.Tests
             Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
         }
 
+        [TestMethod]
+        public void DictionaryIsDetectedAsNormalDictionary()
+        {
+            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<int, int>()));
+        }
+
+        [TestMethod]
+        public void CustomDictionaryIsDetectedAsNormalDictionary()
+        {
+            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionary()));
+        }
+
+        [TestMethod]
+        public void DictionaryWithCustomComparerIsNotDetectedAsNormalDictionary()
+        {
+            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
+        }
+
+        [TestMethod]
+        public void DictionaryAdditionalPropertiesAsNormalDictionary()
+        {
+            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
+        }
+
 
 
 

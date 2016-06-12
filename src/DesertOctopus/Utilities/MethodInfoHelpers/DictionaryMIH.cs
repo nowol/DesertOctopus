@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -19,6 +20,30 @@ namespace DesertOctopus.Utilities
         public static MethodInfo Add<TKey, TValue>()
         {
             return typeof(IDictionary<TKey, TValue>).GetMethod("Add", new[] { typeof(TKey), typeof(TValue) });
+        }
+
+        public static MethodInfo Add(Type dictionaryType, Type keyType, Type valueType)
+        {
+            return dictionaryType.GetMethod("Add", new[] { keyType, valueType });
+        }
+
+        public static MethodInfo GetEnumerator(Type dictionaryType)
+        {
+            Debug.Assert(dictionaryType.IsGenericType && dictionaryType.GetGenericTypeDefinition() == typeof(Dictionary<,>), "Type " + dictionaryType + " is not a dictionary");
+            return dictionaryType.GetMethod("GetEnumerator");
+        }
+
+        public static MethodInfo IsObjectADictionaryWithDefaultComparer()
+        {
+            return typeof(DictionaryHelper).GetMethod("IsObjectADictionaryWithDefaultComparer",
+                                                      BindingFlags.Static | BindingFlags.NonPublic,
+                                                      null,
+                                                      CallingConventions.Any,
+                                                      new[]
+                                                      {
+                                                          typeof(object)
+                                                      },
+                                                      new ParameterModifier[0]);
         }
     }
 }

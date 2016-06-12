@@ -48,6 +48,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="ServiceStack.Text, Version=4.0.0.0, Culture=neutral, PublicKeyToken=e06fbc6124f57c43, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\ServiceStack.Text.Signed.4.0.56\lib\net40\ServiceStack.Text.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -121,6 +125,10 @@
     <ProjectReference Include="..\..\src\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj">
       <Project>{c42cfb36-c60a-47fc-bf74-12d93c1e92e4}</Project>
       <Name>DesertOctupos.MammothCache.Redis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DesertOctopus.Benchmark\DesertOctopus.Benchmark.csproj">
+      <Project>{0747c3c7-4b11-4f06-8ace-35a75fa69240}</Project>
+      <Name>DesertOctopus.Benchmark</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

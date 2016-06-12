@@ -512,6 +512,116 @@ namespace DesertOctopus.Tests
             }
         }
 
+        private class TypeValueCargo
+        {
+            public Type Type { get; set; }
+            public ICollection Values { get; set; }
+        }
+
+        [TestMethod]
+        public void DuplicateDictionaries()
+        {
+            var cargoes = new TypeValueCargo[]
+                          {
+                                new TypeValueCargo { Type = typeof(bool), Values = new bool[] { true, false } },
+                                new TypeValueCargo { Type = typeof(byte), Values = new byte[] { byte.MinValue, byte.MaxValue, 3 } },
+                                new TypeValueCargo { Type = typeof(sbyte), Values = new sbyte[] { sbyte.MinValue, sbyte.MaxValue, 3, 0, -3 } },
+                                new TypeValueCargo { Type = typeof(Int16), Values = new Int16[] { Int16.MinValue, Int16.MaxValue, 3, 0 } },
+                                new TypeValueCargo { Type = typeof(UInt16), Values = new UInt16[] { UInt16.MinValue, UInt16.MaxValue, 3 } },
+                                new TypeValueCargo { Type = typeof(Int32), Values = new Int32[] { Int32.MinValue, Int32.MaxValue, 3, 0, -3 } },
+                                new TypeValueCargo { Type = typeof(UInt32), Values = new UInt32[] { UInt32.MinValue, UInt32.MaxValue, 3 } },
+                                new TypeValueCargo { Type = typeof(Int64), Values = new Int64[] { Int64.MinValue, Int64.MaxValue, 3, 0, -3 } },
+                                new TypeValueCargo { Type = typeof(UInt64), Values = new UInt64[] { UInt64.MinValue, UInt64.MaxValue, 3 } },
+                                new TypeValueCargo { Type = typeof(char), Values = new char[] { char.MinValue, char.MaxValue, 'a', 'z' } },
+                                new TypeValueCargo { Type = typeof(double), Values = new double[] { double.MinValue, double.MaxValue, 3.34D, 0, -3.34D } },
+                                new TypeValueCargo { Type = typeof(Decimal), Values = new Decimal[] { Decimal.MinValue, Decimal.MaxValue, 3.34M, 0, -3.34M } },
+                                new TypeValueCargo { Type = typeof(Single), Values = new Single[] { Single.MinValue, Single.MaxValue, 3.34F, 0, -3.34F } },
+                                new TypeValueCargo { Type = typeof(DateTime), Values = new DateTime[] { DateTime.MaxValue, DateTime.MinValue, DateTime.Now, DateTime.UtcNow } },
+                                new TypeValueCargo { Type = typeof(TimeSpan), Values = new TimeSpan[] { TimeSpan.MaxValue, TimeSpan.MinValue, TimeSpan.FromSeconds(30) } },
+                                new TypeValueCargo { Type = typeof(BigInteger), Values = new BigInteger[] { BigInteger.MinusOne, BigInteger.One, BigInteger.Zero, 98, -1928 } },
+                                new TypeValueCargo { Type = typeof(Tuple<int, string>), Values = new Tuple<int, string>[] { new Tuple<int, string>(1, "a"), new Tuple<int, string>(2, "b") } }
+                          };
+
+            var types = new[]
+                        {
+
+                            typeof(bool),
+                            typeof(byte),
+                            typeof(sbyte),
+                            typeof(Int16),
+                            typeof(UInt16),
+                            typeof(Int32),
+                            typeof(UInt32),
+                            typeof(Int64),
+                            typeof(UInt64),
+                            typeof(char),
+                            typeof(double),
+                            typeof(Decimal),
+                            typeof(Single),
+                            typeof(DateTime),
+                            typeof(TimeSpan),
+                            typeof(BigInteger),
+                            typeof(Tuple<int, string>)
+                        };
+
+            foreach (var keyType in types)
+            {
+                foreach (var valueType in types)
+                {
+                    var m = typeof(BaseDuplicationTest).GetMethod("DuplicateDictionary", BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(keyType, valueType);
+                    m.Invoke(this,
+                             new object[]
+                             {
+                                cargoes.Single(x => x.Type == keyType).Values,
+                                 cargoes.Single(x => x.Type == valueType).Values
+                             });
+                }
+            }
+        }
+
+        private void DuplicateDictionary<TKey, TValue>(object valuesForKey, TValue[] valuesForValues)
+        {
+            var vk = (TKey[]) valuesForKey;
+            var rnd = new Random();
+            var instance = new Dictionary<TKey, TValue>();
+            foreach (var key in vk)
+            {
+                instance.Add((TKey)key, valuesForValues[rnd.Next(0, valuesForValues.Length)]);
+            }
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
+        [TestMethod]
+        public void DuplicateObjectKeyDictionary()
+        {
+            var instance = new Dictionary<object, int>();
+            instance.Add(new ClassWithGenericInt(3), 1);
+            instance.Add(new ClassWithGenericInt(5), 4);
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
         [TestMethod]
         public void DuplicateEmptyDictionary()
         {
@@ -736,6 +846,27 @@ namespace DesertOctopus.Tests
                 {"Key2", 456},
                 {"Key3", 789},
             };
+            instance.SomeProperty = 849;
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.SomeProperty,
+                            duplicatedValue.SomeProperty);
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
+        [TestMethod]
+        public void DuplicateEmptyCustomDictionaryWithAdditionalPropertiesAndGenerics()
+        {
+            var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<string, int>();
             instance.SomeProperty = 849;
 
             var duplicatedValue = Duplicate(instance);

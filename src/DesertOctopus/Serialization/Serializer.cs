@@ -252,7 +252,7 @@ namespace DesertOctopus.Serialization
         /// <param name="itemAsObj">Source object as an object</param>
         /// <param name="typeExpr">Type of the object as an expression</param>
         /// <param name="serializer">Serializer temporary variable</param>
-        /// <param name="elementType">Type of the element</param>
+        /// <param name="itemType">Type of the element</param>
         /// <returns>An expression tree to handle class type serialization</returns>
         internal static Expression GetWriteClassTypeExpression(ParameterExpression outputStream,
                                                               ParameterExpression objTracking,
@@ -260,17 +260,17 @@ namespace DesertOctopus.Serialization
                                                               Expression itemAsObj,
                                                               ParameterExpression typeExpr,
                                                               ParameterExpression serializer,
-                                                              Type elementType)
+                                                              Type itemType)
         {
-            var writeType = Expression.IfThenElse(Expression.Equal(Expression.Call(item, ObjectMIH.GetTypeMethod()), Expression.Constant(elementType)),
-                                                  Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0)),
-                                                                   Expression.Assign(typeExpr, Expression.Constant(elementType)),
-                                                                   Expression.Assign(itemAsObj, Expression.Convert(item, typeof(object)))),
-                                                  Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
-                                                                   Expression.Assign(itemAsObj, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), item)),
-                                                                   Expression.Assign(typeExpr, Expression.Call(itemAsObj, ObjectMIH.GetTypeMethod())),
-                                                                   GenerateStringExpression(outputStream,  Expression.Call(SerializedTypeResolverMIH.GetShortNameFromType(), typeExpr), objTracking),
-                                                                   PrimitiveHelpers.WriteInt32(outputStream, Expression.Call(SerializedTypeResolverMIH.GetHashCodeFromType(), typeExpr))));
+            var writeType = Expression.IfThenElse(Expression.Equal(Expression.Call(item, ObjectMIH.GetTypeMethod()), Expression.Constant(itemType)),
+                                                Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0)),
+                                                                 Expression.Assign(typeExpr, Expression.Constant(itemType)),
+                                                                 Expression.Assign(itemAsObj, Expression.Convert(item, typeof(object)))),
+                                                Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
+                                                                 Expression.Assign(itemAsObj, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), item)),
+                                                                 Expression.Assign(typeExpr, Expression.Call(itemAsObj, ObjectMIH.GetTypeMethod())),
+                                                                 GenerateStringExpression(outputStream, Expression.Call(SerializedTypeResolverMIH.GetShortNameFromType(), typeExpr), objTracking),
+                                                                 PrimitiveHelpers.WriteInt32(outputStream, Expression.Call(SerializedTypeResolverMIH.GetHashCodeFromType(), typeExpr))));
 
             return Expression.IfThenElse(Expression.Equal(item, Expression.Constant(null)),
                                          PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0)),
@@ -343,7 +343,6 @@ namespace DesertOctopus.Serialization
                                                             Expression objToSerialize,
                                                             ParameterExpression objTracking)
         {
-            List<Expression> expressions = new List<Expression>();
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 

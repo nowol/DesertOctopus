@@ -281,7 +281,7 @@ namespace DesertOctopus.Serialization
         /// <param name="typeName">Type of the class as a string</param>
         /// <param name="typeHashCode">Hashcode of the class</param>
         /// <param name="deserializer">Temporary deserializer variable</param>
-        /// <param name="elementType">Type of the class</param>
+        /// <param name="itemType">Type of the class</param>
         /// <returns>An expression tree to deserialize a class</returns>
         internal static Expression GetReadClassExpression(ParameterExpression inputStream,
                                                           ParameterExpression objTracking,
@@ -290,27 +290,28 @@ namespace DesertOctopus.Serialization
                                                           ParameterExpression typeName,
                                                           ParameterExpression typeHashCode,
                                                           ParameterExpression deserializer,
-                                                          Type elementType)
+                                                          Type itemType)
         {
             var readType = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
-                                                                  Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_Type(), Expression.Constant(elementType))),
-                                                                  Expression.Block(Expression.Assign(typeName, Deserializer.GenerateStringExpression(inputStream, objTracking)),
-                                                                                   Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
-                                                                                   Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_String(), typeName)),
-                                                                                   Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
-                                                                                                     Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
+                                                               Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_Type(), Expression.Constant(itemType))),
+                                                               Expression.Block(Expression.Assign(typeName, Deserializer.GenerateStringExpression(inputStream, objTracking)),
+                                                                                Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
+                                                                                Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_String(), typeName)),
+                                                                                Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
+                                                                                                  Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
 
             var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracking);
             Expression convertExpression;
 
-            convertExpression = Expression.Convert(Expression.Call(SerializerMIH.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(elementType)), elementType);
+            convertExpression = Expression.Convert(Expression.Call(SerializerMIH.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(itemType)), itemType);
 
             return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
-                                                          Expression.Assign(leftSide, Expression.Constant(null, elementType)),
+                                                          Expression.Assign(leftSide, Expression.Constant(null, itemType)),
                                                           Expression.Block(
                                                                             readType,
                                                                             Expression.Assign(deserializer, Expression.Call(DeserializerMIH.GetTypeDeserializer(), Expression.Property(typeExpr, "Type"))),
                                                                             Expression.Assign(leftSide, convertExpression)));
+
         }
 
         /// <summary>
