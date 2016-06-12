@@ -615,7 +615,15 @@ namespace DesertOctopus.Tests
             var instance = new Dictionary<TKey, TValue>();
             foreach (var key in vk)
             {
-                instance.Add((TKey)key, valuesForValues[rnd.Next(0, valuesForValues.Length)]);
+                var value = valuesForValues[rnd.Next(0, valuesForValues.Length)];
+                try
+                {
+                    instance.Add((TKey)key, value);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("key = " + key.ToString() + " value = " + value, ex);
+                }
             }
 
             var duplicatedValue = Duplicate(instance);
