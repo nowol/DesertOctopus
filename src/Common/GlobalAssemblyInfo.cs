@@ -1,9 +1,9 @@
 using System.Reflection;
 
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("NoWoL")]
 [assembly: AssemblyProduct("DesertOctopus")]
-[assembly: AssemblyCopyright("Copyright © nwlSoft 2016")]
+[assembly: AssemblyCopyright("Copyright 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
