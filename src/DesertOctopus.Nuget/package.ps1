@@ -1,8 +1,4 @@
-﻿param (
-	[ValidateSet("Debug", "Release")]
-    [string]$compileMode
-)
-
+﻿
 $scriptFolder = $PSScriptRoot
 $nugetLocation = Join-Path $scriptFolder "..\..\Tools\nuget\nuget.exe"
 
@@ -24,7 +20,7 @@ $nugetLocation = Join-Path $scriptFolder "..\..\Tools\nuget\nuget.exe"
 
 function UpdateNuspec([String] $nuspec, [String] $dllName)
 {
-	$dllFile = Join-Path $scriptFolder "bin\$($compileMode)\$($dllName)"
+	$dllFile = Join-Path $scriptFolder "bin\Release\$($dllName)"
 	$info = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($dllFile)
 
 	if (!$info) {
