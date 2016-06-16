@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DesertOctupos.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Redis
 {
     internal static class LuaScripts
     {

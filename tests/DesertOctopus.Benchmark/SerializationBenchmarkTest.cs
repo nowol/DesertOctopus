@@ -8,7 +8,7 @@ using BenchmarkDotNet.Running;
 using DesertOctopus.Benchmark.Models;
 using DesertOctopus.MammothCache;
 using DesertOctopus.MammothCache.Common;
-using DesertOctupos.MammothCache.Redis;
+using DesertOctopus.MammothCache.Redis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.Benchmark

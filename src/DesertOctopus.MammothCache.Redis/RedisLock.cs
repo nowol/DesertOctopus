@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DesertOctupos.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Redis
 {
     /// <summary>
     /// Provide a way to lock keys in Redis

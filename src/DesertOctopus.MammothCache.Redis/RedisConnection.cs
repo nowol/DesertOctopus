@@ -10,7 +10,7 @@ using Polly;
 using Polly.Retry;
 using StackExchange.Redis;
 
-namespace DesertOctupos.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Redis
 {
     /// <summary>
     /// Wrap StackExchange.Redis to add retry policy

@@ -96,6 +96,10 @@
       <Project>{7DC09C74-AE2A-4A2E-A411-69B9A261F694}</Project>
       <Name>DesertOctopus.MammothCache.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\DesertOctopus.MammothCache.Redis\DesertOctopus.MammothCache.Redis.csproj">
+      <Project>{c42cfb36-c60a-47fc-bf74-12d93c1e92e4}</Project>
+      <Name>DesertOctopus.MammothCache.Redis</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj">
       <Project>{141B4827-785B-4644-87F2-D54770CA4E9B}</Project>
       <Name>DesertOctopus.MammothCache</Name>
@@ -103,10 +107,6 @@
     <ProjectReference Include="..\..\src\DesertOctopus\DesertOctopus.csproj">
       <Project>{7342e898-8ae6-4482-8a20-b54935dbecab}</Project>
       <Name>DesertOctopus</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj">
-      <Project>{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}</Project>
-      <Name>DesertOctupos.MammothCache.Redis</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

@@ -1,41 +1,31 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>DesertOctopus</id>
+    <id>DesertOctupos.MammothCache.Redis</id>
     <version>0.0.2.0-beta</version>
-    <title>DesertOctopus</title>
+    <title>DesertOctupos.MammothCache.Redis</title>
     <authors>NoWoL</authors>
     <owners>NoWoL</owners>
     <licenseUrl>https://github.com/nowol/DesertOctopus/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/nowol/DesertOctopus</projectUrl>
     <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>DesertOctopus is a utility class.</description>
+    <description>DesertOctupos.MammothCache.Redis provides an implementation of a distributed cache using Redis for DesertOctupos.MammothCache.</description>
     <!--<releaseNotes>Summary of changes made in this release of the package.</releaseNotes>-->
     <copyright>Copyright 2016</copyright>
-    <tags>Serialization Serializer Clone Cloning</tags>
+    <tags>DistributedCache Caching Redis</tags>
     <dependencies>
       <group targetFramework="net461">
         <dependency id="Microsoft.CSharp" version="4.0.0" />
-        <!--<dependency id="StyleCop.Analyzers" version="1.1.0" />-->
-        <!--<dependency id="jQuery" />
-      <dependency id="RouteMagic" version="1.1.0" />
-      -->
+        <dependency id="DesertOctopus" version="0.0.2.0" />
+        <dependency id="DesertOctopus.MammothCache.Common" version="0.0.2.0" />
+        <dependency id="DesertOctopus.MammothCache" version="0.0.2.0" />
+        <dependency id="Polly-Signed" version="4.2.1" />
+        <dependency id="StackExchange.Redis.StrongName" version="1.1.604-alpha" />
       </group>
     </dependencies>
-    <references>
-      <!--<group targetFramework="net461">
-        <reference file="Microsoft.CSharp" />
-      </group>-->
-      <!--<group targetFramework="netcore45">
-      <reference file="b.dll" />
-    </group>
-    <group>
-      <reference file="c.dll" />
-    </group>-->
-    </references>
   </metadata>
   <files>
-    <file src="bin\Release\DesertOctopus.dll" target="lib\net461" />
+    <file src="bin\Release\DesertOctopus.MammothCache.Common.dll" target="lib\net461" />
   </files>
 </package>

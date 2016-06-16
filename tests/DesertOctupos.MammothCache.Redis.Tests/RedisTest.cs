@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus;
+using DesertOctopus.MammothCache.Redis;
 using DesertOctupos.MammothCache.Redis.Tests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using StackExchange.Redis;

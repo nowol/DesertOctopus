@@ -43,6 +43,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DesertOctopus.MammothCache.Redis.nuspec" />
+    <None Include="DesertOctopus.MammothCache.nuspec" />
+    <None Include="DesertOctopus.MammothCache.Common.nuspec" />
     <None Include="DesertOctopus.nuspec" />
     <None Include="package.ps1" />
   </ItemGroup>
@@ -50,6 +53,10 @@
     <ProjectReference Include="..\DesertOctopus.MammothCache.Common\DesertOctopus.MammothCache.Common.csproj">
       <Project>{7dc09c74-ae2a-4a2e-a411-69b9a261f694}</Project>
       <Name>DesertOctopus.MammothCache.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DesertOctopus.MammothCache.Redis\DesertOctopus.MammothCache.Redis.csproj">
+      <Project>{c42cfb36-c60a-47fc-bf74-12d93c1e92e4}</Project>
+      <Name>DesertOctopus.MammothCache.Redis</Name>
     </ProjectReference>
     <ProjectReference Include="..\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj">
       <Project>{141b4827-785b-4644-87f2-d54770ca4e9b}</Project>
@@ -59,13 +66,9 @@
       <Project>{7342e898-8ae6-4482-8a20-b54935dbecab}</Project>
       <Name>DesertOctopus</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DesertOctupos.MammothCache.Redis\DesertOctupos.MammothCache.Redis.csproj">
-      <Project>{c42cfb36-c60a-47fc-bf74-12d93c1e92e4}</Project>
-      <Name>DesertOctupos.MammothCache.Redis</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup  Condition=" '$(Configuration)' == 'Release' ">
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <PostBuildEvent>powershell  -ExecutionPolicy Unrestricted -File "$(ProjectDir)\package.ps1"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using DesertOctopus.Benchmark.Models;
 using DesertOctopus.MammothCache.Common;
-using DesertOctupos.MammothCache.Redis;
+using DesertOctopus.MammothCache.Redis;
 
 namespace DesertOctopus.MammothCache.WebSiteSimulator.Controllers
 {

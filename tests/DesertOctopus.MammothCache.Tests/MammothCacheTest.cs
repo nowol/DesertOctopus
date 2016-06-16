@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
+using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.MammothCache.Tests.Models;
-using DesertOctupos.MammothCache.Redis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.MammothCache.Tests

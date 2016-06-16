@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DesertOctupos.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Redis
 {
     /// <summary>
     /// Represents the contract for classes that wishes to provide a retry policy for Redis

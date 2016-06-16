@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
-using StackExchange.Redis;
 
-namespace DesertOctupos.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Redis
 {
     /// <summary>
     /// Represents the contract for classes that wishes to provide a connection to Redis
