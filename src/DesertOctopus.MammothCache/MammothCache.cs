@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 
@@ -57,6 +58,13 @@ namespace DesertOctopus.MammothCache
         private void SubscribeToEvents()
         {
             SecondLevelCache.OnItemRemovedFromCache += OnItemRemovedFromSecondLevelCache;
+            SecondLevelCache.OnRemoveAllItems += OnRemoveAllItemsFromSecondLevelCache;
+        }
+
+        private void OnRemoveAllItemsFromSecondLevelCache()
+        {
+            FirstLevelCache.RemoveAll();
+            NonSerializableCache.RemoveAll();
         }
 
         private void OnItemRemovedFromSecondLevelCache(string key)
@@ -90,8 +98,11 @@ namespace DesertOctopus.MammothCache
                     return null;
                 }
 
-                var ttl = SecondLevelCache.GetTimeToLive(key);
-                FirstLevelCache.Set(key, bytes, ttl: ttl);
+                var ttlResult = SecondLevelCache.GetTimeToLive(key);
+                if (ttlResult.KeyExists)
+                {
+                    FirstLevelCache.Set(key, bytes, ttl: ttlResult.TimeToLive);
+                }
 
                 return deserializedValue as T;
             }
@@ -125,8 +136,11 @@ namespace DesertOctopus.MammothCache
                     return null;
                 }
 
-                var ttl = await SecondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
-                FirstLevelCache.Set(key, bytes, ttl: ttl);
+                var ttlResult = await SecondLevelCache.GetTimeToLiveAsync(key).ConfigureAwait(false);
+                if (ttlResult.KeyExists)
+                {
+                    FirstLevelCache.Set(key, bytes, ttl: ttlResult.TimeToLive);
+                }
 
                 return deserializedValue as T;
             }
@@ -149,16 +163,24 @@ namespace DesertOctopus.MammothCache
             {
                 byte[] bytes = SerializationProvider.Serialize(value);
 
-                FirstLevelCache.Set(key, bytes, ttl: ttl);
                 SecondLevelCache.Set(key, bytes, ttl: ttl);
+                FirstLevelCache.Set(key, bytes, ttl: ttl);
             }
             else
             {
                 var ph = new NonSerializableObjectPlaceHolder();
-                NonSerializableCache.Set(key, value, ttl: ttl);
+                var ttlResult = SecondLevelCache.GetTimeToLive(key);
 
-                byte[] bytes = SerializationProvider.Serialize(ph);
-                SecondLevelCache.Set(key, bytes, ttl: ttl);
+                if (ttlResult.KeyExists)
+                {
+                    NonSerializableCache.Set(key, value, ttl: ttlResult.TimeToLive);
+                }
+                else
+                {
+                    byte[] bytes = SerializationProvider.Serialize(ph);
+                    SecondLevelCache.Set(key, bytes, ttl: ttl);
+                    NonSerializableCache.Set(key, value, ttl: ttl);
+                }
             }
         }
 
@@ -166,14 +188,35 @@ namespace DesertOctopus.MammothCache
         public void Set<T>(Dictionary<CacheItemDefinition, T> objects)
             where T : class
         {
-            var serializedValues = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
-            SecondLevelCache.Set(serializedValues);
+            var valuesToStore = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
+            if (valuesToStore.InNonSerializableCache.Count > 0)
+            {
+                var keys = valuesToStore.InNonSerializableCache.Select(x => x.Key.Key).ToArray();
+                var ttlResults = SecondLevelCache.GetTimeToLives(keys);
+                RemoveTtlResultFromValuesToStore(ttlResults, valuesToStore);
+            }
+
+            SecondLevelCache.Set(valuesToStore.InSecondLevelCache);
+            StoreValuesInFirstLevelCacheAndNonSerializableCache(valuesToStore);
         }
 
-        private Dictionary<CacheItemDefinition, byte[]> SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache<T>(Dictionary<CacheItemDefinition, T> objects)
+        private void StoreValuesInFirstLevelCacheAndNonSerializableCache<T>(ValuesToStore<T> valuesToStore)
+        {
+            foreach (var kvp in valuesToStore.InFirstLevelCache)
+            {
+                FirstLevelCache.Set(kvp.Key.Key, kvp.Value, ttl: kvp.Key.TimeToLive);
+            }
+
+            foreach (var kvp in valuesToStore.InNonSerializableCache)
+            {
+                NonSerializableCache.Set(kvp.Key.Key, kvp.Value, ttl: kvp.Key.TimeToLive);
+            }
+        }
+
+        private ValuesToStore<T> SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache<T>(Dictionary<CacheItemDefinition, T> objects)
             where T : class
         {
-            var serializedValues = new Dictionary<CacheItemDefinition, byte[]>();
+            var result = new ValuesToStore<T>();
 
             foreach (var kvp in objects)
             {
@@ -181,31 +224,33 @@ namespace DesertOctopus.MammothCache
                 {
                     if (SerializationProvider.CanSerialize(kvp.Value.GetType()))
                     {
-                        serializedValues.Add(kvp.Key, SerializationProvider.Serialize(kvp.Value));
-                        FirstLevelCache.Set(kvp.Key.Key, serializedValues[kvp.Key], ttl: kvp.Key.TimeToLive);
+                        var bytes = SerializationProvider.Serialize(kvp.Value);
+                        result.InSecondLevelCache.Add(kvp.Key, bytes);
+                        result.InFirstLevelCache.Add(kvp.Key, bytes);
                     }
                     else
                     {
                         var ph = new NonSerializableObjectPlaceHolder();
-                        NonSerializableCache.Set(kvp.Key.Key, kvp.Value, ttl: kvp.Key.TimeToLive);
+                        result.InNonSerializableCache.Add(kvp.Key, kvp.Value);
+
                         byte[] bytes = SerializationProvider.Serialize(ph);
-                        serializedValues.Add(kvp.Key, bytes);
+                        result.InSecondLevelCache.Add(kvp.Key, bytes);
                     }
                 }
             }
 
-            return serializedValues;
+            return result;
         }
 
         /// <inheritdoc/>
-        public Task SetAsync<T>(string key,
-                                T value,
-                                TimeSpan? ttl = null)
+        public async Task SetAsync<T>(string key,
+                                      T value,
+                                      TimeSpan? ttl = null)
             where T : class
         {
             if (value == null)
             {
-                return Task.FromResult(true);
+                return;
             }
 
             if (SerializationProvider.CanSerialize(value.GetType()))
@@ -213,24 +258,56 @@ namespace DesertOctopus.MammothCache
                 var bytes = SerializationProvider.Serialize(value);
 
                 FirstLevelCache.Set(key, bytes, ttl: ttl);
-                return SecondLevelCache.SetAsync(key, bytes, ttl: ttl);
+                await SecondLevelCache.SetAsync(key, bytes, ttl: ttl).ConfigureAwait(false);
             }
             else
             {
                 var ph = new NonSerializableObjectPlaceHolder();
-                NonSerializableCache.Set(key, value, ttl: ttl);
+                var ttlResult = SecondLevelCache.GetTimeToLive(key);
 
-                byte[] bytes = SerializationProvider.Serialize(ph);
-                return SecondLevelCache.SetAsync(key, bytes, ttl: ttl);
+                if (ttlResult.KeyExists)
+                {
+                    NonSerializableCache.Set(key, value, ttl: ttlResult.TimeToLive);
+                }
+                else
+                {
+                    byte[] bytes = SerializationProvider.Serialize(ph);
+                    await SecondLevelCache.SetAsync(key, bytes, ttl: ttl).ConfigureAwait(false);
+                    NonSerializableCache.Set(key, value, ttl: ttl);
+                }
             }
         }
 
         /// <inheritdoc/>
-        public Task SetAsync<T>(Dictionary<CacheItemDefinition, T> objects)
+        public async Task SetAsync<T>(Dictionary<CacheItemDefinition, T> objects)
             where T : class
         {
-            var serializedValues = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
-            return SecondLevelCache.SetAsync(serializedValues);
+            var valuesToStore = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
+            if (valuesToStore.InNonSerializableCache.Count > 0)
+            {
+                var keys = valuesToStore.InNonSerializableCache.Select(x => x.Key.Key).ToArray();
+                var ttlResults = await SecondLevelCache.GetTimeToLivesAsync(keys).ConfigureAwait(false);
+                RemoveTtlResultFromValuesToStore(ttlResults, valuesToStore);
+            }
+
+            await SecondLevelCache.SetAsync(valuesToStore.InSecondLevelCache).ConfigureAwait(false);
+            StoreValuesInFirstLevelCacheAndNonSerializableCache(valuesToStore);
+        }
+
+        private static void RemoveTtlResultFromValuesToStore<T>(Dictionary<string, TimeToLiveResult> ttlResults,
+                                                                ValuesToStore<T> valuesToStore)
+            where T : class
+        {
+            foreach (var ttlResult in ttlResults)
+            {
+                if (ttlResult.Value.KeyExists)
+                {
+                    valuesToStore.InSecondLevelCache.Remove(valuesToStore.InSecondLevelCache.FirstOrDefault(x => x.Key.Key == ttlResult.Key)
+                                                                         .Key);
+                    var nonSerializableKey = valuesToStore.InNonSerializableCache.FirstOrDefault(x => x.Key.Key == ttlResult.Key);
+                    nonSerializableKey.Key.TimeToLive = ttlResult.Value.TimeToLive;
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -276,13 +353,22 @@ namespace DesertOctopus.MammothCache
                 return value;
             }
 
-            value = getAction();
-            if (value != default(T))
+            using (var rLock = AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
             {
-                Set(key, value, ttl: ttl);
-            }
+                value = Get<T>(key);
+                if (value != default(T))
+                {
+                    return value;
+                }
 
-            return value;
+                value = getAction();
+                if (value != default(T))
+                {
+                    Set(key, value, ttl: ttl);
+                }
+
+                return value;
+            }
         }
 
         /// <inheritdoc/>
@@ -300,13 +386,22 @@ namespace DesertOctopus.MammothCache
                 return value;
             }
 
-            value = await getActionAsync().ConfigureAwait(false);
-            if (value != default(T))
+            using (var rLock = AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
             {
-                await SetAsync(key, value, ttl: ttl).ConfigureAwait(false);
-            }
+                value = await GetAsync<T>(key).ConfigureAwait(false);
+                if (value != default(T))
+                {
+                    return value;
+                }
 
-            return value;
+                value = await getActionAsync().ConfigureAwait(false);
+                if (value != default(T))
+                {
+                    await SetAsync(key, value, ttl: ttl).ConfigureAwait(false);
+                }
+
+                return value;
+            }
         }
 
         /// <inheritdoc/>
@@ -342,6 +437,18 @@ namespace DesertOctopus.MammothCache
         {
             var helper = new MultipleGetHelper(this);
             return helper.GetAsync<T>(keys);
+        }
+
+        /// <inheritdoc/>
+        public IDisposable AcquireLock(string key, TimeSpan lockExpiry, TimeSpan timeout)
+        {
+            return SecondLevelCache.AcquireLock(key, lockExpiry, timeout);
+        }
+
+        /// <inheritdoc/>
+        public Task<IDisposable> AcquireLockAsync(string key, TimeSpan lockExpiry, TimeSpan timeout)
+        {
+            return SecondLevelCache.AcquireLockAsync(key, lockExpiry, timeout);
         }
     }
 }

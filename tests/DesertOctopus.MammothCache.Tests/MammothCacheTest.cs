@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis;
@@ -27,7 +28,7 @@ namespace DesertOctopus.MammothCache.Tests
         private readonly NotSerializableTestClass _nonSerializableTestObject3 = new NotSerializableTestClass();
 
         private RedisConnection _secondLevelCache;
-        private string _redisConnectionString = "172.16.100.100";
+        private string _redisConnectionString = "172.16.100.101";
         private IRedisRetryPolicy _redisRetryPolicy;
 
         private MammothCache _cache;
@@ -51,8 +52,10 @@ namespace DesertOctopus.MammothCache.Tests
 
             _mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
             _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _nonSerializableCache, _mammothCacheSerializationProvider);
+
+            _cache.RemoveAll();
         }
-        
+
         [TestCleanup]
         public void Cleanup()
         {
@@ -124,6 +127,184 @@ namespace DesertOctopus.MammothCache.Tests
 
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             Assert.IsNull(_secondLevelCache.Get(key));
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task UpdatingAnItemShouldRemoveItFromOtherDistributedCacheAsync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            bool itemsWereRemoved = false;
+            bool itemsWereRemovedFromOtherCache = false;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+
+            await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedFromOtherCache = false;
+
+            await otherCache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsTrue(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void UpdatingAnItemShouldRemoveItFromOtherDistributedCacheSync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            bool itemsWereRemoved = false;
+            bool itemsWereRemovedFromOtherCache = false;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+
+            _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedFromOtherCache = false;
+
+            otherCache.Set(key, _testObject, TimeSpan.FromSeconds(30));
+
+            WaitFor(10);
+
+            Assert.IsTrue(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheAsync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            objects.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject2);
+            objects.Add(new CacheItemDefinition { Key = key3 }, _testObject3);
+
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate(string k)
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate(string k)
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
+
+            await _cache.SetAsync(objects).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(0, itemsWereRemovedCount);
+            Assert.AreEqual(3, itemsWereRemovedCountFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+
+            await otherCache.SetAsync(objects).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsTrue(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(3, itemsWereRemovedCount);
+            Assert.AreEqual(0, itemsWereRemovedCountFromOtherCache);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheSync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            objects.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject2);
+            objects.Add(new CacheItemDefinition { Key = key3 }, _testObject3);
+
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate(string k)
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate(string k)
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
+
+            _cache.Set(objects);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(0, itemsWereRemovedCount);
+            Assert.AreEqual(3, itemsWereRemovedCountFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+
+            otherCache.Set(objects);
+
+            WaitFor(10);
+
+            Assert.IsTrue(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(3, itemsWereRemovedCount);
+            Assert.AreEqual(0, itemsWereRemovedCountFromOtherCache);
         }
 
         [TestMethod]
@@ -517,6 +698,56 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Integration")]
+        public async Task SetMultipleItemsShouldStoreAllItemsAsync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            objects.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) }, _testObject2);
+            objects.Add(new CacheItemDefinition { Key = key3 }, _testObject3);
+
+            await _cache.SetAsync(objects).ConfigureAwait(false);
+
+            Assert.AreEqual(3, _firstLevelCache.NumberOfObjects);
+            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
+            Assert.IsFalse(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void SetMultipleItemsShouldStoreAllItemsSync()
+        {
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, CachingTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _testObject);
+            objects.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) }, _testObject2);
+            objects.Add(new CacheItemDefinition { Key = key3 }, _testObject3);
+
+            _cache.Set(objects);
+
+            Assert.AreEqual(3, _firstLevelCache.NumberOfObjects);
+            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
+            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
+            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
+
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
+            Assert.IsFalse(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
         public async Task GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
         {
             bool delegateWasCalled = false;
@@ -740,8 +971,8 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
             Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).Value.TotalSeconds > 25);
-            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2));
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
         }
 
         [TestMethod]
@@ -763,8 +994,8 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
             Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).Value.TotalSeconds > 25);
-            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2));
+            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
         }
 
         [TestMethod]
@@ -1392,23 +1623,426 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.IsNull(_secondLevelCache.Get(key2));
             Assert.IsNull(_secondLevelCache.Get(key3));
         }
-        
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task AcquiringAndReleasingALockShouldCreateTheKeyInRedisAsync()
+        {
+            var key = RandomKey();
+            using (await _cache.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
+            {
+                Assert.IsTrue(await _secondLevelCache.KeyExistsAsync("DistributedLock:" + key).ConfigureAwait(false));
+            }
+            Assert.IsFalse(_secondLevelCache.KeyExists("DistributedLock:" + key));
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void AcquiringAndReleasingALockShouldCreateTheKeyInRedisSync()
+        {
+            var key = RandomKey();
+            using (_cache.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
+            {
+                Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+            }
+            Assert.IsFalse(_secondLevelCache.KeyExists("DistributedLock:" + key));
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task GetOrAddOneKeyShouldLockTheKeyWhenTheItemIsMissingAsync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var obj = await _cache.GetOrAddAsync(key,
+                                                 () =>
+                                                 {
+                                                     delegateWasCalled = true;
+
+                                                     Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+
+                                                     return Task.FromResult(_testObject);
+                                                 }).ConfigureAwait(false);
+
+            Assert.IsTrue(delegateWasCalled);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void GetOrAddOneKeyShouldLockTheKeyWhenTheItemIsMissingSync()
+        {
+            bool delegateWasCalled = false;
+            var key = RandomKey();
+            var obj = _cache.GetOrAdd(key,
+                                      () =>
+                                      {
+                                          delegateWasCalled = true;
+
+                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+
+                                          return Task.FromResult(_testObject);
+                                      });
+
+            Assert.IsTrue(delegateWasCalled);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task GetOrAddMultipleKeyShouldLockTheKeyWhenTheItemIsMissingAsync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys,
+                                                                      definitions =>
+                                                                      {
+                                                                          delegateWasCalled = true;
+
+                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+
+                                                                          var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                                          results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                                          return Task.FromResult(results);
+                                                                      })
+                                     .ConfigureAwait(false);
+            Assert.IsTrue(delegateWasCalled);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void GetOrAddMultipleKeyShouldLockTheKeyWhenTheItemIsMissingSync()
+        {
+            bool delegateWasCalled = false;
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+
+            var keys = new List<CacheItemDefinition>();
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
+            keys.Add(new CacheItemDefinition { Key = key3 });
+
+            var values = _cache.GetOrAdd<CachingTestClass>(keys,
+                                                           definitions =>
+                                                           {
+                                                               delegateWasCalled = true;
+
+                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+
+                                                               var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
+                                                               results.Add(definitions.Single(x => x.Key == key1), _testObject);
+                                                               return results;
+                                                           });
+            Assert.IsTrue(delegateWasCalled);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            bool itemsWereRemoved = false;
+            bool itemsWereRemovedFromOtherCache = false;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+
+            await _cache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedFromOtherCache = false;
+
+            await otherCache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key = RandomKey();
+
+            bool itemsWereRemoved = false;
+            bool itemsWereRemovedFromOtherCache = false;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+
+            _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedFromOtherCache = false;
+
+            otherCache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(60) }, _nonSerializableTestObject);
+            objects.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemoved = true;
+                Interlocked.Increment(ref itemsWereRemovedCount);
+            };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemovedFromOtherCache = true;
+                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+            };
+
+            await _cache.SetAsync(objects).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(0, itemsWereRemovedCount);
+            Assert.AreEqual(2, itemsWereRemovedCountFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+
+            await otherCache.SetAsync(objects).ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+
+            var objects = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+            objects.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(60) }, _nonSerializableTestObject);
+            objects.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
+
+
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemoved = true;
+                Interlocked.Increment(ref itemsWereRemovedCount);
+            };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemovedFromOtherCache = true;
+                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+            };
+
+            _cache.Set(objects);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.AreEqual(0, itemsWereRemovedCount);
+            Assert.AreEqual(2, itemsWereRemovedCountFromOtherCache);
+
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+
+            otherCache.Set(objects);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            itemsWereRemoved = false;
+            itemsWereRemovedCount = 0;
+            itemsWereRemovedFromOtherCache = false;
+            itemsWereRemovedCountFromOtherCache = 0;
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task RemovingAllKeysShouldExpireAllKeysAsync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+            var key4 = RandomKey();
+
+            await _cache.SetAsync(key1, _testObject).ConfigureAwait(false);
+            await _cache.SetAsync(key2, _testObject).ConfigureAwait(false);
+            await _cache.SetAsync(key3, _testObject).ConfigureAwait(false);
+            await _cache.SetAsync(key4, _testObject).ConfigureAwait(false);
+
+            bool removeAll = false;
+            bool removeAllFromOtherCache = false;
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemoved = true;
+                Interlocked.Increment(ref itemsWereRemovedCount);
+            };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemovedFromOtherCache = true;
+                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+            };
+            _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
+            otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
+
+            await _cache.RemoveAllAsync().ConfigureAwait(false);
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.IsTrue(removeAll);
+            Assert.IsTrue(removeAllFromOtherCache);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public void RemovingAllKeysShouldExpireAllKeysSync()
+        {
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
+
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            var key3 = RandomKey();
+            var key4 = RandomKey();
+
+            _cache.Set(key1, _testObject);
+            _cache.Set(key2, _testObject);
+            _cache.Set(key3, _testObject);
+            _cache.Set(key4, _testObject);
+
+            bool removeAll = false;
+            bool removeAllFromOtherCache = false;
+            bool itemsWereRemoved = false;
+            int itemsWereRemovedCount = 0;
+            bool itemsWereRemovedFromOtherCache = false;
+            int itemsWereRemovedCountFromOtherCache = 0;
+
+            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemoved = true;
+                Interlocked.Increment(ref itemsWereRemovedCount);
+            };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            {
+                itemsWereRemovedFromOtherCache = true;
+                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+            };
+            _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
+            otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
+
+            _cache.RemoveAll();
+
+            WaitFor(10);
+
+            Assert.IsFalse(itemsWereRemoved);
+            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.IsTrue(removeAll);
+            Assert.IsTrue(removeAllFromOtherCache);
+            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+        }
+
 
         /*
-                 storing a non serializable object should store a marker in 1st and 2nd level cache
+                     storing a non serializable object should store a marker in 1st and 2nd level cache
 
-                removing key in redis should remove key in nonserializablecache
+                    removing key in redis should remove key in nonserializablecache
 
-                getting an object placeholder from redis should not store it in first level cache and should return null
+                    getting an object placeholder from redis should not store it in first level cache and should return null
 
-                do for multiple get/set / async/sync
+                    do for multiple get/set / async/sync
 
-            get or add
+                get or add
 
-            nonserialized cache ttl
+                nonserialized cache ttl
 
-                // are events serialized?
-                 */
+                    // are events serialized?
+                     */
 
-        }
+    }
 }

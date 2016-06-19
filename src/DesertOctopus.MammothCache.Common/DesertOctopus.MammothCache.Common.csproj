@@ -67,6 +67,9 @@
     <Compile Include="ISecondLevelCache.cs" />
     <Compile Include="ItemEvictedFromCacheEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoveAllItemsEventHandler.cs" />
+    <Compile Include="TimeToLiveResult.cs" />
+    <Compile Include="UnableToAcquireLockException.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DesertOctopus\DesertOctopus.csproj">

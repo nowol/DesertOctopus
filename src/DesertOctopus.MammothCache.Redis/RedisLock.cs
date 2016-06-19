@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DesertOctopus.MammothCache.Common;
 
 namespace DesertOctopus.MammothCache.Redis
 {
@@ -11,7 +12,7 @@ namespace DesertOctopus.MammothCache.Redis
     /// </summary>
     public sealed class RedisLock : IDisposable
     {
-        private const string LockPrefix = "LOCK:";
+        private const string LockPrefix = "DistributedLock:";
         private readonly RedisConnection _connection;
         private readonly string _lockValue = Guid.NewGuid().ToString();
         private bool _lockIsAcquired = false;

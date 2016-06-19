@@ -99,19 +99,38 @@ namespace DesertOctopus.MammothCache.Redis
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <returns>Time to live of the object</returns>
-        TimeSpan? GetTimeToLive(string key);
+        TimeToLiveResult GetTimeToLive(string key);
 
         /// <summary>
         /// Get the time to live of an object
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <returns>Time to live of the object as an awaitable task</returns>
-        Task<TimeSpan?> GetTimeToLiveAsync(string key);
+        Task<TimeToLiveResult> GetTimeToLiveAsync(string key);
+
+        /// <summary>
+        /// Get the time to live of many objects
+        /// </summary>
+        /// <param name="keys">Keys of the objects</param>
+        /// <returns>Time to live of the objects</returns>
+        Dictionary<string, TimeToLiveResult> GetTimeToLives(string[] keys);
+
+        /// <summary>
+        /// Get the time to live of many objects
+        /// </summary>
+        /// <param name="keys">Keys of the objects</param>
+        /// <returns>Time to live of the objects</returns>
+        Task<Dictionary<string, TimeToLiveResult>> GetTimeToLivesAsync(string[] keys);
 
         /// <summary>
         /// Event launched when an object is removed from the cache
         /// </summary>
         event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
+
+        /// <summary>
+        /// Triggered when RemoveAll is called
+        /// </summary>
+        event RemoveAllItemsEventHandler OnRemoveAllItems;
 
         /// <summary>
         /// Get Redis' configuration

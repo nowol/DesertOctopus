@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus;
+using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis;
 using DesertOctupos.MammothCache.Redis.Tests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,7 +17,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
         private CachingTestClass _testObject;
         private byte[] _serializedTestObject;
         private RedisConnection _connection;
-        private string _redisConnectionString = "172.16.100.100";
+        private string _redisConnectionString = "172.16.100.101";
         private IRedisRetryPolicy _redisRetryPolicy;
 
         [TestInitialize]
@@ -80,7 +81,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             Assert.IsNotNull(redisVal);
             var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
             Assert.AreEqual(_testObject.Value, obj.Value);
-            Assert.IsTrue((await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false)) > TimeSpan.FromSeconds(25));
+            Assert.IsTrue((await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false)).TimeToLive > TimeSpan.FromSeconds(25));
         }
 
         [TestMethod]
@@ -93,7 +94,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             Assert.IsNotNull(redisVal);
             var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
             Assert.AreEqual(_testObject.Value, obj.Value);
-            Assert.IsTrue(_connection.GetTimeToLive(key) > TimeSpan.FromSeconds(25));
+            Assert.IsTrue(_connection.GetTimeToLive(key).TimeToLive > TimeSpan.FromSeconds(25));
         }
 
         [TestMethod]
@@ -108,7 +109,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
                 Assert.IsNotNull(redisVal);
                 var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
                 Assert.AreEqual(_testObject.Value, obj.Value);
-                Assert.IsNull(await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false));
+                Assert.IsNull((await _connection.GetTimeToLiveAsync(key).ConfigureAwait(false)).TimeToLive);
             }
             finally
             {
@@ -128,7 +129,7 @@ namespace DesertOctupos.MammothCache.Redis.Tests
                 Assert.IsNotNull(redisVal);
                 var obj = KrakenSerializer.Deserialize<CachingTestClass>(redisVal);
                 Assert.AreEqual(_testObject.Value, obj.Value);
-                Assert.IsNull(_connection.GetTimeToLive(key));
+                Assert.IsNull(_connection.GetTimeToLive(key).TimeToLive);
             }
             finally
             {
@@ -200,9 +201,9 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
             {
-                Assert.IsTrue(await _connection.KeyExistsAsync("LOCK:" + key).ConfigureAwait(false));
+                Assert.IsTrue(await _connection.KeyExistsAsync("DistributedLock:" + key).ConfigureAwait(false));
             }
-            Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+            Assert.IsFalse(_connection.KeyExists("DistributedLock:" + key));
         }
 
         [TestMethod]
@@ -212,9 +213,9 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
             {
-                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+                Assert.IsTrue(_connection.KeyExists("DistributedLock:" + key));
             }
-            Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+            Assert.IsFalse(_connection.KeyExists("DistributedLock:" + key));
         }
 
         [TestMethod]
@@ -224,11 +225,11 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
             {
-                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+                Assert.IsTrue(_connection.KeyExists("DistributedLock:" + key));
 
                 WaitFor(5);
 
-                Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+                Assert.IsFalse(_connection.KeyExists("DistributedLock:" + key));
             }
         }
 
@@ -239,11 +240,11 @@ namespace DesertOctupos.MammothCache.Redis.Tests
             var key = RandomKey();
             using (_connection.AcquireLock(key, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30)))
             {
-                Assert.IsTrue(_connection.KeyExists("LOCK:" + key));
+                Assert.IsTrue(_connection.KeyExists("DistributedLock:" + key));
 
                 WaitFor(5);
 
-                Assert.IsFalse(_connection.KeyExists("LOCK:" + key));
+                Assert.IsFalse(_connection.KeyExists("DistributedLock:" + key));
             }
         }
 

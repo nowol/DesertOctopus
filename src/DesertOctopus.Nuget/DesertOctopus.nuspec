@@ -13,7 +13,7 @@
     <description>DesertOctopus is a utility class.</description>
     <!--<releaseNotes>Summary of changes made in this release of the package.</releaseNotes>-->
     <copyright>Copyright 2016</copyright>
-    <tags>Serialization Serializer Clone Cloning</tags>
+    <tags>Serialization Serializer Clone Cloning Deep</tags>
     <dependencies>
       <group targetFramework="net461">
         <dependency id="Microsoft.CSharp" version="4.0.0" />

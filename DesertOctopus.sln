@@ -32,6 +32,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Nuget", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Redis", "src\DesertOctopus.MammothCache.Redis\DesertOctopus.MammothCache.Redis.csproj", "{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{68948E3B-D6DD-4949-A612-F9A95379C062}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\KrakenSerializer.md = Docs\KrakenSerializer.md
+		Docs\Main.md = Docs\Main.md
+		Docs\MammothCache.md = Docs\MammothCache.md
+		Docs\ObjectCloner.md = Docs\ObjectCloner.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,5 +96,6 @@ Global
 		{465618C0-B665-4C9B-A224-F83938AF0BC7} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 		{8E5FAED5-2524-4ECE-B98B-7053A46E640A} = {520E6EF7-469D-4892-A6B8-976B73D5D82D}
 		{9DD795A2-B3DA-48AF-A548-8E0B0BA077D6} = {EEFA52C8-BBDE-4830-8EF2-1174FA3DB681}
+		{68948E3B-D6DD-4949-A612-F9A95379C062} = {1006FFC1-3831-4A24-8E7C-3BC52C1EA2CB}
 	EndGlobalSection
 EndGlobal

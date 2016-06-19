@@ -72,7 +72,6 @@
     <Compile Include="RedisConnection.cs" />
     <Compile Include="RedisLock.cs" />
     <Compile Include="RedisRetryPolicy.cs" />
-    <Compile Include="UnableToAcquireLockException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

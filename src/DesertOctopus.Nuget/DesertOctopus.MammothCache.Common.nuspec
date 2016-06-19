@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>DesertOctopus.MammothCache.Common</id>
-    <version>0.0.1.0-beta</version>
+    <version>0.0.2.0-beta</version>
     <title>DesertOctopus.MammothCache.Common</title>
     <authors>NoWoL</authors>
     <owners>NoWoL</owners>
@@ -17,7 +17,7 @@
     <dependencies>
       <group targetFramework="net461">
         <dependency id="Microsoft.CSharp" version="4.0.0" />
-        <dependency id="DesertOctopus" version="0.0.1.0" />
+        <dependency id="DesertOctopus" version="0.0.2.0" />
       </group>
     </dependencies>
   </metadata>

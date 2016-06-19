@@ -60,10 +60,21 @@ namespace DesertOctopus.MammothCache
             var itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
             if (itemsStillMissingFromCache.Length > 0)
             {
-                var itemsFromAction = getAction(itemsStillMissingFromCache);
-                _mammothCache.Set(itemsFromAction);
-                AddToDictionary(itemsFromAction, result);
-                AddItemsToFirstLevelCache(itemsFromAction);
+                var missingKeys = itemsStillMissingFromCache.Select(x => x.Key).ToArray();
+                using (var lockMgr = new LocksManager(_mammothCache).AcquireLocks(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)))
+                {
+                    var itemsThatWereAddedToCacheBeforeLock = Get<T>(itemsStillMissingFromCache);
+                    AddToDictionary(itemsThatWereAddedToCacheBeforeLock, result);
+
+                    itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
+                    if (itemsStillMissingFromCache.Length > 0)
+                    {
+                        var itemsFromAction = getAction(itemsStillMissingFromCache);
+                        _mammothCache.Set(itemsFromAction);
+                        AddToDictionary(itemsFromAction, result);
+                        AddItemsToFirstLevelCache(itemsFromAction);
+                    }
+                }
             }
 
             return result;
@@ -80,10 +91,21 @@ namespace DesertOctopus.MammothCache
             var itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
             if (itemsStillMissingFromCache.Length > 0)
             {
-                var itemsFromAction = await getActionAsync(itemsStillMissingFromCache).ConfigureAwait(false);
-                await _mammothCache.SetAsync(itemsFromAction).ConfigureAwait(false);
-                AddToDictionary(itemsFromAction, result);
-                AddItemsToFirstLevelCache(itemsFromAction);
+                var missingKeys = itemsStillMissingFromCache.Select(x => x.Key).ToArray();
+                using (var lockMgr = await new LocksManager(_mammothCache).AcquireLocksAsync(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)).ConfigureAwait(false))
+                {
+                    var itemsThatWereAddedToCacheBeforeLock = await GetAsync<T>(itemsStillMissingFromCache).ConfigureAwait(false);
+                    AddToDictionary(itemsThatWereAddedToCacheBeforeLock, result);
+
+                    itemsStillMissingFromCache = DetectMissingItems(arrayKeys, result);
+                    if (itemsStillMissingFromCache.Length > 0)
+                    {
+                        var itemsFromAction = await getActionAsync(itemsStillMissingFromCache).ConfigureAwait(false);
+                        await _mammothCache.SetAsync(itemsFromAction).ConfigureAwait(false);
+                        AddToDictionary(itemsFromAction, result);
+                        AddItemsToFirstLevelCache(itemsFromAction);
+                    }
+                }
             }
 
             return result;

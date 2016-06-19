@@ -14,7 +14,7 @@ namespace DesertOctopus.MammothCache.Common
         int TimerInterval { get; set; }
 
         /// <summary>
-        /// Gets or sets the maximum memory
+        /// Gets or sets the maximum memory in bytes
         /// </summary>
         int MaximumMemorySize { get; set; }
 

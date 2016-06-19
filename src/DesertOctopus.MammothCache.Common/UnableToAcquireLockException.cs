@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace DesertOctopus.MammothCache.Redis
+namespace DesertOctopus.MammothCache.Common
 {
     /// <summary>
     /// Exception used when a Redis lock cannot be acquired

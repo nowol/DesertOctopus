@@ -22,14 +22,18 @@ namespace DesertOctopus.MammothCache.Redis
         private readonly ConnectionMultiplexer _multiplexer;
         private readonly RetryPolicy _retryPolicy;
         private readonly RetryPolicy _retryPolicyAsync;
+        private readonly string _instanceId = Guid.NewGuid().ToString();
+        private readonly string _setKeyChannel;
+        private readonly string _removeAllItemsChannel = "RemoveAllItems";
         private bool _isDisposed = false;
         private ISubscriber _subscriber;
         private PolicyBuilder _baseRetryPolicy;
 
-        /// <summary>
-        /// Triggered when an item is removed from redis
-        /// </summary>
+        /// <inheritdoc/>
         public event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
+
+        /// <inheritdoc/>
+        public event RemoveAllItemsEventHandler OnRemoveAllItems;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RedisConnection"/> class.
@@ -38,6 +42,8 @@ namespace DesertOctopus.MammothCache.Redis
         /// <param name="redisRetryPolicy">Retry policy</param>
         public RedisConnection(string connectionString, IRedisRetryPolicy redisRetryPolicy)
         {
+            _setKeyChannel = "~SetKey~:" + _instanceId;
+
             _connectionString = connectionString;
             _redisRetryPolicy = redisRetryPolicy;
             _baseRetryPolicy = Policy.Handle<TimeoutException>()
@@ -63,10 +69,39 @@ namespace DesertOctopus.MammothCache.Redis
             GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*del", OnKeyRemoveFromRedis));
             GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*expired", OnKeyRemoveFromRedis));
             GetRetryPolicy().Execute(() => _subscriber.Subscribe("__key*__:*evicted", OnKeyRemoveFromRedis));
+            GetRetryPolicy().Execute(() => _subscriber.Subscribe("~SetKey~:*", OnSetKeyFromRedis));
+            GetRetryPolicy().Execute(() => _subscriber.Subscribe(_removeAllItemsChannel, OnRemoveAllItemsFromRedis));
+        }
+
+        private void OnRemoveAllItemsFromRedis(RedisChannel arg1,
+                                               RedisValue arg2)
+        {
+
+            var eventCopy = OnRemoveAllItems;
+            if (eventCopy != null)
+            {
+                eventCopy();
+            }
+        }
+
+        private void OnSetKeyFromRedis(RedisChannel redisChannel,
+                                       RedisValue redisValue)
+        {
+            var channel = (string)redisChannel;
+
+            if (channel != _setKeyChannel)
+            {
+                SendOnItemRemoveFromCacheEvent(redisValue);
+            }
         }
 
         private void OnKeyRemoveFromRedis(RedisChannel redisChannel,
                                           RedisValue redisValue)
+        {
+            SendOnItemRemoveFromCacheEvent(redisValue);
+        }
+
+        private void SendOnItemRemoveFromCacheEvent(RedisValue redisValue)
         {
             var eventCopy = OnItemRemovedFromCache;
             if (eventCopy != null
@@ -211,6 +246,7 @@ namespace DesertOctopus.MammothCache.Redis
                         byte[] serializedValue,
                         TimeSpan? ttl = null)
         {
+            GetRetryPolicy().Execute(() => GetDatabase().Publish(_setKeyChannel, key));
             GetRetryPolicy().Execute(() => GetDatabase().StringSet(key, serializedValue, expiry: ttl));
         }
 
@@ -220,6 +256,11 @@ namespace DesertOctopus.MammothCache.Redis
             RedisValue[] values;
             RedisKey[] keys;
             GetMultipleSetValues(objects, out keys, out values);
+
+            foreach (var key in keys)
+            {
+                GetRetryPolicy().Execute(() => GetDatabase().Publish(_setKeyChannel, (string)key));
+            }
 
             GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetMultipleSetScript(),
                                                                                      keys: keys,
@@ -245,23 +286,29 @@ namespace DesertOctopus.MammothCache.Redis
         }
 
         /// <inheritdoc/>
-        public Task SetAsync(string key,
+        public async Task SetAsync(string key,
                              byte[] serializedValue,
                              TimeSpan? ttl = null)
         {
-            return GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().StringSetAsync(key, serializedValue, expiry: ttl));
+            await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().PublishAsync(_setKeyChannel, key)).ConfigureAwait(false);
+            await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().StringSetAsync(key, serializedValue, expiry: ttl)).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        public Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects)
+        public async Task SetAsync(Dictionary<CacheItemDefinition, byte[]> objects)
         {
             RedisValue[] values;
             RedisKey[] keys;
             GetMultipleSetValues(objects, out keys, out values);
 
-            return GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetMultipleSetScript(),
-                                                                                                           keys: keys,
-                                                                                                           values: values));
+            foreach (var key in keys)
+            {
+                await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().PublishAsync(_setKeyChannel, (string)key)).ConfigureAwait(false);
+            }
+
+            await GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetMultipleSetScript(),
+                                                                                                          keys: keys,
+                                                                                                          values: values)).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -289,6 +336,7 @@ namespace DesertOctopus.MammothCache.Redis
                                  server.FlushAllDatabases();
                              }
                          });
+            GetRetryPolicy().Execute(() => GetDatabase().Publish(_removeAllItemsChannel, String.Empty));
         }
 
         /// <inheritdoc/>
@@ -306,18 +354,78 @@ namespace DesertOctopus.MammothCache.Redis
                                         }
                                     })
                 .ConfigureAwait(false);
+            await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().PublishAsync(_removeAllItemsChannel, String.Empty)).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        public TimeSpan? GetTimeToLive(string key)
+        public TimeToLiveResult GetTimeToLive(string key)
         {
-            return GetRetryPolicy().Execute<TimeSpan?>(() => GetDatabase().KeyTimeToLive(key));
+            var redisResult = GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetTtlScript(), keys: new RedisKey[] { key }));
+            return ConvertRedisResultTimeToLiveResult((int)redisResult);
         }
 
         /// <inheritdoc/>
-        public Task<TimeSpan?> GetTimeToLiveAsync(string key)
+        public async Task<TimeToLiveResult> GetTimeToLiveAsync(string key)
         {
-            return GetRetryPolicyAsync().ExecuteAsync<TimeSpan?>(() => GetDatabase().KeyTimeToLiveAsync(key));
+            var redisResult = await GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetTtlScript(), keys: new RedisKey[] { key })).ConfigureAwait(false);
+            return ConvertRedisResultTimeToLiveResult((int)redisResult);
+        }
+
+        /// <inheritdoc/>
+        public Dictionary<string, TimeToLiveResult> GetTimeToLives(string[] keys)
+        {
+            var redisResult = GetRetryPolicy().Execute<RedisResult>(() => GetDatabase().ScriptEvaluate(LuaScripts.GetTtlsScript(), keys: keys.Select(x => (RedisKey)x).ToArray()));
+
+            if (redisResult == null)
+            {
+                throw new InvalidOperationException("Lua script did not return anything.");
+            }
+
+            return ConvertRedisResultTimeToLiveResults(keys, redisResult);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Dictionary<string, TimeToLiveResult>> GetTimeToLivesAsync(string[] keys)
+        {
+            var redisResult = await GetRetryPolicyAsync().ExecuteAsync<RedisResult>(() => GetDatabase().ScriptEvaluateAsync(LuaScripts.GetTtlsScript(), keys: keys.Select(x => (RedisKey)x).ToArray())).ConfigureAwait(false);
+
+            if (redisResult == null)
+            {
+                throw new InvalidOperationException("Lua script did not return anything.");
+            }
+
+            return ConvertRedisResultTimeToLiveResults(keys, redisResult);
+        }
+
+        private static Dictionary<string, TimeToLiveResult> ConvertRedisResultTimeToLiveResults(string[] keys,
+                                                                                                RedisResult redisResult)
+        {
+            var redisValues = (RedisValue[])redisResult;
+            var result = new Dictionary<string, TimeToLiveResult>();
+            int cpt = 0;
+            foreach (var key in keys)
+            {
+                result.Add(key,
+                           ConvertRedisResultTimeToLiveResult((int)redisValues[cpt]));
+                cpt++;
+            }
+
+            return result;
+        }
+
+        private static TimeToLiveResult ConvertRedisResultTimeToLiveResult(int ttl)
+        {
+            if (ttl == -2 || ttl == 0)
+            {
+                return new TimeToLiveResult();
+            }
+
+            if (ttl == -1)
+            {
+                return new TimeToLiveResult() { KeyExists = true };
+            }
+
+            return new TimeToLiveResult() { KeyExists = true, TimeToLive = TimeSpan.FromSeconds(ttl) };
         }
 
         private IServer GetServer(ConnectionMultiplexer muxer)
