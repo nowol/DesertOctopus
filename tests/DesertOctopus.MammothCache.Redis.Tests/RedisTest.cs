@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DesertOctopus;
 using DesertOctopus.MammothCache.Common;
-using DesertOctopus.MammothCache.Redis;
-using DesertOctupos.MammothCache.Redis.Tests.Models;
+using DesertOctopus.MammothCache.Redis.Tests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using StackExchange.Redis;
 
-namespace DesertOctupos.MammothCache.Redis.Tests
+namespace DesertOctopus.MammothCache.Redis.Tests
 {
     [TestClass]
     public class RedisTest

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace DesertOctupos.MammothCache.Redis.Tests.Models
+namespace DesertOctopus.MammothCache.Redis.Tests.Models
 {
     public class CachingTestClass
     {

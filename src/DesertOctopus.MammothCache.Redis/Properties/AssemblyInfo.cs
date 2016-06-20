@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DesertOctupos.MammothCache.Redis")]
-[assembly: AssemblyDescription("DesertOctupos.MammothCache.Redis provides an implementation of a distributed cache using Redis for DesertOctupos.MammothCache.")]
+[assembly: AssemblyTitle("DesertOctopus.MammothCache.Redis")]
+[assembly: AssemblyDescription("DesertOctopus.MammothCache.Redis provides an implementation of a distributed cache using Redis for DesertOctopus.MammothCache.")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

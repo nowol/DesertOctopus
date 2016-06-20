@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>DesertOctupos.MammothCache.Redis</id>
-    <version>0.0.2.0-beta</version>
-    <title>DesertOctupos.MammothCache.Redis</title>
+    <id>DesertOctopus.MammothCache.Redis</id>
+    <version>0.0.4.0-beta</version>
+    <title>DesertOctopus.MammothCache.Redis</title>
     <authors>NoWoL</authors>
     <owners>NoWoL</owners>
     <licenseUrl>https://github.com/nowol/DesertOctopus/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/nowol/DesertOctopus</projectUrl>
     <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>DesertOctupos.MammothCache.Redis provides an implementation of a distributed cache using Redis for DesertOctupos.MammothCache.</description>
+    <description>DesertOctopus.MammothCache.Redis provides an implementation of a distributed cache using Redis for DesertOctopus.MammothCache.</description>
     <!--<releaseNotes>Summary of changes made in this release of the package.</releaseNotes>-->
     <copyright>Copyright 2016</copyright>
     <tags>DistributedCache Caching Redis</tags>
     <dependencies>
       <group targetFramework="net461">
         <dependency id="Microsoft.CSharp" version="4.0.0" />
-        <dependency id="DesertOctopus" version="0.0.2.0" />
-        <dependency id="DesertOctopus.MammothCache.Common" version="0.0.2.0" />
-        <dependency id="DesertOctopus.MammothCache" version="0.0.2.0" />
+        <dependency id="DesertOctopus" version="0.0.4.0" />
+        <dependency id="DesertOctopus.MammothCache.Common" version="0.0.4.0" />
+        <dependency id="DesertOctopus.MammothCache" version="0.0.4.0" />
         <dependency id="Polly-Signed" version="4.2.1" />
         <dependency id="StackExchange.Redis.StrongName" version="1.1.604-alpha" />
       </group>
