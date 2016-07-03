@@ -398,7 +398,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheSync()
         {
             var key = RandomKey();
-            _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(60));
+            _cache.Set(key, _testObject, TimeSpan.FromSeconds(60));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 

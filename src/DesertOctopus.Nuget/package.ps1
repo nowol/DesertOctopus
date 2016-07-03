@@ -33,7 +33,7 @@ function UpdateNuspec([String] $nuspec, [String] $dllName)
 	
 	$replacements = @{}
 	$replacements["id"] = $info.FileDescription
-	$replacements["version"] = $info.ProductVersion + "-beta"
+	$replacements["version"] = $info.ProductVersion + ""
 	$replacements["title"] = $info.FileDescription
 	$replacements["authors"] = $info.CompanyName
 	$replacements["owners"] = $info.CompanyName
