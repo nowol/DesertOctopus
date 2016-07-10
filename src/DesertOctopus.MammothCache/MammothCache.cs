@@ -48,11 +48,19 @@ namespace DesertOctopus.MammothCache
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException("This " + nameof(MammothCache) + " object is disposed.");
+                GuardDisposed();
             }
 
             SecondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
             _isDisposed = true;
+        }
+
+        private void GuardDisposed()
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("This " + nameof(MammothCache) + " object is disposed.");
+            }
         }
 
         private void SubscribeToEvents()
@@ -61,21 +69,23 @@ namespace DesertOctopus.MammothCache
             SecondLevelCache.OnRemoveAllItems += OnRemoveAllItemsFromSecondLevelCache;
         }
 
-        private void OnRemoveAllItemsFromSecondLevelCache()
+        private void OnRemoveAllItemsFromSecondLevelCache(object sender, RemoveAllItemsEventArgs e)
         {
             FirstLevelCache.RemoveAll();
             NonSerializableCache.RemoveAll();
         }
 
-        private void OnItemRemovedFromSecondLevelCache(string key)
+        private void OnItemRemovedFromSecondLevelCache(object sender, ItemEvictedEventArgs e)
         {
-            FirstLevelCache.Remove(key);
+            FirstLevelCache.Remove(e.Key);
         }
 
         /// <inheritdoc/>
         public T Get<T>(string key)
             where T : class
         {
+            GuardDisposed();
+
             var nonSerializableResult = NonSerializableCache.Get<T>(key);
             if (nonSerializableResult.IsSuccessful)
             {
@@ -114,6 +124,8 @@ namespace DesertOctopus.MammothCache
         public async Task<T> GetAsync<T>(string key)
             where T : class
         {
+            GuardDisposed();
+
             var nonSerializableResult = NonSerializableCache.Get<T>(key);
             if (nonSerializableResult.IsSuccessful)
             {
@@ -154,6 +166,8 @@ namespace DesertOctopus.MammothCache
                            TimeSpan? ttl = null)
             where T : class
         {
+            GuardDisposed();
+
             if (value == null)
             {
                 return;
@@ -188,6 +202,8 @@ namespace DesertOctopus.MammothCache
         public void Set<T>(Dictionary<CacheItemDefinition, T> objects)
             where T : class
         {
+            GuardDisposed();
+
             var valuesToStore = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
             if (valuesToStore.InNonSerializableCache.Count > 0)
             {
@@ -248,6 +264,8 @@ namespace DesertOctopus.MammothCache
                                       TimeSpan? ttl = null)
             where T : class
         {
+            GuardDisposed();
+
             if (value == null)
             {
                 return;
@@ -282,6 +300,8 @@ namespace DesertOctopus.MammothCache
         public async Task SetAsync<T>(Dictionary<CacheItemDefinition, T> objects)
             where T : class
         {
+            GuardDisposed();
+
             var valuesToStore = SaveToFirstLevelCacheAndGetSerializedValuesForSecondLevelCache(objects);
             if (valuesToStore.InNonSerializableCache.Count > 0)
             {
@@ -313,6 +333,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void Remove(string key)
         {
+            GuardDisposed();
             FirstLevelCache.Remove(key);
             SecondLevelCache.Remove(key);
         }
@@ -320,6 +341,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public Task RemoveAsync(string key)
         {
+            GuardDisposed();
             FirstLevelCache.Remove(key);
             return SecondLevelCache.RemoveAsync(key);
         }
@@ -327,6 +349,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void RemoveAll()
         {
+            GuardDisposed();
             FirstLevelCache.RemoveAll();
             SecondLevelCache.RemoveAll();
         }
@@ -334,6 +357,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public Task RemoveAllAsync()
         {
+            GuardDisposed();
             FirstLevelCache.RemoveAll();
             return SecondLevelCache.RemoveAllAsync();
         }
@@ -342,6 +366,8 @@ namespace DesertOctopus.MammothCache
         public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null)
             where T : class
         {
+            GuardDisposed();
+
             if (getAction == null)
             {
                 throw new ArgumentNullException(nameof(getAction));
@@ -375,6 +401,8 @@ namespace DesertOctopus.MammothCache
         public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null)
             where T : class
         {
+            GuardDisposed();
+
             if (getActionAsync == null)
             {
                 throw new ArgumentNullException(nameof(getActionAsync));
@@ -409,8 +437,9 @@ namespace DesertOctopus.MammothCache
                                                               Func<CacheItemDefinition[], Dictionary<CacheItemDefinition, T>> getAction)
             where T : class
         {
-            var helper = new MultipleGetHelper(this);
+            GuardDisposed();
 
+            var helper = new MultipleGetHelper(this);
             return helper.GetOrAdd<T>(keys, getAction);
         }
 
@@ -419,6 +448,8 @@ namespace DesertOctopus.MammothCache
                                                                          Func<CacheItemDefinition[], Task<Dictionary<CacheItemDefinition, T>>> getActionAsync)
             where T : class
         {
+            GuardDisposed();
+
             var helper = new MultipleGetHelper(this);
             return helper.GetOrAddAsync<T>(keys, getActionAsync);
         }
@@ -427,6 +458,8 @@ namespace DesertOctopus.MammothCache
         public Dictionary<CacheItemDefinition, T> Get<T>(ICollection<CacheItemDefinition> keys)
             where T : class
         {
+            GuardDisposed();
+
             var helper = new MultipleGetHelper(this);
             return helper.Get<T>(keys);
         }
@@ -435,6 +468,8 @@ namespace DesertOctopus.MammothCache
         public Task<Dictionary<CacheItemDefinition, T>> GetAsync<T>(ICollection<CacheItemDefinition> keys)
             where T : class
         {
+            GuardDisposed();
+
             var helper = new MultipleGetHelper(this);
             return helper.GetAsync<T>(keys);
         }
@@ -442,12 +477,14 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public IDisposable AcquireLock(string key, TimeSpan lockExpiry, TimeSpan timeout)
         {
+            GuardDisposed();
             return SecondLevelCache.AcquireLock(key, lockExpiry, timeout);
         }
 
         /// <inheritdoc/>
         public Task<IDisposable> AcquireLockAsync(string key, TimeSpan lockExpiry, TimeSpan timeout)
         {
+            GuardDisposed();
             return SecondLevelCache.AcquireLockAsync(key, lockExpiry, timeout);
         }
     }

@@ -9,6 +9,7 @@ using System.Reflection;
 using DesertOctopus.Cloning;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
+using DesertOctopus.Tests.TestObjects;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
@@ -61,6 +62,30 @@ namespace DesertOctopus.Tests
             PrimitiveTestSuite<TimeSpan?>(TimeSpan.MaxValue, TimeSpan.MinValue, TimeSpan.FromSeconds(30), null);
             PrimitiveTestSuite<BigInteger>(BigInteger.MinusOne, BigInteger.One, BigInteger.Zero, 98, -1928);
             PrimitiveTestSuite<BigInteger?>(BigInteger.MinusOne, BigInteger.One, BigInteger.Zero, 98, -1928, null);
+
+            PrimitiveTestSuite<EnumForTestingInt32>(EnumForTestingInt32.One, EnumForTestingInt32.Two);
+            PrimitiveTestSuite<EnumForTestingInt32?>(EnumForTestingInt32.One, EnumForTestingInt32.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingUint32>(EnumForTestingUint32.One, EnumForTestingUint32.Two);
+            PrimitiveTestSuite<EnumForTestingUint32?>(EnumForTestingUint32.One, EnumForTestingUint32.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingInt16>(EnumForTestingInt16.One, EnumForTestingInt16.Two);
+            PrimitiveTestSuite<EnumForTestingInt16?>(EnumForTestingInt16.One, EnumForTestingInt16.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingInt64>(EnumForTestingInt64.One, EnumForTestingInt64.Two);
+            PrimitiveTestSuite<EnumForTestingInt64?>(EnumForTestingInt64.One, EnumForTestingInt64.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingUint64>(EnumForTestingUint64.One, EnumForTestingUint64.Two);
+            PrimitiveTestSuite<EnumForTestingUint64?>(EnumForTestingUint64.One, EnumForTestingUint64.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingByte>(EnumForTestingByte.One, EnumForTestingByte.Two);
+            PrimitiveTestSuite<EnumForTestingByte?>(EnumForTestingByte.One, EnumForTestingByte.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingSbyte>(EnumForTestingSbyte.One, EnumForTestingSbyte.Two);
+            PrimitiveTestSuite<EnumForTestingSbyte?>(EnumForTestingSbyte.One, EnumForTestingSbyte.Two, null);
+
+            PrimitiveTestSuite<EnumForTestingUint16>(EnumForTestingUint16.One, EnumForTestingUint16.Two);
+            PrimitiveTestSuite<EnumForTestingUint16?>(EnumForTestingUint16.One, EnumForTestingUint16.Two, null);
 
         }
 
@@ -205,6 +230,30 @@ namespace DesertOctopus.Tests
             }
             DuplicateArray<T>(values);
             DuplicateList<T>(values);
+            DuplicateReadOnly<T>(values.First());
+        }
+
+        private void DuplicateReadOnly<T>(T value)
+        {
+            var instance = new ClassWithReadOnlyProperty<T>(value);
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Value,
+                            duplicatedValue.Value,
+                            string.Format("Type {0} does not have the same value after being deserialized.",
+                                            typeof(T)));
+        }
+
+        [TestMethod]
+        public void DuplicateReadOnlyObjectProperty()
+        {
+            var instance = new ClassWithReadOnlyProperty<ClassWithGenericInt>(new ClassWithGenericInt { Value = 38 });
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Value,
+                            duplicatedValue.Value,
+                            string.Format("Type {0} does not have the same value after being deserialized.",
+                                            typeof(ClassWithReadOnlyProperty<ClassWithGenericInt>)));
         }
 
         private void DuplicateWrappedValue<T>(T value)
@@ -995,7 +1044,7 @@ namespace DesertOctopus.Tests
         [TestCategory("Unit")]
         public void DuplicateObjectWithEnumProperty()
         {
-            var instance = new GenericBaseClass<EnumForTesting> { Value = EnumForTesting.Two };
+            var instance = new GenericBaseClass<EnumForTestingInt32> { Value = EnumForTestingInt32.Two };
 
             var duplicatedValue = Duplicate(instance);
 
@@ -1699,7 +1748,7 @@ namespace DesertOctopus.Tests
         [TestCategory("Unit")]
         public void DuplicateEnumEqualityComparer()
         {
-            var instance = new Dictionary<EnumForTesting, int> { { EnumForTesting.One, 1 }, { EnumForTesting.Two, 2 } };
+            var instance = new Dictionary<EnumForTestingInt32, int> { { EnumForTestingInt32.One, 1 }, { EnumForTestingInt32.Two, 2 } };
 
             var duplicatedValue = Duplicate(instance);
 

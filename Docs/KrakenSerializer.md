@@ -90,11 +90,11 @@ Type=SimpleDtoWithEveryPrimitivesSerializationBenchmark  Mode=Throughput
 ```
                          Method |     Median |    StdDev |
 ------------------------------- |----------- |---------- |
-              JsonSerialization | 14.2249 us | 0.1102 us |
-            JsonDeserialization | 15.1895 us | 0.1149 us |
-              OmniSerialization |  1.7736 us | 0.0130 us |
-            OmniDeserialization |  1.1721 us | 0.0074 us |
-            KrakenSerialization |  5.7288 us | 0.0518 us |
-          KrakenDeserialization |  3.6326 us | 0.0418 us |
-   BinaryFormatterSerialization | 43.1586 us | 0.3241 us |
- BinaryFormatterDeserialization | 23.2617 us | 0.2351 us |
+              JsonSerialization | 14.2819 us | 0.1385 us |
+            JsonDeserialization | 15.3280 us | 0.1109 us |
+              OmniSerialization |  1.7782 us | 0.0183 us |
+            OmniDeserialization |  1.1509 us | 0.0132 us |
+            KrakenSerialization |  3.4494 us | 0.0808 us |
+          KrakenDeserialization |  1.7009 us | 0.0232 us |
+   BinaryFormatterSerialization | 44.0757 us | 0.6720 us |
+ BinaryFormatterDeserialization | 23.4476 us | 0.1815 us |

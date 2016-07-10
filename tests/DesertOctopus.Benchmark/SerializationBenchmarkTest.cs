@@ -16,6 +16,14 @@ namespace DesertOctopus.Benchmark
     [TestClass]
     public class SerializationBenchmarkTest
     {
+        public SerializationBenchmarkTest()
+        {
+#if DEBUG
+            throw new Exception("Use release mode");
+#endif
+        }
+
+
         [TestMethod]
         [TestCategory("Benchmark")]
         public void ProfileSerialization()

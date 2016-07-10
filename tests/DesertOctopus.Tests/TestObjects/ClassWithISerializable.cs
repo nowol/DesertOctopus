@@ -20,7 +20,7 @@ namespace SerializerTests.TestObjects
 
         public int NumberOfTimesGetObjectDataWasCalled { get; set; }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             NumberOfTimesGetObjectDataWasCalled++;
 

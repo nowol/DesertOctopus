@@ -141,8 +141,8 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
 
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
@@ -174,8 +174,8 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
 
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
@@ -216,12 +216,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
                                                         {
                                                             itemsWereRemoved = true;
                                                             Interlocked.Increment(ref itemsWereRemovedCount);
                                                         };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate(string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
                                                             {
                                                                 itemsWereRemovedFromOtherCache = true;
                                                                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -272,12 +272,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
                                                         {
                                                             itemsWereRemoved = true;
                                                             Interlocked.Increment(ref itemsWereRemovedCount);
                                                         };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate(string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
                                                             {
                                                                 itemsWereRemovedFromOtherCache = true;
                                                                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -502,11 +502,11 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = true;
             var removedKeys = new ConcurrentBag<string>();
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(string key)
+            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
                                                         {
-                                                            Assert.IsTrue(keys.Contains(key));
+                                                            Assert.IsTrue(keys.Contains(e.Key));
                                                             itemsWereRemoved = true;
-                                                            removedKeys.Add(key);
+                                                            removedKeys.Add(e.Key);
                                                         };
 
 
@@ -1160,15 +1160,6 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Integration")]
-        [ExpectedException(typeof(ObjectDisposedException))]
-        public void DisposingSquirrelCacheTwiceShouldThrowAnException()
-        {
-            _firstLevelCache.Dispose();
-            _firstLevelCache.Dispose();
-        }
-
-        [TestMethod]
-        [TestCategory("Integration")]
         [ExpectedException(typeof(ArgumentNullException))]
         public async Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
         {
@@ -1759,8 +1750,8 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
 
             await _cache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
@@ -1792,8 +1783,8 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
 
             _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
 
@@ -1833,12 +1824,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemoved = true;
                 Interlocked.Increment(ref itemsWereRemovedCount);
             };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemovedFromOtherCache = true;
                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -1890,12 +1881,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemoved = true;
                 Interlocked.Increment(ref itemsWereRemovedCount);
             };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemovedFromOtherCache = true;
                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -1952,12 +1943,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemoved = true;
                 Interlocked.Increment(ref itemsWereRemovedCount);
             };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemovedFromOtherCache = true;
                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -2002,12 +1993,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemoved = true;
                 Interlocked.Increment(ref itemsWereRemovedCount);
             };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (string k)
+            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
             {
                 itemsWereRemovedFromOtherCache = true;
                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);

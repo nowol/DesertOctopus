@@ -57,7 +57,11 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         public int NumberOfObjects
         {
-            get { return (int)_cache.GetCount(); }
+            get
+            {
+                GuardDisposed();
+                return (int)_cache.GetCount();
+            }
         }
 
         /// <summary>
@@ -69,6 +73,8 @@ namespace DesertOctopus.MammothCache
         public ConditionalResult<T> Get<T>(string key)
              where T : class
         {
+            GuardDisposed();
+
             var value = _cache.Get(key) as CachedObject;
             if (value == null
                 || value.Value == null)
@@ -87,12 +93,14 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void Remove(string key)
         {
+            GuardDisposed();
             _cache.Remove(key); // will trigger the RemovedCallback
         }
 
         /// <inheritdoc/>
         public void RemoveAll()
         {
+            GuardDisposed();
             List<string> cacheKeys = _cache.Select(kvp => kvp.Key).ToList();
             foreach (string cacheKey in cacheKeys)
             {
@@ -103,6 +111,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void Set(string key, byte[] serializedValue, TimeSpan? ttl = null)
         {
+            GuardDisposed();
             Remove(key); // removing the item first to decrease the estimated memory usage
 
             var co = CreateCachedObject(key, serializedValue);
@@ -156,13 +165,22 @@ namespace DesertOctopus.MammothCache
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException(nameof(SquirrelCache));
+                return;
             }
 
             _cleanUpTimer.Stop();
             _cleanUpTimer.Dispose();
             _cache.Dispose();
+            _cachedObjectsByAge.Dispose();
             _isDisposed = true;
+        }
+
+        private void GuardDisposed()
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException(nameof(SquirrelCache));
+            }
         }
 
         /// <summary>
@@ -170,7 +188,11 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         public CachedObjectQueue CachedObjectsByAge
         {
-            get { return _cachedObjectsByAge; }
+            get
+            {
+                GuardDisposed();
+                return _cachedObjectsByAge;
+            }
         }
     }
 }

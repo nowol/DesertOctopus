@@ -8,10 +8,18 @@ namespace DesertOctopus.MammothCache
     /// <summary>
     /// List of queued items ordered by age
     /// </summary>
-    public sealed class CachedObjectQueue
+    public sealed class CachedObjectQueue : IDisposable
     {
         private readonly LinkedList<CachedObject> _cachedObjects = new LinkedList<CachedObject>();
         private readonly Semaphore _lockRoot = new Semaphore(1, 1);
+
+        /// <summary>
+        /// Dispose of the object
+        /// </summary>
+        public void Dispose()
+        {
+            _lockRoot.Dispose();
+        }
 
         /// <summary>
         /// Gets the number of items in the cache

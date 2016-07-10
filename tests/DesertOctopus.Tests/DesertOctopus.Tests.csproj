@@ -90,8 +90,9 @@
     <Compile Include="TestObjects\ClassWithObjectProperty.cs" />
     <Compile Include="TestObjects\ClassWithoutSerializableAttribute.cs" />
     <Compile Include="TestObjects\ClassWithPointer.cs" />
+    <Compile Include="TestObjects\ClassWithReadOnlyProperty.cs" />
     <Compile Include="TestObjects\CustomDictionaries.cs" />
-    <Compile Include="TestObjects\EnumForTesting.cs" />
+    <Compile Include="TestObjects\EnumForTestingInt32.cs" />
     <Compile Include="TestObjects\GenericBaseClass.cs" />
     <Compile Include="TestObjects\HierarchyClasses.cs" />
     <Compile Include="TestObjects\TestStruct.cs" />

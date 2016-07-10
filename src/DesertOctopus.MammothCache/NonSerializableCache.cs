@@ -11,9 +11,17 @@ namespace DesertOctopus.MammothCache
     /// <summary>
     /// Represents a cache for objects that cannot be serialized
     /// </summary>
-    public class NonSerializableCache : INonSerializableCache
+    public sealed class NonSerializableCache : INonSerializableCache, IDisposable
     {
         private readonly MemoryCache _cache = new MemoryCache("NonSerializableCache");
+
+        /// <summary>
+        /// Dispose the object
+        /// </summary>
+        public void Dispose()
+        {
+            _cache.Dispose();
+        }
 
         /// <inheritdoc/>
         public ConditionalResult<T> Get<T>(string key)

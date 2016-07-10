@@ -80,7 +80,7 @@ namespace DesertOctopus.MammothCache.Redis
             var eventCopy = OnRemoveAllItems;
             if (eventCopy != null)
             {
-                eventCopy();
+                eventCopy(this, new RemoveAllItemsEventArgs());
             }
         }
 
@@ -107,7 +107,7 @@ namespace DesertOctopus.MammothCache.Redis
             if (eventCopy != null
                 && redisValue.HasValue)
             {
-                eventCopy(redisValue);
+                eventCopy(this, new ItemEvictedEventArgs { Key = (string)redisValue });
             }
         }
 

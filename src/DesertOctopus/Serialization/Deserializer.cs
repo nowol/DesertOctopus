@@ -77,7 +77,7 @@ namespace DesertOctopus.Serialization
                 Func<Stream, List<object>, object> deserializerMethod = GetTypeDeserializer(type.Type);
                 object value = deserializerMethod(ms, objs);
 
-                Debug.Assert(ms.Position == ms.Length, "Byte array was not read completely.");
+                Debug.Assert(ms.Position == ms.Length, "Byte array was not read completely." + ms.Position + " / " + ms.Length);
                 Debug.Assert(value != null, "unable to deserialize?");
 
                 return value;
@@ -182,6 +182,27 @@ namespace DesertOctopus.Serialization
             if (LazyPrimitiveMap.Value.TryGetValue(type, out reader))
             {
                 return reader;
+            }
+
+            if (type.IsEnum)
+            {
+                if (LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out reader))
+                {
+                    return reader;
+                }
+            }
+
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType != null)
+            {
+                if (underlyingType.IsEnum)
+                {
+                    var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                    if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out reader))
+                    {
+                        return reader;
+                    }
+                }
             }
 
             return null;
@@ -365,6 +386,7 @@ namespace DesertOctopus.Serialization
             variables.Add(typeExpr);
             variables.Add(typeName);
             variables.Add(typeHashCode);
+            var temporaryVariables = new Dictionary<Type, ParameterExpression>();
 
             List<Expression> notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(FormatterServicesMIH.GetUninitializedObject(), Expression.Constant(type)), type)));
@@ -379,28 +401,113 @@ namespace DesertOctopus.Serialization
                 notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), Expression.Convert(newInstance, typeof(object))));
             }
 
+            Func<Type, ParameterExpression> getTempVar = t =>
+                                                         {
+                                                             ParameterExpression tmpVar;
+                                                             if (!temporaryVariables.TryGetValue(t, out tmpVar))
+                                                             {
+                                                                 tmpVar = Expression.Parameter(t);
+                                                                 temporaryVariables.Add(t, tmpVar);
+                                                                 variables.Add(tmpVar);
+                                                             }
+
+                                                             return tmpVar;
+                                                         };
+
+
             foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
             {
-                if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType || fieldInfo.FieldType == typeof(string))
+                if (type == typeof(string))
                 {
-                    Func<Stream, List<object>, object> primitiveDeserializer = GetTypeDeserializer(fieldInfo.FieldType);
-                    var newValue = Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), fieldInfo.FieldType);
+                    if (fieldInfo.IsInitOnly)
+                    {
+                        var tmpVar = getTempVar(fieldInfo.FieldType);
+                        notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
+                                                                  Expression.Constant(fieldInfo),
+                                                                  Expression.Convert(tmpVar, typeof(object)),
+                                                                  newInstance));
+                    }
+                    else
+                    {
+                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
+                        notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
+                    }
+                }
+                else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
+                {
+                    var primitiveReader = GetPrimitiveReader(fieldInfo.FieldType);
+                    Expression newValue;
+
+                    if (primitiveReader == null)
+                    {
+                        Func<Stream, List<object>, object> primitiveDeserializer = GetTypeDeserializer(fieldInfo.FieldType);
+                        newValue = Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking);
+
+                        newValue = Expression.Convert(newValue, fieldInfo.FieldType);
+                    }
+                    else
+                    {
+                        newValue = primitiveReader(inputStream);
+
+                        if (fieldInfo.FieldType == typeof(byte)
+                            || fieldInfo.FieldType == typeof(sbyte)
+                            || fieldInfo.FieldType == typeof(byte?)
+                            || fieldInfo.FieldType == typeof(sbyte?)
+                            || IsEnumOrNullableEnum(fieldInfo.FieldType))
+                        {
+                            newValue = Expression.Convert(newValue, fieldInfo.FieldType);
+                        }
+                    }
+
+                    var tmpVar = getTempVar(fieldInfo.FieldType);
+                    //newValue = Expression.Convert(newValue, fieldInfo.FieldType);
+                    notTrackedExpressions.Add(Expression.Assign(tmpVar, newValue));
+
+
+                    //if (fieldInfo.FieldType == typeof(byte)
+                    //    || fieldInfo.FieldType == typeof(sbyte)
+                    //    || fieldInfo.FieldType == typeof(byte?)
+                    //    || fieldInfo.FieldType == typeof(sbyte?)
+                    //    || IsEnumOrNullableEnum(fieldInfo.FieldType))
+                    //{
+                    //    newValue = Expression.Convert(newValue, fieldInfo.FieldType);
+                    //}
+
+                    //var tmpVar = getTempVar(fieldInfo.FieldType);
+                    //notTrackedExpressions.Add(Expression.Assign(tmpVar, newValue));
+
 
                     if (fieldInfo.IsInitOnly)
                     {
                         notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
                                                                 Expression.Constant(fieldInfo),
-                                                                Expression.Convert(newValue, typeof(object)),
+                                                                Expression.Convert(tmpVar, typeof(object)),
                                                                 newInstance));
                     }
                     else
                     {
-                        notTrackedExpressions.Add(Expression.Assign(Expression.Field(newInstance, fieldInfo), newValue));
+                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
+                        notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
                     }
                 }
                 else
                 {
-                    notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, Expression.Field(newInstance, fieldInfo), typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
+                    if (fieldInfo.IsInitOnly)
+                    {
+                        var tmpVar = getTempVar(typeof(object));
+                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, tmpVar, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
+                        notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
+                                                                  Expression.Constant(fieldInfo),
+                                                                  tmpVar,
+                                                                  newInstance));
+                    }
+                    else
+                    {
+                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
+                        //notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
+
+                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, fieldValueExpr, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
+                    }
                 }
             }
 
@@ -414,6 +521,31 @@ namespace DesertOctopus.Serialization
                                                                          notTrackedExpressions,
                                                                          trackType,
                                                                          variables);
+        }
+
+        private static bool ValueTypeRequiresTemporaryVariable(Type type)
+        {
+            bool isStruct = type.IsValueType
+                            && !type.IsEnum
+                            && !type.IsPrimitive
+                            && type != typeof(decimal);
+            return isStruct;
+        }
+
+        private static bool IsEnumOrNullableEnum(Type type)
+        {
+            if (type.IsEnum)
+            {
+                return true;
+            }
+
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType != null)
+            {
+                return underlyingType.IsEnum;
+            }
+
+            return false;
         }
 
         /// <summary>

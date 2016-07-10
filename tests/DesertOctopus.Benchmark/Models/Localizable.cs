@@ -44,7 +44,7 @@ namespace DesertOctopus.Benchmark.Models
             }
         }
 
-        int ILocalizable.Count
+        public int Count
         {
             get { return Values.Count; }
         }

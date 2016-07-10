@@ -177,7 +177,7 @@ namespace DesertOctopus.Serialization
 
         #endregion
 
-        #region byte
+        #region byte?
 
         /// <summary>
         /// Generates an expression to handle nullable byte serialization

@@ -44,7 +44,14 @@ namespace DesertOctopus.Benchmark.Models
             NTimeSpanValue = TimeSpan.FromSeconds(3);
             BigIntegerValue = new BigInteger(3892);
             NBigIntegerValue = new BigInteger(3892);
+
+            // not primitives
+            //StringValue = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            //DictValue = new Dictionary<int, int> { {1, 2}, {2, 2}, {3, 2}, {4, 2}, };
         }
+
+        //public Dictionary<int,int> DictValue { get; set; }
+        //public string StringValue { get; set; }
 
         public byte ByteValue { get; set; }
         public sbyte SByteValue { get; set; }

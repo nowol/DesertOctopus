@@ -141,6 +141,27 @@ namespace DesertOctopus.Serialization
                 return writer;
             }
 
+            if (type.IsEnum)
+            {
+                if (LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out writer))
+                {
+                    return writer;
+                }
+            }
+
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType != null)
+            {
+                if (underlyingType.IsEnum)
+                {
+                    var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                    if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out writer))
+                    {
+                        return writer;
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -152,7 +173,7 @@ namespace DesertOctopus.Serialization
             var expressions = new List<Expression>();
             var outputStream = Expression.Parameter(typeof(Stream), "outputStream");
             var objToSerialize = Expression.Parameter(typeof(object), "objToSerialize");
-            var objCargo = Expression.Parameter(typeof(SerializerObjectTracker), "objCargo");
+            var objTracking = Expression.Parameter(typeof(SerializerObjectTracker), "objTracking");
 
             var primitiveWriter = GetPrimitiveWriter(type);
             if (primitiveWriter != null)
@@ -162,23 +183,23 @@ namespace DesertOctopus.Serialization
             }
             else if (type == typeof(string))
             {
-                expressions.Add(GenerateStringExpression(outputStream, objToSerialize, objCargo));
+                expressions.Add(GenerateStringExpression(outputStream, objToSerialize, objTracking));
             }
             else if (typeof(ISerializable).IsAssignableFrom(type))
             {
-                expressions.Add(ISerializableSerializer.GenerateISerializableExpression(type, variables, outputStream, objToSerialize, objCargo));
+                expressions.Add(ISerializableSerializer.GenerateISerializableExpression(type, variables, outputStream, objToSerialize, objTracking));
             }
             else if (type == typeof(ExpandoObject))
             {
-                expressions.Add(ExpandoSerializer.GenerateExpandoObjectExpression(variables, outputStream, objToSerialize, objCargo));
+                expressions.Add(ExpandoSerializer.GenerateExpandoObjectExpression(variables, outputStream, objToSerialize, objTracking));
             }
             else if (type.IsArray)
             {
-                expressions.Add(GenerateArrayExpression(type, outputStream, objToSerialize, objCargo));
+                expressions.Add(GenerateArrayExpression(type, outputStream, objToSerialize, objTracking));
             }
             else if (type.IsValueType && !type.IsEnum && !type.IsPrimitive)
             {
-                expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objCargo));
+                expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objTracking));
             }
             else if (typeof(IQueryable).IsAssignableFrom(type))
             {
@@ -190,7 +211,7 @@ namespace DesertOctopus.Serialization
                 if (queryableInterface != null)
                 {
                     var genericArgumentType = queryableInterface.GetGenericArguments()[0];
-                    expressions.Add(GenerateArrayExpression(genericArgumentType.MakeArrayType(), outputStream, objToSerialize, objCargo));
+                    expressions.Add(GenerateArrayExpression(genericArgumentType.MakeArrayType(), outputStream, objToSerialize, objTracking));
                 }
                 else
                 {
@@ -199,12 +220,12 @@ namespace DesertOctopus.Serialization
             }
             else
             {
-                expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objCargo));
+                expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objTracking));
             }
 
             var block = Expression.Block(variables, expressions);
 
-            return Expression.Lambda<Action<Stream, object, SerializerObjectTracker>>(block, outputStream, objToSerialize, objCargo).Compile();
+            return Expression.Lambda<Action<Stream, object, SerializerObjectTracker>>(block, outputStream, objToSerialize, objTracking).Compile();
         }
 
         /// <summary>
@@ -311,14 +332,44 @@ namespace DesertOctopus.Serialization
 
             foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
             {
-                if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType || fieldInfo.FieldType == typeof(string))
+                var fieldValueExpr = Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo);
+
+                if (type == typeof(string))
                 {
-                    Action<Stream, object, SerializerObjectTracker> primitiveSerializer = GetTypeSerializer(fieldInfo.FieldType);
-                    copyFieldsExpressions.Add(Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo), typeof(object)), objTracking));
+                    copyFieldsExpressions.Add(GenerateStringExpression(outputStream, fieldValueExpr, objTracking));
+                }
+                else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
+                {
+                    var primitiveWriter = GetPrimitiveWriter(fieldInfo.FieldType);
+
+                    if (primitiveWriter == null)
+                    {
+                        //throw new NullReferenceException(fieldInfo.FieldType.FullName);
+                        Action<Stream, object, SerializerObjectTracker> primitiveSerializer = GetTypeSerializer(fieldInfo.FieldType);
+                        copyFieldsExpressions.Add(Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(fieldValueExpr, typeof(object)), objTracking));
+                    }
+                    else
+                    {
+                        copyFieldsExpressions.Add(primitiveWriter(outputStream, fieldValueExpr));
+                    }
+
+
+
+                    //var actionPrimitiveType = typeof(Action<,,>).MakeGenericType(typeof(Stream), fieldInfo.FieldType, typeof(SerializerObjectTracker));
+                    ////var lambdaType = typeof(Expression.Lambda<>);
+                    //var lamdaMethod = typeof(Expression).GetMethod("Lambda").MakeGenericMethod(actionPrimitiveType);
+                    ////object pp = ((LambdaExpression)lamdaMethod.Invoke(null, new object[] { outputStream, fieldValueExpr })).Compile();
+                    //object pp = ((LambdaExpression)lamdaMethod.Invoke(null, new object[] { outputStream, fieldValueExpr })).Compile();
+                    ////Expression.Lambda(
+                    ////outputStream, Expression.Unbox(objToSerialize, type)
+                    ////object p = Expression.Lambda<Action<Stream, object, SerializerObjectTracker>>(primitiveWriter, outputStream, objToSerialize, objTracking).Compile();
+
+
+                    ////copyFieldsExpressions.Add(Expression.Invoke(Expression.Constant(lamdaMethod), outputStream, Expression.Convert(Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo), typeof(object)), objTracking));
                 }
                 else
                 {
-                    copyFieldsExpressions.Add(GetWriteClassTypeExpression(outputStream, objTracking, Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo), itemAsObj, typeExpr, serializer, fieldInfo.FieldType));
+                    copyFieldsExpressions.Add(GetWriteClassTypeExpression(outputStream, objTracking, fieldValueExpr, itemAsObj, typeExpr, serializer, fieldInfo.FieldType));
                 }
             }
 
