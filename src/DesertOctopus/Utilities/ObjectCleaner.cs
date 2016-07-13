@@ -12,7 +12,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class that help cleaning objects to serialize/clone
     /// </summary>
-    internal class ObjectCleaner
+    internal static class ObjectCleaner
     {
         /// <summary>
         /// Convert an IEnumerable to an array

@@ -130,24 +130,20 @@ namespace DesertOctopus.Serialization
                 return writer;
             }
 
-            if (type.IsEnum)
+            if (type.IsEnum
+                && LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out writer))
             {
-                if (LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out writer))
-                {
-                    return writer;
-                }
+                return writer;
             }
 
             var underlyingType = Nullable.GetUnderlyingType(type);
-            if (underlyingType != null)
+            if (underlyingType != null
+                && underlyingType.IsEnum)
             {
-                if (underlyingType.IsEnum)
+                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out writer))
                 {
-                    var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
-                    if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out writer))
-                    {
-                        return writer;
-                    }
+                    return writer;
                 }
             }
 
@@ -303,7 +299,6 @@ namespace DesertOctopus.Serialization
                                                            Expression objToSerialize,
                                                            ParameterExpression objTracking)
         {
-            List<Expression> expressions = new List<Expression>();
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
@@ -333,7 +328,6 @@ namespace DesertOctopus.Serialization
 
                     if (primitiveWriter == null)
                     {
-                        //throw new NullReferenceException(fieldInfo.FieldType.FullName);
                         Action<Stream, object, SerializerObjectTracker> primitiveSerializer = GetTypeSerializer(fieldInfo.FieldType);
                         copyFieldsExpressions.Add(Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(fieldValueExpr, typeof(object)), objTracking));
                     }
@@ -341,20 +335,6 @@ namespace DesertOctopus.Serialization
                     {
                         copyFieldsExpressions.Add(primitiveWriter(outputStream, fieldValueExpr));
                     }
-
-
-
-                    //var actionPrimitiveType = typeof(Action<,,>).MakeGenericType(typeof(Stream), fieldInfo.FieldType, typeof(SerializerObjectTracker));
-                    ////var lambdaType = typeof(Expression.Lambda<>);
-                    //var lamdaMethod = typeof(Expression).GetMethod("Lambda").MakeGenericMethod(actionPrimitiveType);
-                    ////object pp = ((LambdaExpression)lamdaMethod.Invoke(null, new object[] { outputStream, fieldValueExpr })).Compile();
-                    //object pp = ((LambdaExpression)lamdaMethod.Invoke(null, new object[] { outputStream, fieldValueExpr })).Compile();
-                    ////Expression.Lambda(
-                    ////outputStream, Expression.Unbox(objToSerialize, type)
-                    ////object p = Expression.Lambda<Action<Stream, object, SerializerObjectTracker>>(primitiveWriter, outputStream, objToSerialize, objTracking).Compile();
-
-
-                    ////copyFieldsExpressions.Add(Expression.Invoke(Expression.Constant(lamdaMethod), outputStream, Expression.Convert(Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo), typeof(object)), objTracking));
                 }
                 else
                 {

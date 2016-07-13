@@ -9,7 +9,7 @@ namespace DesertOctopus.Utilities
     /// </summary>
     internal static class CopyReadOnlyFieldMethodInfo
     {
-        private static readonly MethodInfo Method = typeof(CopyReadOnlyFieldMethodInfo).GetMethod("CopyReadonlyField", BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo Method = typeof(CopyReadOnlyFieldMethodInfo).GetMethod(nameof(CopyReadOnlyFieldMethodInfo.CopyReadonlyField), BindingFlags.NonPublic | BindingFlags.Static);
 
         /// <summary>
         /// Calls CopyReadonlyField

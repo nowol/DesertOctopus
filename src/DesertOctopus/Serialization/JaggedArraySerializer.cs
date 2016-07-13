@@ -28,7 +28,6 @@ namespace DesertOctopus.Serialization
                                                        ParameterExpression objToSerialize,
                                                        ParameterExpression objTracking)
         {
-            List<Expression> expressions = new List<Expression>();
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 

@@ -9,16 +9,14 @@ namespace DesertOctopus.Utilities
     /// </summary>
     internal class DeserializerObjectTracker
     {
-        //private readonly Dictionary<object, int> _trackedObjects;
-        private readonly List<object> _trackedObjects2;
+        private readonly List<object> _trackedObjects;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DeserializerObjectTracker"/> class.
         /// </summary>
         public DeserializerObjectTracker()
         {
-            //_trackedObjects = new Dictionary<object, int>();
-            _trackedObjects2 = new List<object>();
+            _trackedObjects = new List<object>();
         }
 
         /// <summary>
@@ -34,8 +32,7 @@ namespace DesertOctopus.Utilities
 
             if (obj.GetType().IsClass)
             {
-                _trackedObjects2.Add(obj);
-                //_trackedObjects.Add(obj, _trackedObjects.Count);
+                _trackedObjects.Add(obj);
             }
         }
 
@@ -46,16 +43,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The object at index</returns>
         public object GetObjectAtIndex(int index)
         {
-            //foreach (var kvp in _trackedObjects)
-            //{
-            //    if (kvp.Value == index)
-            //    {
-            //        return kvp.Key;
-            //    }
-            //}
-
-            //return null;
-            return _trackedObjects2[index];
+            return _trackedObjects[index];
         }
     }
 }

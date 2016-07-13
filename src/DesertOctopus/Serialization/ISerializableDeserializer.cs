@@ -41,7 +41,7 @@ namespace DesertOctopus.Serialization
             }
             else
             {
-                notTrackedExpressions.Add(Expression.IfThenElse(Expression.Equal(PrimitiveHelpers.ReadByte(inputStream), Expression.Constant((int)1, typeof(int))),
+                notTrackedExpressions.Add(Expression.IfThenElse(Expression.Equal(PrimitiveHelpers.ReadByte(inputStream), Expression.Constant(1, typeof(int))),
                                                                 DeserializeDictionary(type, variables, inputStream, objTracking, newInstance),
                                                                 DeserializeISerializable(type, variables, inputStream, objTracking, newInstance)));
             }
