@@ -13,7 +13,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for ObjectCloner.CloneImpl</returns>
         public static MethodInfo CloneImpl()
         {
-            return typeof(ObjectCloner).GetMethod("CloneImpl", BindingFlags.NonPublic | BindingFlags.Static);
+            return typeof(ObjectCloner).GetMethod(nameof(ObjectCloner.CloneImpl), BindingFlags.NonPublic | BindingFlags.Static);
         }
     }
 }

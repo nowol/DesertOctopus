@@ -124,21 +124,6 @@ namespace DesertOctopus
             return Expression.Lambda<Func<object, ObjectClonerReferenceTracker, object>>(Expression.Block(variables, expressions), sourceParameter, refTrackerParam).Compile();
         }
 
-        private static bool IsAGenericList(Type type)
-        {
-            var isGenericList = false;
-            var targetType = type;
-
-            do
-            {
-                isGenericList = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>);
-                targetType = targetType.BaseType;
-            }
-            while (!isGenericList && targetType != null);
-
-            return isGenericList;
-        }
-
         /// <summary>
         /// Generates null, tracked or untracked expression
         /// </summary>

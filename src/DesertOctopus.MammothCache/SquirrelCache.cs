@@ -109,7 +109,13 @@ namespace DesertOctopus.MammothCache
         }
 
         /// <inheritdoc/>
-        public void Set(string key, byte[] serializedValue, TimeSpan? ttl = null)
+        public void Set(string key, byte[] serializedValue)
+        {
+            Set(key, serializedValue, null);
+        }
+
+        /// <inheritdoc/>
+        public void Set(string key, byte[] serializedValue, TimeSpan? ttl)
         {
             GuardDisposed();
             Remove(key); // removing the item first to decrease the estimated memory usage

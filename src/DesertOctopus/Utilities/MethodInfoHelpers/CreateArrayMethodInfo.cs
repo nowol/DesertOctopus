@@ -10,9 +10,9 @@ namespace DesertOctopus.Utilities
     /// </summary>
     internal static class CreateArrayMethodInfo
     {
-        private static readonly MethodInfo CreateArrayMethod = typeof(CreateArrayMethodInfo).GetMethod("CreateArray", BindingFlags.Static | BindingFlags.Public);
-        private static readonly MethodInfo ArrayLengthMethod = typeof(Array).GetMethod("GetLength");
-        private static readonly MethodInfo CreateArrayWithLengthMethod = typeof(CreateArrayMethodInfo).GetMethod("CreateArrayWithLength", BindingFlags.Static | BindingFlags.Public);
+        private static readonly MethodInfo CreateArrayMethod = typeof(CreateArrayMethodInfo).GetMethod(nameof(CreateArrayMethodInfo.CreateArray), BindingFlags.Static | BindingFlags.Public);
+        private static readonly MethodInfo ArrayLengthMethod = typeof(Array).GetMethod(nameof(Array.GetLength));
+        private static readonly MethodInfo CreateArrayWithLengthMethod = typeof(CreateArrayMethodInfo).GetMethod(nameof(CreateArrayMethodInfo.CreateArrayWithLength), BindingFlags.Static | BindingFlags.Public);
 
         /// <summary>
         /// Calls CreateArrayMethodInfo.CreateArray

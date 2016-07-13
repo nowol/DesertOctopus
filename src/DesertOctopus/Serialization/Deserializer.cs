@@ -88,9 +88,7 @@ namespace DesertOctopus.Serialization
                                            List<object> objs)
         {
             var int16Reader = GetTypeDeserializer(typeof(short));
-            var byteReader = GetTypeDeserializer(typeof(byte));
             short version = (short)int16Reader(ms, objs);
-            InternalSerializationStuff.SerializationType serializationType = (InternalSerializationStuff.SerializationType)(byte)byteReader(ms, objs);
 
             if (version != InternalSerializationStuff.Version)
             {
@@ -98,18 +96,6 @@ namespace DesertOctopus.Serialization
                                                                              version,
                                                                              InternalSerializationStuff.Version));
             }
-
-            // if (serializationType == InternalSerializationStuff.SerializationType.ValueType
-            //     && !(typeof(T).IsValueType || typeof(T).IsPrimitive))
-            // {
-            //     throw new Exception("wrong type?");
-            // }
-            // if (serializationType == InternalSerializationStuff.SerializationType.Class
-            //     && !typeof(T).IsValueType
-            //     && !typeof(T).IsPrimitive)
-            // {
-            //     throw new Exception("wrong type?");
-            // }
         }
 
         /// <summary>
@@ -184,24 +170,21 @@ namespace DesertOctopus.Serialization
                 return reader;
             }
 
-            if (type.IsEnum)
+            if (type.IsEnum
+                && LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(),
+                                                      out reader))
             {
-                if (LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out reader))
-                {
-                    return reader;
-                }
+                return reader;
             }
 
             var underlyingType = Nullable.GetUnderlyingType(type);
-            if (underlyingType != null)
+            if (underlyingType != null
+                && underlyingType.IsEnum)
             {
-                if (underlyingType.IsEnum)
+                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out reader))
                 {
-                    var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
-                    if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out reader))
-                    {
-                        return reader;
-                    }
+                    return reader;
                 }
             }
 
@@ -363,7 +346,7 @@ namespace DesertOctopus.Serialization
         /// <param name="obj">Object list</param>
         /// <param name="index">Index to read from</param>
         /// <returns>The object at the specified index</returns>
-        private static object GetTrackedObject(List<object> obj, int index)
+        internal static object GetTrackedObject(List<object> obj, int index)
         {
             return obj[index];
         }

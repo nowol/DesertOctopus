@@ -44,8 +44,15 @@ namespace DesertOctopus.MammothCache.Redis
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <param name="serializedValue">Byte array containing the serialized object</param>
+        void Set(string key, byte[] serializedValue);
+
+        /// <summary>
+        /// Store an object in the cache
+        /// </summary>
+        /// <param name="key">Key of the object</param>
+        /// <param name="serializedValue">Byte array containing the serialized object</param>
         /// <param name="ttl">Optional time to live of the object</param>
-        void Set(string key, byte[] serializedValue, TimeSpan? ttl = null);
+        void Set(string key, byte[] serializedValue, TimeSpan? ttl);
 
         /// <summary>
         /// Store multiple objects in the cache
@@ -58,9 +65,17 @@ namespace DesertOctopus.MammothCache.Redis
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <param name="serializedValue">Byte array containing the serialized object</param>
+        /// <returns>A task that can be awaited</returns>
+        Task SetAsync(string key, byte[] serializedValue);
+
+        /// <summary>
+        /// Store an object in the cache
+        /// </summary>
+        /// <param name="key">Key of the object</param>
+        /// <param name="serializedValue">Byte array containing the serialized object</param>
         /// <param name="ttl">Optional time to live of the object</param>
         /// <returns>A task that can be awaited</returns>
-        Task SetAsync(string key, byte[] serializedValue, TimeSpan? ttl = null);
+        Task SetAsync(string key, byte[] serializedValue, TimeSpan? ttl);
 
         /// <summary>
         /// Store multiple objects in the cache

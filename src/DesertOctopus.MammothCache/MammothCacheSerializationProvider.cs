@@ -14,7 +14,7 @@ namespace DesertOctopus.MammothCache
     /// </summary>
     public class MammothCacheSerializationProvider : IMammothCacheSerializationProvider
     {
-        private static ConcurrentDictionary<Type, bool> _canTypeBeSerialized = new ConcurrentDictionary<Type, bool>();
+        private static readonly ConcurrentDictionary<Type, bool> _canTypeBeSerialized = new ConcurrentDictionary<Type, bool>();
 
         /// <inheritdoc/>
         public byte[] Serialize<T>(T value)
@@ -50,13 +50,10 @@ namespace DesertOctopus.MammothCache
             }
 
             if (type.Namespace != null
-                && type.GetCustomAttribute<SerializableAttribute>(true) == null)
+                && type.GetCustomAttribute<SerializableAttribute>(true) == null
+                && (type.Namespace.StartsWith("System.") || type.Namespace.StartsWith("Microsoft.")))
             {
-                if (type.Namespace.StartsWith("System.")
-                    || type.Namespace.StartsWith("Microsoft."))
-                {
-                    return false;
-                }
+                return false;
             }
 
             return true;

@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for PrimitiveHelpers.GetLongFromDouble</returns>
         public static MethodInfo GetLongFromDouble()
         {
-            return typeof(PrimitiveHelpers).GetMethod("GetLongFromDouble", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(PrimitiveHelpers).GetMethod(nameof(PrimitiveHelpers.GetLongFromDouble), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for PrimitiveHelpers.GetDoubleFromLong</returns>
         public static MethodInfo GetDoubleFromLong()
         {
-            return typeof(PrimitiveHelpers).GetMethod("GetDoubleFromLong", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(PrimitiveHelpers).GetMethod(nameof(PrimitiveHelpers.GetDoubleFromLong), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for PrimitiveHelpers.GetUintFromSingle</returns>
         public static MethodInfo GetUintFromSingle()
         {
-            return typeof(PrimitiveHelpers).GetMethod("GetUintFromSingle", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(PrimitiveHelpers).GetMethod(nameof(PrimitiveHelpers.GetUintFromSingle), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for PrimitiveHelpers.GetSingleFromUint</returns>
         public static MethodInfo GetSingleFromUint()
         {
-            return typeof(PrimitiveHelpers).GetMethod("GetSingleFromUint", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(PrimitiveHelpers).GetMethod(nameof(PrimitiveHelpers.GetSingleFromUint), BindingFlags.Static | BindingFlags.NonPublic);
         }
     }
 }

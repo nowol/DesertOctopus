@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for DateTime.ToBinary</returns>
         public static MethodInfo ToBinary()
         {
-            return typeof(DateTime).GetMethod("ToBinary");
+            return typeof(DateTime).GetMethod(nameof(DateTime.ToBinary));
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for DateTime.FromBinary</returns>
         public static MethodInfo FromBinary()
         {
-            return typeof(DateTime).GetMethod("FromBinary", BindingFlags.Static | BindingFlags.Public);
+            return typeof(DateTime).GetMethod(nameof(DateTime.FromBinary), BindingFlags.Static | BindingFlags.Public);
         }
     }
 }

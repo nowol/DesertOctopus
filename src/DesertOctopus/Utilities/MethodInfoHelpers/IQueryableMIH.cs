@@ -17,7 +17,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for IQueryableCloner.IsGenericIQueryableType</returns>
         public static MethodInfo IsGenericIQueryableType()
         {
-            return typeof(IQueryableCloner).GetMethod("IsGenericIQueryableType", new[] { typeof(Type) });
+            return typeof(IQueryableCloner).GetMethod(nameof(IQueryableCloner.IsGenericIQueryableType), new[] { typeof(Type) });
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for IQueryableCloner.ConvertToNonGenericQueryable</returns>
         public static MethodInfo ConvertToNonGenericQueryable()
         {
-            return typeof(IQueryableCloner).GetMethod("ConvertToNonGenericQueryable", BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(object) }, new ParameterModifier[0]);
+            return typeof(IQueryableCloner).GetMethod(nameof(IQueryableCloner.ConvertToNonGenericQueryable), BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(object) }, new ParameterModifier[0]);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for BigInteger.ToByteArray</returns>
         public static MethodInfo ToByteArray()
         {
-            return typeof(BigInteger).GetMethod("ToByteArray");
+            return typeof(BigInteger).GetMethod(nameof(BigInteger.ToByteArray));
         }
 
         /// <summary>

@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for IDisposable.Dispose</returns>
         public static MethodInfo Dispose()
         {
-            return typeof(IDisposable).GetMethod("Dispose");
+            return typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose));
         }
     }
 }

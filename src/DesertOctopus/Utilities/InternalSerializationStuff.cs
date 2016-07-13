@@ -22,22 +22,6 @@ namespace DesertOctopus.Utilities
         /// </summary>
         public const short Version = 1;
 
-        /// <summary>
-        /// Type of serialized object
-        /// </summary>
-        public enum SerializationType : byte
-        {
-            /// <summary>
-            /// Value/Primitive type
-            /// </summary>
-            ValueType = 0,
-
-            /// <summary>
-            /// Reference type
-            /// </summary>
-            Class = 1
-        }
-
         public static readonly ConcurrentDictionary<Type, FieldInfo[]> FieldsForType = new ConcurrentDictionary<Type, FieldInfo[]>();
 
         /// <summary>

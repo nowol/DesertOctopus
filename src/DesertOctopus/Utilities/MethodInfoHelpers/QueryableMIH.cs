@@ -17,7 +17,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Queryable.AsQueryable</returns>
         public static MethodInfo AsQueryable(Type elementType)
         {
-            return typeof(Queryable).GetMethod("AsQueryable", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(IEnumerable<>).MakeGenericType(elementType) }, new ParameterModifier[0]);
+            return typeof(Queryable).GetMethod(nameof(Queryable.AsQueryable), BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(IEnumerable<>).MakeGenericType(elementType) }, new ParameterModifier[0]);
         }
     }
 }

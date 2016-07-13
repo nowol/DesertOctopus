@@ -14,7 +14,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
         /// <returns>The method info for ObjectClonerReferenceTracker.IsSourceObjectTracked</returns>
         public static MethodInfo IsSourceObjectTracked()
         {
-            return typeof(ObjectClonerReferenceTracker).GetMethod("IsSourceObjectTracked");
+            return typeof(ObjectClonerReferenceTracker).GetMethod(nameof(ObjectClonerReferenceTracker.IsSourceObjectTracked));
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
         /// <returns>The method info for ObjectClonerReferenceTracker.Track</returns>
         public static MethodInfo Track()
         {
-            return typeof(ObjectClonerReferenceTracker).GetMethod("Track");
+            return typeof(ObjectClonerReferenceTracker).GetMethod(nameof(ObjectClonerReferenceTracker.Track));
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
         /// <returns>The method info for ObjectClonerReferenceTracker.GetEquivalentTargetObject</returns>
         public static MethodInfo GetEquivalentTargetObject()
         {
-            return typeof(ObjectClonerReferenceTracker).GetMethod("GetEquivalentTargetObject");
+            return typeof(ObjectClonerReferenceTracker).GetMethod(nameof(ObjectClonerReferenceTracker.GetEquivalentTargetObject));
         }
     }
 }

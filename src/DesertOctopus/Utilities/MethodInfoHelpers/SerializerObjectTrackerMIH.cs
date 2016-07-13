@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.TrackObject</returns>
         public static MethodInfo TrackObject()
         {
-            return typeof(SerializerObjectTracker).GetMethod("TrackObject", new Type[] { typeof(object) });
+            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.TrackObject), new Type[] { typeof(object) });
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.GetTrackedObjectIndex</returns>
         public static MethodInfo GetTrackedObjectIndex()
         {
-            return typeof(SerializerObjectTracker).GetMethod("GetTrackedObjectIndex");
+            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.GetTrackedObjectIndex));
         }
     }
 }

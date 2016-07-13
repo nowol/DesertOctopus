@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializedTypeResolver.GetTypeFromFullName</returns>
         public static MethodInfo GetTypeFromFullName_Type()
         {
-            return typeof(SerializedTypeResolver).GetMethod("GetTypeFromFullName", BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(Type) }, null);
+            return typeof(SerializedTypeResolver).GetMethod(nameof(SerializedTypeResolver.GetTypeFromFullName), BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(Type) }, null);
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializedTypeResolver.GetTypeFromFullName</returns>
         public static MethodInfo GetTypeFromFullName_String()
         {
-            return typeof(SerializedTypeResolver).GetMethod("GetTypeFromFullName", BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(string) }, null);
+            return typeof(SerializedTypeResolver).GetMethod(nameof(SerializedTypeResolver.GetTypeFromFullName), BindingFlags.Static | BindingFlags.Public, null, CallingConventions.Any, new Type[] { typeof(string) }, null);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializedTypeResolver.GetHashCodeFromType</returns>
         public static MethodInfo GetHashCodeFromType()
         {
-            return typeof(SerializedTypeResolver).GetMethod("GetHashCodeFromType", new[] { typeof(Type) });
+            return typeof(SerializedTypeResolver).GetMethod(nameof(SerializedTypeResolver.GetHashCodeFromType), new[] { typeof(Type) });
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializedTypeResolver.GetShortNameFromType</returns>
         public static MethodInfo GetShortNameFromType()
         {
-            return typeof(SerializedTypeResolver).GetMethod("GetShortNameFromType", new[] { typeof(Type) });
+            return typeof(SerializedTypeResolver).GetMethod(nameof(SerializedTypeResolver.GetShortNameFromType), new[] { typeof(Type) });
         }
     }
 }

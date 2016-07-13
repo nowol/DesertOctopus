@@ -33,8 +33,15 @@ namespace DesertOctopus.MammothCache.Common
         /// </summary>
         /// <param name="key">Key of the object</param>
         /// <param name="value">Non serializable object to store</param>
+        void Set(string key, object value);
+
+        /// <summary>
+        /// Store an object in the cache
+        /// </summary>
+        /// <param name="key">Key of the object</param>
+        /// <param name="value">Non serializable object to store</param>
         /// <param name="ttl">Optional time to live of the object</param>
-        void Set(string key, object value, TimeSpan? ttl = null);
+        void Set(string key, object value, TimeSpan? ttl);
 
         /// <summary>
         /// Gets the number of items in the cache

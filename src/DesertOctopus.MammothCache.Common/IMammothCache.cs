@@ -52,9 +52,19 @@ namespace DesertOctopus.MammothCache.Common
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="key">Key of the object</param>
         /// <param name="getAction">Delegate that will create the object</param>
+        /// <returns>The object or default({T}) if the object was not found</returns>
+        T GetOrAdd<T>(string key, Func<T> getAction)
+            where T : class;
+
+        /// <summary>
+        /// Gets an object from the cache.  If the object does not exists, getAction is executed and its result, if not null, is stored in the cache.
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="key">Key of the object</param>
+        /// <param name="getAction">Delegate that will create the object</param>
         /// <param name="ttl">Optional time to live of the object</param>
         /// <returns>The object or default({T}) if the object was not found</returns>
-        T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null)
+        T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl)
             where T : class;
 
         /// <summary>
@@ -73,9 +83,19 @@ namespace DesertOctopus.MammothCache.Common
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="key">Key of the object</param>
         /// <param name="getActionAsync">Delegate that will create the object</param>
+        /// <returns>The object or default({T}) if the object was not found as an awaitable task</returns>
+        Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync)
+            where T : class;
+
+        /// <summary>
+        /// Gets an object from the cache.  If the object does not exists, getAction is executed and its result, if not null, is stored in the cache.
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="key">Key of the object</param>
+        /// <param name="getActionAsync">Delegate that will create the object</param>
         /// <param name="ttl">Optional time to live of the object</param>
         /// <returns>The object or default({T}) if the object was not found as an awaitable task</returns>
-        Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null)
+        Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl)
             where T : class;
 
         /// <summary>
@@ -94,8 +114,17 @@ namespace DesertOctopus.MammothCache.Common
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="key">Key of the object</param>
         /// <param name="value">Object to store</param>
+        void Set<T>(string key, T value)
+            where T : class;
+
+        /// <summary>
+        /// Store an object in the cache
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="key">Key of the object</param>
+        /// <param name="value">Object to store</param>
         /// <param name="ttl">Optional time to live of the object</param>
-        void Set<T>(string key, T value, TimeSpan? ttl = null)
+        void Set<T>(string key, T value, TimeSpan? ttl)
             where T : class;
 
         /// <summary>
@@ -112,9 +141,19 @@ namespace DesertOctopus.MammothCache.Common
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="key">Key of the object</param>
         /// <param name="value">Object to store</param>
+        /// <returns>A task that can be awaited</returns>
+        Task SetAsync<T>(string key, T value)
+            where T : class;
+
+        /// <summary>
+        /// Store an object in the cache
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="key">Key of the object</param>
+        /// <param name="value">Object to store</param>
         /// <param name="ttl">Optional time to live of the object</param>
         /// <returns>A task that can be awaited</returns>
-        Task SetAsync<T>(string key, T value, TimeSpan? ttl = null)
+        Task SetAsync<T>(string key, T value, TimeSpan? ttl)
             where T : class;
 
         /// <summary>

@@ -17,17 +17,15 @@ namespace DesertOctopus.MammothCache.Redis
     /// </summary>
     public sealed class RedisConnection : IRedisConnection, ISecondLevelCache, IDisposable
     {
-        private readonly string _connectionString;
-        private readonly IRedisRetryPolicy _redisRetryPolicy;
         private readonly ConnectionMultiplexer _multiplexer;
         private readonly RetryPolicy _retryPolicy;
         private readonly RetryPolicy _retryPolicyAsync;
         private readonly string _instanceId = Guid.NewGuid().ToString();
         private readonly string _setKeyChannel;
         private readonly string _removeAllItemsChannel = "RemoveAllItems";
+        private readonly PolicyBuilder _baseRetryPolicy;
         private bool _isDisposed = false;
         private ISubscriber _subscriber;
-        private PolicyBuilder _baseRetryPolicy;
 
         /// <inheritdoc/>
         public event ItemEvictedFromCacheEventHandler OnItemRemovedFromCache;
@@ -44,14 +42,12 @@ namespace DesertOctopus.MammothCache.Redis
         {
             _setKeyChannel = "~SetKey~:" + _instanceId;
 
-            _connectionString = connectionString;
-            _redisRetryPolicy = redisRetryPolicy;
             _baseRetryPolicy = Policy.Handle<TimeoutException>()
                                      .Or<TimeoutException>()
                                      .Or<SocketException>()
                                      .Or<IOException>();  // for async
-            _retryPolicy = _baseRetryPolicy.WaitAndRetry(_redisRetryPolicy.SleepDurations);
-            _retryPolicyAsync = _baseRetryPolicy.WaitAndRetryAsync(_redisRetryPolicy.SleepDurations);
+            _retryPolicy = _baseRetryPolicy.WaitAndRetry(redisRetryPolicy.SleepDurations);
+            _retryPolicyAsync = _baseRetryPolicy.WaitAndRetryAsync(redisRetryPolicy.SleepDurations);
 
             var options = ConfigurationOptions.Parse(connectionString);
             ConfigureIfMissing(options, "abortConnect", connectionString, o => { o.AbortOnConnectFail = false; });
@@ -243,8 +239,17 @@ namespace DesertOctopus.MammothCache.Redis
 
         /// <inheritdoc/>
         public void Set(string key,
+                        byte[] serializedValue)
+        {
+            Set(key,
+                serializedValue,
+                null);
+        }
+
+        /// <inheritdoc/>
+        public void Set(string key,
                         byte[] serializedValue,
-                        TimeSpan? ttl = null)
+                        TimeSpan? ttl)
         {
             GetRetryPolicy().Execute(() => GetDatabase().Publish(_setKeyChannel, key));
             GetRetryPolicy().Execute(() => GetDatabase().StringSet(key, serializedValue, expiry: ttl));
@@ -286,9 +291,18 @@ namespace DesertOctopus.MammothCache.Redis
         }
 
         /// <inheritdoc/>
+        public Task SetAsync(string key,
+                             byte[] serializedValue)
+        {
+            return SetAsync(key,
+                            serializedValue,
+                            null);
+        }
+
+        /// <inheritdoc/>
         public async Task SetAsync(string key,
                              byte[] serializedValue,
-                             TimeSpan? ttl = null)
+                             TimeSpan? ttl)
         {
             await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().PublishAsync(_setKeyChannel, key)).ConfigureAwait(false);
             await GetRetryPolicyAsync().ExecuteAsync(() => GetDatabase().StringSetAsync(key, serializedValue, expiry: ttl)).ConfigureAwait(false);
@@ -458,13 +472,13 @@ namespace DesertOctopus.MammothCache.Redis
         }
 
         /// <inheritdoc/>
-        public KeyValuePair<string, string>[] GetConfig(string pattern = null)
+        public KeyValuePair<string, string>[] GetConfig(string pattern)
         {
             return GetRetryPolicy().Execute(() => GetServer(_multiplexer).ConfigGet(pattern));
         }
 
         /// <inheritdoc/>
-        public Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern = null)
+        public Task<KeyValuePair<string, string>[]> GetConfigAsync(string pattern)
         {
             return GetRetryPolicyAsync().ExecuteAsync(() => GetServer(_multiplexer).ConfigGetAsync(pattern));
         }

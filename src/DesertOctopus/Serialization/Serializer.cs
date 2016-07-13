@@ -42,11 +42,10 @@ namespace DesertOctopus.Serialization
 
                 Action<Stream, object, SerializerObjectTracker> shortSerializerMethod = GetTypeSerializer(typeof(short));
                 Action<Stream, object, SerializerObjectTracker> serializerMethod = GetTypeSerializer(obj.GetType());
-                Action<Stream, object, SerializerObjectTracker> byteSerializerMethod = GetTypeSerializer(typeof(byte));
                 Action<Stream, object, SerializerObjectTracker> stringSerializerMethod = GetTypeSerializer(typeof(string));
                 Action<Stream, object, SerializerObjectTracker> intSerializerMethod = GetTypeSerializer(typeof(int));
 
-                WriteHeader(objToSerialize, shortSerializerMethod, ms, cargo, byteSerializerMethod);
+                WriteHeader(shortSerializerMethod, ms, cargo);
                 stringSerializerMethod(ms, SerializedTypeResolver.GetShortNameFromType(obj.GetType()), cargo);
                 intSerializerMethod(ms, SerializedTypeResolver.GetHashCodeFromType(obj.GetType()), cargo);
                 serializerMethod(ms, objToSerialize, cargo);
@@ -55,21 +54,11 @@ namespace DesertOctopus.Serialization
             }
         }
 
-        private static void WriteHeader<T>(T obj,
-                                           Action<Stream, object, SerializerObjectTracker> shortSerializerMethod,
-                                           MemoryStream ms,
-                                           SerializerObjectTracker objectTracker,
-                                           Action<Stream, object, SerializerObjectTracker> byteSerializerMethod)
+        private static void WriteHeader(Action<Stream, object, SerializerObjectTracker> shortSerializerMethod,
+                                        MemoryStream ms,
+                                        SerializerObjectTracker objectTracker)
         {
             shortSerializerMethod(ms, InternalSerializationStuff.Version, objectTracker);
-            if (obj.GetType().IsValueType || obj.GetType().IsPrimitive)
-            {
-                byteSerializerMethod(ms, InternalSerializationStuff.SerializationType.ValueType, objectTracker);
-            }
-            else
-            {
-                byteSerializerMethod(ms, InternalSerializationStuff.SerializationType.Class, objectTracker);
-            }
         }
 
         /// <summary>
@@ -234,7 +223,7 @@ namespace DesertOctopus.Serialization
         /// <typeparam name="T">Any reference type</typeparam>
         /// <param name="items">Items to convert to an array</param>
         /// <returns>An array</returns>
-        private static T[] ConvertEnumerableToArray<T>(IEnumerable items)
+        internal static T[] ConvertEnumerableToArray<T>(IEnumerable items)
         {
             return items.Cast<T>().ToArray();
         }

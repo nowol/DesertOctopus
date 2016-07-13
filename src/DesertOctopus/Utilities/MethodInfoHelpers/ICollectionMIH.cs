@@ -17,7 +17,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for ICollection.Count</returns>
         public static PropertyInfo Count<T>()
         {
-            return typeof(ICollection<T>).GetProperty("Count");
+            return typeof(ICollection<T>).GetProperty(nameof(ICollection<T>.Count));
         }
     }
 }

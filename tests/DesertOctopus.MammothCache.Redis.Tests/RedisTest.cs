@@ -165,7 +165,7 @@ namespace DesertOctopus.MammothCache.Redis.Tests
         [TestCategory("Integration")]
         public async Task GetTheConfigAsync()
         {
-            var config = await _connection.GetConfigAsync().ConfigureAwait(false);
+            var config = await _connection.GetConfigAsync(null).ConfigureAwait(false);
             Assert.AreNotEqual(0, config.Length);
 
             config = await _connection.GetConfigAsync(pattern: config[0].Key).ConfigureAwait(false);
@@ -176,7 +176,7 @@ namespace DesertOctopus.MammothCache.Redis.Tests
         [TestCategory("Integration")]
         public void GetTheConfigSync()
         {
-            var config = _connection.GetConfig();
+            var config = _connection.GetConfig(null);
             Assert.AreNotEqual(0, config.Length);
 
             config = _connection.GetConfig(pattern: config[0].Key);

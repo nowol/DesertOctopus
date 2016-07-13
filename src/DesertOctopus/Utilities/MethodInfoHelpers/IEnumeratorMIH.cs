@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for IEnumerator.MoveNext</returns>
         public static MethodInfo MoveNext()
         {
-            return typeof(IEnumerator).GetMethod("MoveNext");
+            return typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext));
         }
     }
 }

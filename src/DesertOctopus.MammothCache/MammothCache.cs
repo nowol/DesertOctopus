@@ -162,8 +162,16 @@ namespace DesertOctopus.MammothCache
 
         /// <inheritdoc/>
         public void Set<T>(string key,
+                           T value)
+            where T : class
+        {
+            Set(key, value, null);
+        }
+
+        /// <inheritdoc/>
+        public void Set<T>(string key,
                            T value,
-                           TimeSpan? ttl = null)
+                           TimeSpan? ttl)
             where T : class
         {
             GuardDisposed();
@@ -259,9 +267,19 @@ namespace DesertOctopus.MammothCache
         }
 
         /// <inheritdoc/>
+        public Task SetAsync<T>(string key,
+                                      T value)
+            where T : class
+        {
+            return SetAsync(key,
+                            value,
+                            null);
+        }
+
+        /// <inheritdoc/>
         public async Task SetAsync<T>(string key,
                                       T value,
-                                      TimeSpan? ttl = null)
+                                      TimeSpan? ttl)
             where T : class
         {
             GuardDisposed();
@@ -363,7 +381,14 @@ namespace DesertOctopus.MammothCache
         }
 
         /// <inheritdoc/>
-        public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl = null)
+        public T GetOrAdd<T>(string key, Func<T> getAction)
+            where T : class
+        {
+            return GetOrAdd(key, getAction, null);
+        }
+
+        /// <inheritdoc/>
+        public T GetOrAdd<T>(string key, Func<T> getAction, TimeSpan? ttl)
             where T : class
         {
             GuardDisposed();
@@ -379,7 +404,7 @@ namespace DesertOctopus.MammothCache
                 return value;
             }
 
-            using (var rLock = AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
+            using (AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
             {
                 value = Get<T>(key);
                 if (value != default(T))
@@ -398,7 +423,14 @@ namespace DesertOctopus.MammothCache
         }
 
         /// <inheritdoc/>
-        public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl = null)
+        public Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync)
+            where T : class
+        {
+            return GetOrAddAsync<T>(key, getActionAsync, null);
+        }
+
+        /// <inheritdoc/>
+        public async Task<T> GetOrAddAsync<T>(string key, Func<Task<T>> getActionAsync, TimeSpan? ttl)
             where T : class
         {
             GuardDisposed();
@@ -414,7 +446,7 @@ namespace DesertOctopus.MammothCache
                 return value;
             }
 
-            using (var rLock = AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
+            using (AcquireLock(key, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)))
             {
                 value = await GetAsync<T>(key).ConfigureAwait(false);
                 if (value != default(T))

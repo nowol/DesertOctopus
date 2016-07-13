@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for List.Add</returns>
         public static MethodInfo ObjectListAdd()
         {
-            return typeof(List<object>).GetMethod("Add", new[] { typeof(object) });
+            return typeof(List<object>).GetMethod(nameof(List<object>.Add), new[] { typeof(object) });
         }
     }
 }

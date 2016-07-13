@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Encoding.GetByteCount</returns>
         public static MethodInfo GetByteCount()
         {
-            return typeof(Encoding).GetMethod("GetByteCount", new[] { typeof(string) });
+            return typeof(Encoding).GetMethod(nameof(Encoding.GetByteCount), new[] { typeof(string) });
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Encoding.GetBytes</returns>
         public static MethodInfo GetBytes()
         {
-            return typeof(Encoding).GetMethod("GetBytes", new Type[] { typeof(string), typeof(int), typeof(int), typeof(byte[]), typeof(int) });
+            return typeof(Encoding).GetMethod(nameof(Encoding.GetBytes), new Type[] { typeof(string), typeof(int), typeof(int), typeof(byte[]), typeof(int) });
         }
     }
 }

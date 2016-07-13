@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for TimeSpan.FromTicks</returns>
         public static MethodInfo FromTicks()
         {
-            return typeof(TimeSpan).GetMethod("FromTicks", BindingFlags.Static | BindingFlags.Public);
+            return typeof(TimeSpan).GetMethod(nameof(TimeSpan.FromTicks), BindingFlags.Static | BindingFlags.Public);
         }
     }
 }

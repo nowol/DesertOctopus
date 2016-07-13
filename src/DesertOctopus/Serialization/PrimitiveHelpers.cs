@@ -104,28 +104,28 @@ namespace DesertOctopus.Serialization
         }
 
         [System.Security.SecuritySafeCritical]
-        private static unsafe long GetLongFromDouble(double value)
+        internal static unsafe long GetLongFromDouble(double value)
         {
             long longValue = *(long*)&value;
             return longValue;
         }
 
         [System.Security.SecuritySafeCritical]
-        private static unsafe double GetDoubleFromLong(long value)
+        internal static unsafe double GetDoubleFromLong(long value)
         {
             double doubleValue = *(double*)&value;
             return doubleValue;
         }
 
         [System.Security.SecuritySafeCritical]
-        private static unsafe uint GetUintFromSingle(float value)
+        internal static unsafe uint GetUintFromSingle(float value)
         {
             uint uintValue = *(uint*)&value;
             return uintValue;
         }
 
         [System.Security.SecuritySafeCritical]
-        private static unsafe float GetSingleFromUint(uint value)
+        internal static unsafe float GetSingleFromUint(uint value)
         {
             float singleValue = *(float*)&value;
             return singleValue;

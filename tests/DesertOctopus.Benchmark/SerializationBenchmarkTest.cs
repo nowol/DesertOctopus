@@ -216,8 +216,13 @@ namespace DesertOctopus.Benchmark
             public void RemoveAll() { }
 
             public void Set(string key,
+                            byte[] serializedValue)
+            { }
+
+            public void Set(string key,
                             byte[] serializedValue,
-                            TimeSpan? ttl = null) { }
+                            TimeSpan? ttl)
+            { }
         }
     }
 

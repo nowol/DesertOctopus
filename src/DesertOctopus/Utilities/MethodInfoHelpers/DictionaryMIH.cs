@@ -19,7 +19,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Dictionary.Add</returns>
         public static MethodInfo Add<TKey, TValue>()
         {
-            return typeof(IDictionary<TKey, TValue>).GetMethod("Add", new[] { typeof(TKey), typeof(TValue) });
+            return typeof(IDictionary<TKey, TValue>).GetMethod(nameof(IDictionary<TKey, TValue>.Add), new[] { typeof(TKey), typeof(TValue) });
         }
 
         public static MethodInfo Add(Type dictionaryType, Type keyType, Type valueType)
@@ -35,7 +35,7 @@ namespace DesertOctopus.Utilities
 
         public static MethodInfo IsObjectADictionaryWithDefaultComparer()
         {
-            return typeof(DictionaryHelper).GetMethod("IsObjectADictionaryWithDefaultComparer",
+            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparer),
                                                       BindingFlags.Static | BindingFlags.NonPublic,
                                                       null,
                                                       CallingConventions.Any,

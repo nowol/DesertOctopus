@@ -26,7 +26,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializationInfo.AddValue</returns>
         public static MethodInfo AddValue()
         {
-            return typeof(SerializationInfo).GetMethod("AddValue", new[] { typeof(string), typeof(object) });
+            return typeof(SerializationInfo).GetMethod(nameof(SerializationInfo.AddValue), new[] { typeof(string), typeof(object) });
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializationInfo.MemberCount</returns>
         public static PropertyInfo MemberCount()
         {
-            return typeof(SerializationInfo).GetProperty("MemberCount");
+            return typeof(SerializationInfo).GetProperty(nameof(SerializationInfo.MemberCount));
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializationInfo.GetEnumerator</returns>
         public static MethodInfo GetEnumerator()
         {
-            var getEnumeratorMethodInfo = typeof(SerializationInfo).GetMethod("GetEnumerator", BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public, null, new Type[0], new ParameterModifier[0]);
+            var getEnumeratorMethodInfo = typeof(SerializationInfo).GetMethod(nameof(SerializationInfo.GetEnumerator), BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public, null, new Type[0], new ParameterModifier[0]);
             Debug.Assert(getEnumeratorMethodInfo != null, "Could not find GetEnumerator method.");
 
             return getEnumeratorMethodInfo;

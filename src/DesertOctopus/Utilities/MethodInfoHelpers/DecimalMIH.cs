@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Decimal.GetBits</returns>
         public static MethodInfo GetBits()
         {
-            return typeof(decimal).GetMethod("GetBits", BindingFlags.Static | BindingFlags.Public);
+            return typeof(decimal).GetMethod(nameof(decimal.GetBits), BindingFlags.Static | BindingFlags.Public);
         }
     }
 }

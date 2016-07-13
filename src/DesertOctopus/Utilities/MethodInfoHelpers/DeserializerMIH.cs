@@ -17,7 +17,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Deserializer.ConvertObjectToIQueryable</returns>
         public static MethodInfo ConvertObjectToIQueryable()
         {
-            return typeof(Deserializer).GetMethod("ConvertObjectToIQueryable", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(Deserializer).GetMethod(nameof(Deserializer.ConvertObjectToIQueryable), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Deserializer.GetTypeDeserializer</returns>
         public static MethodInfo GetTypeDeserializer()
         {
-            return typeof(Deserializer).GetMethod("GetTypeDeserializer", BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTypeDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Deserializer.GetTrackedObject</returns>
         public static MethodInfo GetTrackedObject()
         {
-            return typeof(Deserializer).GetMethod("GetTrackedObject", BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(List<object>), typeof(int) }, new ParameterModifier[0]);
+            return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTrackedObject), BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(List<object>), typeof(int) }, new ParameterModifier[0]);
         }
     }
 }

@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for object.GetType</returns>
         public static MethodInfo GetTypeMethod()
         {
-            return typeof(object).GetMethod("GetType", new Type[0]);
+            return typeof(object).GetMethod(nameof(object.GetType), new Type[0]);
         }
     }
 }

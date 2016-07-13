@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for FormatterServices.GetUninitializedObject</returns>
         public static MethodInfo GetUninitializedObject()
         {
-            return typeof(FormatterServices).GetMethod("GetUninitializedObject", BindingFlags.Public | BindingFlags.Static);
+            return typeof(FormatterServices).GetMethod(nameof(FormatterServices.GetUninitializedObject), BindingFlags.Public | BindingFlags.Static);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for ISerializable.GetObjectData</returns>
         public static MethodInfo GetObjectData()
         {
-            return typeof(ISerializable).GetMethod("GetObjectData", new[] { typeof(SerializationInfo), typeof(StreamingContext) });
+            return typeof(ISerializable).GetMethod(nameof(ISerializable.GetObjectData), new[] { typeof(SerializationInfo), typeof(StreamingContext) });
         }
     }
 }

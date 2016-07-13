@@ -9,7 +9,7 @@ namespace DesertOctopus.MammothCache
 {
     internal class MultipleGetHelper
     {
-        private MammothCache _mammothCache;
+        private readonly MammothCache _mammothCache;
 
         public MultipleGetHelper(MammothCache mammothCache)
         {
@@ -61,7 +61,7 @@ namespace DesertOctopus.MammothCache
             if (itemsStillMissingFromCache.Length > 0)
             {
                 var missingKeys = itemsStillMissingFromCache.Select(x => x.Key).ToArray();
-                using (var lockMgr = new LocksManager(_mammothCache).AcquireLocks(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)))
+                using (new LocksManager(_mammothCache).AcquireLocks(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)))
                 {
                     var itemsThatWereAddedToCacheBeforeLock = Get<T>(itemsStillMissingFromCache);
                     AddToDictionary(itemsThatWereAddedToCacheBeforeLock, result);
@@ -92,7 +92,7 @@ namespace DesertOctopus.MammothCache
             if (itemsStillMissingFromCache.Length > 0)
             {
                 var missingKeys = itemsStillMissingFromCache.Select(x => x.Key).ToArray();
-                using (var lockMgr = await new LocksManager(_mammothCache).AcquireLocksAsync(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)).ConfigureAwait(false))
+                using (await new LocksManager(_mammothCache).AcquireLocksAsync(missingKeys, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)).ConfigureAwait(false))
                 {
                     var itemsThatWereAddedToCacheBeforeLock = await GetAsync<T>(itemsStillMissingFromCache).ConfigureAwait(false);
                     AddToDictionary(itemsThatWereAddedToCacheBeforeLock, result);
