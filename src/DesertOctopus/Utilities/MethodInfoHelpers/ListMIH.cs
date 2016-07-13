@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for List MethodInfo
     /// </summary>
-    internal static class ListMIH
+    internal static class ListMih
     {
         /// <summary>
         /// Calls List.Add

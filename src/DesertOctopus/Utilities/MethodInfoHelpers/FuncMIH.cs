@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
     /// <summary>
     /// Helper class for Func MethodInfo
     /// </summary>
-    internal static class FuncMIH
+    internal static class FuncMih
     {
         /// <summary>
         /// Calls Func.Invoke

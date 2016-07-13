@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for TimeSpan MethodInfo
     /// </summary>
-    internal static class TimeSpanMIH
+    internal static class TimeSpanMih
     {
         /// <summary>
         /// Calls TimeSpan.FromTicks

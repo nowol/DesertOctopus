@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for UTF8Encoding MethodInfo
     /// </summary>
-    internal static class UTF8EncodingMIH
+    internal static class Utf8EncodingMih
     {
         /// <summary>
         /// Calls UTF8Encoding.GetString

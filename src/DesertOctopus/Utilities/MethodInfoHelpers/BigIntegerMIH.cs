@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for BigInteger MethodInfo
     /// </summary>
-    internal static class BigIntegerMIH
+    internal static class BigIntegerMih
     {
         /// <summary>
         /// Calls BigInteger.ToByteArray

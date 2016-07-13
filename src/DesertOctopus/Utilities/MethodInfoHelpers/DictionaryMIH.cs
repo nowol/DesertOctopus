@@ -9,7 +9,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Dictionary MethodInfo
     /// </summary>
-    internal static class DictionaryMIH
+    internal static class DictionaryMih
     {
         /// <summary>
         /// Calls Dictionary.Add

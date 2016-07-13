@@ -58,12 +58,12 @@ namespace DesertOctopus.Cloning
             {
                 var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(arrClone, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
                 expressions.Add(Expression.Assign(clone, Expression.Convert(m, sourceType)));
-                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
             }
             else
             {
                 expressions.Add(Expression.Assign(clone, Expression.Convert(arrClone, sourceType)));
-                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
             }
 
             return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,

@@ -9,7 +9,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for IQueryableCloner MethodInfo
     /// </summary>
-    internal static class IQueryableMIH
+    internal static class IQueryableMih
     {
         /// <summary>
         /// Calls IQueryableCloner.IsGenericIQueryableType

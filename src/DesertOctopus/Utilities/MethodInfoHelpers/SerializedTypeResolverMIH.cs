@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for SerializedTypeResolver MethodInfo
     /// </summary>
-    internal static class SerializedTypeResolverMIH
+    internal static class SerializedTypeResolverMih
     {
         /// <summary>
         /// Calls SerializedTypeResolver.GetTypeFromFullName

@@ -64,7 +64,7 @@ namespace DesertOctopus.Utilities
             loopBodyCargo.Serializer = serializer;
 
             Expression finallyExpr = Expression.IfThen(Expression.TypeIs(enumeratorVar, typeof(IDisposable)),
-                                                       Expression.Call(Expression.Convert(enumeratorVar, typeof(IDisposable)), IDisposableMIH.Dispose()));
+                                                       Expression.Call(Expression.Convert(enumeratorVar, typeof(IDisposable)), IDisposableMih.Dispose()));
 
             var expressions = new List<Expression>();
 
@@ -74,7 +74,7 @@ namespace DesertOctopus.Utilities
                 expressions.AddRange(preLoopActions);
             }
 
-            expressions.Add(Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, IEnumeratorMIH.MoveNext())),
+            expressions.Add(Expression.Loop(Expression.IfThenElse(Expression.IsTrue(Expression.Call(enumeratorVar, IEnumeratorMih.MoveNext())),
                                                                                                 loopBody(loopBodyCargo),
                                                                                                 Expression.Break(breakLabel)),
                                             breakLabel));

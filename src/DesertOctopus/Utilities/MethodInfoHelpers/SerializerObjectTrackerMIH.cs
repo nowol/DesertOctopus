@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for SerializerObjectTracker MethodInfo
     /// </summary>
-    internal static class SerializerObjectTrackerMIH
+    internal static class SerializerObjectTrackerMih
     {
         /// <summary>
         /// Calls SerializerObjectTracker.TrackObject

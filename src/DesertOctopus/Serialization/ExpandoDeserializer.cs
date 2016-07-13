@@ -52,7 +52,7 @@ namespace DesertOctopus.Serialization
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
             loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
-            loopExpressions.Add(Expression.Call(destDict, DictionaryMIH.Add<string, object>(), key, value));
+            loopExpressions.Add(Expression.Call(destDict, DictionaryMih.Add<string, object>(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);
@@ -68,7 +68,7 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(typeof(ExpandoObject))));
             notTrackedExpressions.Add(Expression.Assign(destDict, Expression.Convert(newInstance, dictType)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
 
             notTrackedExpressions.Add(loop);
 

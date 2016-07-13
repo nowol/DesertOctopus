@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for DateTime MethodInfo
     /// </summary>
-    internal static class DateTimeMIH
+    internal static class DateTimeMih
     {
         /// <summary>
         /// Calls DateTime.ToBinary

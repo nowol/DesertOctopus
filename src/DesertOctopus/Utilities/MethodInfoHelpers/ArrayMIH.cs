@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for array MethodInfo
     /// </summary>
-    internal static class ArrayMIH
+    internal static class ArrayMih
     {
         /// <summary>
         /// Calls Array.CreateInstance

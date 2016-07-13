@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for IEnumerable MethodInfo
     /// </summary>
-    internal static class IEnumerableMIH
+    internal static class IEnumerableMih
     {
         /// <summary>
         /// Calls IEnumerable.SetValue

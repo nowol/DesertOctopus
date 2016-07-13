@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Decimal MethodInfo
     /// </summary>
-    internal static class DecimalMIH
+    internal static class DecimalMih
     {
         /// <summary>
         /// Calls Decimal.GetBits

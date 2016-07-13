@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for IEnumerator MethodInfo
     /// </summary>
-    internal static class IEnumeratorMIH
+    internal static class IEnumeratorMih
     {
         /// <summary>
         /// Calls IEnumerator.MoveNext

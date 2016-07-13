@@ -5,7 +5,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for ObjectCloner MethodInfo
     /// </summary>
-    internal static class ObjectClonerMIH
+    internal static class ObjectClonerMih
     {
         /// <summary>
         /// Calls ObjectCloner.CloneImpl

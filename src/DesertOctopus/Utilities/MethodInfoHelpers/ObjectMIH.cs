@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for object MethodInfo
     /// </summary>
-    internal static class ObjectMIH
+    internal static class ObjectMih
     {
         /// <summary>
         /// Calls object.GetType

@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Queryable MethodInfo
     /// </summary>
-    internal static class QueryableMIH
+    internal static class QueryableMih
     {
         /// <summary>
         /// Calls Queryable.AsQueryable

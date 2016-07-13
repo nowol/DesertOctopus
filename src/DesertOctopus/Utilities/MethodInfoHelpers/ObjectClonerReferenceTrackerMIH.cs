@@ -6,7 +6,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
     /// <summary>
     /// Helper class for ObjectClonerReferenceTracker MethodInfo
     /// </summary>
-    internal static class ObjectClonerReferenceTrackerMIH
+    internal static class ObjectClonerReferenceTrackerMih
     {
         /// <summary>
         /// Calls ObjectClonerReferenceTracker.IsSourceObjectTracked

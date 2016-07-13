@@ -79,11 +79,11 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.New(type.GetConstructor(new[] { typeof(int) }), length), type)));
-            expressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            expressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType));
-            loopExpressions.Add(Expression.Call(newInstance, ArrayMIH.SetValue(), Expression.Convert(tmpValue, typeof(object)), i));
+            loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValue(), Expression.Convert(tmpValue, typeof(object)), i));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);

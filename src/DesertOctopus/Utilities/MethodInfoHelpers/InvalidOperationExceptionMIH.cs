@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for InvalidOperationException MethodInfo
     /// </summary>
-    internal static class InvalidOperationExceptionMIH
+    internal static class InvalidOperationExceptionMih
     {
         /// <summary>
         /// Calls InvalidOperationException.Constructor

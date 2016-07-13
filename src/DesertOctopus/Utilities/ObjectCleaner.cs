@@ -42,7 +42,7 @@ namespace DesertOctopus.Utilities
                         itemType = enumerableInterface.GetGenericArguments()[0];
                     }
 
-                    var converter = SerializerMIH.ConvertEnumerableToArray(itemType);
+                    var converter = SerializerMih.ConvertEnumerableToArray(itemType);
                     return converter.Invoke(null,
                                             new object[]
                                             {
@@ -106,7 +106,7 @@ namespace DesertOctopus.Utilities
 
             if (IQueryableCloner.IsGenericIQueryableType(expectedType))
             {
-                var m = QueryableMIH.AsQueryable(expectedType.GetGenericArguments()[0]);
+                var m = QueryableMih.AsQueryable(expectedType.GetGenericArguments()[0]);
                 return m.Invoke(null, new[] { obj });
             }
 

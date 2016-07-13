@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for ISerializable MethodInfo
     /// </summary>
-    internal static class ISerializableMIH
+    internal static class ISerializableMih
     {
         /// <summary>
         /// Calls ISerializable.GetObjectData

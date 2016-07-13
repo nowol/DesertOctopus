@@ -70,10 +70,10 @@ namespace DesertOctopus.Serialization
 
             for (int bits = (numberOfBytes * 8) - 8; bits >= 8; bits -= 8)
             {
-                expressions.Add(Expression.Call(outputStream, StreamMIH.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+                expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
             }
 
-            expressions.Add(Expression.Call(outputStream, StreamMIH.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+            expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
             return Expression.Block(new[] { tmp }, expressions);
         }
 
@@ -218,7 +218,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle byte deserialization</returns>
         public static Expression ReadByte(ParameterExpression inputStream)
         {
-            return Expression.Call(inputStream, StreamMIH.ReadByte());
+            return Expression.Call(inputStream, StreamMih.ReadByte());
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle sbyte deserialization</returns>
         public static Expression ReadSByte(ParameterExpression inputStream)
         {
-            return Expression.Convert(Expression.Call(inputStream, StreamMIH.ReadByte()), typeof(sbyte));
+            return Expression.Convert(Expression.Call(inputStream, StreamMih.ReadByte()), typeof(sbyte));
         }
 
         #endregion
@@ -580,7 +580,7 @@ namespace DesertOctopus.Serialization
             variables.Add(scaleSign);
 
             return Expression.Block(variables,
-                                    Expression.Assign(bits, Expression.Call(DecimalMIH.GetBits(), Expression.Convert(obj, typeof(decimal)))),
+                                    Expression.Assign(bits, Expression.Call(DecimalMih.GetBits(), Expression.Convert(obj, typeof(decimal)))),
                                     Expression.Assign(low, Expression.Convert(Expression.ArrayAccess(bits, Expression.Constant(0)), typeof(ulong))),
                                     Expression.Assign(mid, Expression.LeftShift(Expression.Convert(Expression.ArrayAccess(bits, Expression.Constant(1)), typeof(ulong)), Expression.Constant(32))),
                                     Expression.Assign(lowmid, Expression.Or(low, mid)),
@@ -663,7 +663,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle double serialization</returns>
         public static Expression WriteDouble(ParameterExpression outputStream, Expression obj)
         {
-            var convertedExpr = Expression.Call(PrimitiveHelpersMIH.GetLongFromDouble(), obj);
+            var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetLongFromDouble(), obj);
 
             return WriteIntegerNumberPrimitive(outputStream, convertedExpr, sizeof(long), typeof(long));
         }
@@ -676,7 +676,7 @@ namespace DesertOctopus.Serialization
         public static Expression ReadDouble(ParameterExpression inputStream)
         {
             var longValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long));
-            return Expression.Call(PrimitiveHelpersMIH.GetDoubleFromLong(), longValue);
+            return Expression.Call(PrimitiveHelpersMih.GetDoubleFromLong(), longValue);
         }
 
         #endregion
@@ -712,7 +712,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle single serialization</returns>
         public static Expression WriteSingle(ParameterExpression outputStream, Expression obj)
         {
-            var convertedExpr = Expression.Call(PrimitiveHelpersMIH.GetUintFromSingle(), obj);
+            var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetUintFromSingle(), obj);
 
             return WriteIntegerNumberPrimitive(outputStream, convertedExpr, sizeof(uint), typeof(uint));
         }
@@ -725,7 +725,7 @@ namespace DesertOctopus.Serialization
         public static Expression ReadSingle(ParameterExpression inputStream)
         {
             var longValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
-            return Expression.Call(PrimitiveHelpersMIH.GetSingleFromUint(), longValue);
+            return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), longValue);
         }
 
         #endregion
@@ -807,7 +807,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle DateTime serialization</returns>
         public static Expression WriteDateTime(ParameterExpression outputStream, Expression obj)
         {
-            return WriteIntegerNumberPrimitive(outputStream, Expression.Call(Expression.Convert(obj, typeof(DateTime)), DateTimeMIH.ToBinary()), sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, Expression.Call(Expression.Convert(obj, typeof(DateTime)), DateTimeMih.ToBinary()), sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -817,7 +817,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle DateTime deserialization</returns>
         public static Expression ReadDateTime(ParameterExpression inputStream)
         {
-            return Expression.Call(DateTimeMIH.FromBinary(),
+            return Expression.Call(DateTimeMih.FromBinary(),
                                    ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
         }
 
@@ -864,7 +864,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle TimeSpan deserialization</returns>
         public static Expression ReadTimeSpan(ParameterExpression inputStream)
         {
-            return Expression.Call(TimeSpanMIH.FromTicks(),
+            return Expression.Call(TimeSpanMih.FromTicks(),
                                    ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
         }
 
@@ -901,7 +901,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle BigInteger serialization</returns>
         public static Expression WriteBigInteger(ParameterExpression outputStream, Expression obj)
         {
-            return WriteByteArray(outputStream, Expression.Call(Expression.Convert(obj, typeof(BigInteger)), BigIntegerMIH.ToByteArray()));
+            return WriteByteArray(outputStream, Expression.Call(Expression.Convert(obj, typeof(BigInteger)), BigIntegerMih.ToByteArray()));
         }
 
         /// <summary>
@@ -911,7 +911,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle BigInteger deserialization</returns>
         public static Expression ReadBigInteger(ParameterExpression inputStream)
         {
-            return Expression.New(BigIntegerMIH.Constructor(),
+            return Expression.New(BigIntegerMih.Constructor(),
                                   ReadByteArray(inputStream));
         }
 
@@ -974,9 +974,9 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(buffer, Expression.NewArrayBounds(typeof(byte), length)));
             expressions.Add(Expression.Assign(encoding, Expression.New(typeof(UTF8Encoding).GetConstructor(new[] { typeof(bool), typeof(bool) }), Expression.Constant(false), Expression.Constant(true))));
 
-            var loopBody = Expression.Block(Expression.Assign(r, Expression.Call(inputStream, StreamMIH.Read(), buffer, i, Expression.Convert(Expression.Subtract(length, i), typeof(int)))),
+            var loopBody = Expression.Block(Expression.Assign(r, Expression.Call(inputStream, StreamMih.Read(), buffer, i, Expression.Convert(Expression.Subtract(length, i), typeof(int)))),
                                             Expression.IfThenElse(Expression.Equal(r, Expression.Constant(0)),
-                                                                    Expression.Throw(Expression.New(EndOfStreamExceptionMIH.Constructor())),
+                                                                    Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor())),
                                                                     Expression.Assign(i, Expression.Add(i, r))));
 
             var breakLabel = Expression.Label("breakLabel");
@@ -987,7 +987,7 @@ namespace DesertOctopus.Serialization
                                        breakLabel);
 
             expressions.Add(loop);
-            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(encoding, UTF8EncodingMIH.GetString(), buffer), typeof(string))));
+            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(encoding, Utf8EncodingMih.GetString(), buffer), typeof(string))));
 
             return Expression.Block(variables,
                                     Expression.Block(Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
@@ -1017,18 +1017,18 @@ namespace DesertOctopus.Serialization
 
             Expression stringNotNull = Expression.Block(variables,
                                                         Expression.Assign(encoding, Expression.Constant(System.Text.Encoding.UTF8)),
-                                                        Expression.Assign(length, Expression.Call(encoding, EncodingMIH.GetByteCount(), Expression.Convert(obj, typeof(string)))),
+                                                        Expression.Assign(length, Expression.Call(encoding, EncodingMih.GetByteCount(), Expression.Convert(obj, typeof(string)))),
                                                         WriteByte(outputStream, Expression.Constant((byte)1)),
                                                         writeLength,
                                                         Expression.Assign(buffer, Expression.NewArrayBounds(typeof(byte), length)),
                                                         Expression.Call(encoding,
-                                                                        EncodingMIH.GetBytes(),
+                                                                        EncodingMih.GetBytes(),
                                                                         Expression.Convert(obj, typeof(string)),
                                                                         Expression.Constant(0),
                                                                         Expression.Property(Expression.Convert(obj, typeof(string)), "Length"),
                                                                         buffer,
                                                                         Expression.Constant(0)),
-                                                        Expression.Call(outputStream, StreamMIH.Write(), buffer, Expression.Constant(0), length));
+                                                        Expression.Call(outputStream, StreamMih.Write(), buffer, Expression.Constant(0), length));
 
             expressions.Add(Expression.IfThenElse(Expression.Equal(obj, Expression.Constant(null)),
                                                   WriteByte(outputStream, Expression.Constant((byte)0)),

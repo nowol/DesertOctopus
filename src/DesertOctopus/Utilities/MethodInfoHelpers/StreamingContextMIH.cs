@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for StreamingContext MethodInfo
     /// </summary>
-    internal static class StreamingContextMIH
+    internal static class StreamingContextMih
     {
         /// <summary>
         /// Calls StreamingContext.Constructor

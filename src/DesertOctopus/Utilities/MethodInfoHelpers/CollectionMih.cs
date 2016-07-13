@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for ICollection MethodInfo
     /// </summary>
-    internal static class ICollectionMIH
+    internal static class CollectionMih
     {
         /// <summary>
         /// Calls ICollection.Count

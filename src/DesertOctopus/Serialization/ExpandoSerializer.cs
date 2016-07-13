@@ -25,7 +25,7 @@ namespace DesertOctopus.Serialization
                                                                  ParameterExpression objTracking)
         {
             var enumerableType = typeof(IEnumerable<KeyValuePair<string, object>>);
-            var getEnumeratorMethodInfo = IEnumerableMIH.GetEnumerator<string, object>();
+            var getEnumeratorMethodInfo = IEnumerableMih.GetEnumerator<string, object>();
             var enumeratorMethod = Expression.Call(Expression.Convert(objToSerialize, enumerableType), getEnumeratorMethodInfo);
 
             var loopBodyCargo = new EnumerableLoopBodyCargo();
@@ -33,10 +33,10 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.KvpType = typeof(KeyValuePair<string, object>);
 
             var preLoopActions = new List<Expression>();
-            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), ICollectionMIH.Count<KeyValuePair<string, object>>())));
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), CollectionMih.Count<KeyValuePair<string, object>>())));
 
             var notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
             notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
                                                                                   EnumerableLoopHelper.GetStringToSomethingWriter(outputStream, objTracking),
                                                                                   enumeratorMethod,

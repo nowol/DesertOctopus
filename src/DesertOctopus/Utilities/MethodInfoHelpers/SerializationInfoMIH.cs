@@ -9,7 +9,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for SerializationInfo MethodInfo
     /// </summary>
-    internal static class SerializationInfoMIH
+    internal static class SerializationInfoMih
     {
         /// <summary>
         /// Calls SerializationInfo.Constructor

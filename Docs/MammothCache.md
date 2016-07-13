@@ -52,10 +52,10 @@ var firstLevelCache = new SquirrelCache(config, cloningProvider);
 // Create a retry policy that will retry 3  times and it will wait 50ms, then 100ms and finally 150ms for each respective retries
 var redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
 // Create an instance of the Redis second level cache
-var secondLevelCache = new RedisConnection("<connection string>", redisRetryPolicy);
+var secondLevelCache = new RedisConnection(connectionString, redisRetryPolicy);
 
 var mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
-var cache = new MammothCache(firstLevelCache, secondLevelCache, nonSerializableCache, mammothCacheSerializationProvider);
+var cache = new MammothCache(firstLevelCache, secondLevelCache, new NonSerializableCache(), mammothCacheSerializationProvider);
 
 ```
 

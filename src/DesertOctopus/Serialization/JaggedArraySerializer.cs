@@ -38,7 +38,7 @@ namespace DesertOctopus.Serialization
             variables.Add(trackedObjectPosition);
             variables.Add(arr);
 
-            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
             notTrackedExpressions.Add(Expression.Assign(arr, Expression.Convert(objToSerialize, type)));
             notTrackedExpressions.AddRange(WriteJaggedArray(elementType, variables, outputStream, arr, objTracking));
 
@@ -77,7 +77,7 @@ namespace DesertOctopus.Serialization
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, i)));   // uh?
-            loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMIH.GetValue(), i), elementType)));
+            loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMih.GetValue(), i), elementType)));
             loopExpressions.Add(Serializer.GetWriteClassTypeExpression(outputStream, objTracking, item, itemAsObj, typeExpr, serializer, elementType));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 

@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Serializer MethodInfo
     /// </summary>
-    internal static class SerializerMIH
+    internal static class SerializerMih
     {
         /// <summary>
         /// Calls Serializer.SetValue

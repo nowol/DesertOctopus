@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for PrimitiveHelpers MethodInfo
     /// </summary>
-    internal static class PrimitiveHelpersMIH
+    internal static class PrimitiveHelpersMih
     {
         /// <summary>
         /// Calls PrimitiveHelpers.GetLongFromDouble

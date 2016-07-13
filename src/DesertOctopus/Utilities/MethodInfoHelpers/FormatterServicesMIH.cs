@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for FormatterServices MethodInfo
     /// </summary>
-    internal static class FormatterServicesMIH
+    internal static class FormatterServicesMih
     {
         /// <summary>
         /// Calls FormatterServices.GetUninitializedObject

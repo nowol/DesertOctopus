@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for NotSupportedException MethodInfo
     /// </summary>
-    internal static class NotSupportedExceptionMIH
+    internal static class NotSupportedExceptionMih
     {
         /// <summary>
         /// Calls NotSupportedException.Constructor

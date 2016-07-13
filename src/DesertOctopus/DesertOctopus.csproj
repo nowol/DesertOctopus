@@ -85,7 +85,7 @@
     <Compile Include="Serialization\ExpandoDeserializer.cs" />
     <Compile Include="Serialization\ExpandoSerializer.cs" />
     <Compile Include="Utilities\EnumerableLoopHelper.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ArrayMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ArrayMih.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\DateTimeMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\DeserializerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\DictionaryMIH.cs" />
@@ -94,13 +94,13 @@
     <Compile Include="Utilities\MethodInfoHelpers\FormatterServicesMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\DecimalMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\FuncMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ICollectionMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IDisposableMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\CollectionMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IDisposableMih.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\IQueryableMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IEnumerableMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IEnumeratorMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IEnumerableMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IEnumeratorMih.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\InvalidOperationExceptionMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ISerializableMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ISerializableMih.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\ListMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\NotSupportedExceptionMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\ObjectClonerMIH.cs" />

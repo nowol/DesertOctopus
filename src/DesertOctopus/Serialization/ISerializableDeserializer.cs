@@ -87,7 +87,7 @@ namespace DesertOctopus.Serialization
 
             GetReadExpression(inputStream, objTracking, keyType, loopExpressions, key, typeExpr, typeName, typeHashCode, deserializer);
             GetReadExpression(inputStream, objTracking, valueType, loopExpressions, value, typeExpr, typeName, typeHashCode, deserializer);
-            loopExpressions.Add(Expression.Call(newInstance, DictionaryMIH.Add(dictionaryType, keyType, dictionaryType.GetGenericArguments()[1]), key, value));
+            loopExpressions.Add(Expression.Call(newInstance, DictionaryMih.Add(dictionaryType, keyType, dictionaryType.GetGenericArguments()[1]), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);
@@ -102,7 +102,7 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(type.GetConstructor(new Type[0]))));
-            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
             notTrackedExpressions.Add(loop);
             notTrackedExpressions.Add(newInstance);
 
@@ -144,7 +144,7 @@ namespace DesertOctopus.Serialization
 
             GetReadExpression(inputStream, objTracking, typeof(string), loopExpressions, key, typeExpr, typeName, typeHashCode, deserializer);
             GetReadExpression(inputStream, objTracking, typeof(object), loopExpressions, value, typeExpr, typeName, typeHashCode, deserializer);
-            loopExpressions.Add(Expression.Call(si, SerializationInfoMIH.AddValue(), key, value));
+            loopExpressions.Add(Expression.Call(si, SerializationInfoMih.AddValue(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);
@@ -157,13 +157,13 @@ namespace DesertOctopus.Serialization
 
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
-            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
-            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
+            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMih.Constructor(), Expression.Constant(type), fc)));
             notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(loop);
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(ISerializableSerializer.GetSerializationConstructor(type), si, context)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, context));
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
             notTrackedExpressions.Add(newInstance);

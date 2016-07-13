@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for EndOfStreamException MethodInfo
     /// </summary>
-    internal static class EndOfStreamExceptionMIH
+    internal static class EndOfStreamExceptionMih
     {
         /// <summary>
         /// Calls EndOfStreamException.Constructor

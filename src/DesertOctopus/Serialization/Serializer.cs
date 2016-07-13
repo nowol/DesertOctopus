@@ -272,21 +272,21 @@ namespace DesertOctopus.Serialization
                                                               ParameterExpression serializer,
                                                               Type itemType)
         {
-            var writeType = Expression.IfThenElse(Expression.Equal(Expression.Call(item, ObjectMIH.GetTypeMethod()), Expression.Constant(itemType)),
+            var writeType = Expression.IfThenElse(Expression.Equal(Expression.Call(item, ObjectMih.GetTypeMethod()), Expression.Constant(itemType)),
                                                 Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0)),
                                                                  Expression.Assign(typeExpr, Expression.Constant(itemType)),
                                                                  Expression.Assign(itemAsObj, Expression.Convert(item, typeof(object)))),
                                                 Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
-                                                                 Expression.Assign(itemAsObj, Expression.Call(SerializerMIH.PrepareObjectForSerialization(), item)),
-                                                                 Expression.Assign(typeExpr, Expression.Call(itemAsObj, ObjectMIH.GetTypeMethod())),
-                                                                 GenerateStringExpression(outputStream, Expression.Call(SerializedTypeResolverMIH.GetShortNameFromType(), typeExpr), objTracking),
-                                                                 PrimitiveHelpers.WriteInt32(outputStream, Expression.Call(SerializedTypeResolverMIH.GetHashCodeFromType(), typeExpr))));
+                                                                 Expression.Assign(itemAsObj, Expression.Call(SerializerMih.PrepareObjectForSerialization(), item)),
+                                                                 Expression.Assign(typeExpr, Expression.Call(itemAsObj, ObjectMih.GetTypeMethod())),
+                                                                 GenerateStringExpression(outputStream, Expression.Call(SerializedTypeResolverMih.GetShortNameFromType(), typeExpr), objTracking),
+                                                                 PrimitiveHelpers.WriteInt32(outputStream, Expression.Call(SerializedTypeResolverMih.GetHashCodeFromType(), typeExpr))));
 
             return Expression.IfThenElse(Expression.Equal(item, Expression.Constant(null)),
                                          PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0)),
                                          Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
                                                           writeType,
-                                                          Expression.Assign(serializer, Expression.Call(SerializerMIH.GetTypeSerializer(), typeExpr)),
+                                                          Expression.Assign(serializer, Expression.Call(SerializerMih.GetTypeSerializer(), typeExpr)),
                                                           Expression.Invoke(serializer, outputStream, itemAsObj, objTracking)));
         }
 
@@ -316,8 +316,8 @@ namespace DesertOctopus.Serialization
             variables.Add(itemAsObj);
 
             List<Expression> copyFieldsExpressions = new List<Expression>();
-            copyFieldsExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            copyFieldsExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
             foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
             {
@@ -363,7 +363,7 @@ namespace DesertOctopus.Serialization
             }
 
             notTrackedExpressions.AddRange(copyFieldsExpressions);
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
             return GenerateNullTrackedOrUntrackedExpression(outputStream,
                                                             objToSerialize,
@@ -386,7 +386,7 @@ namespace DesertOctopus.Serialization
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
-            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
             notTrackedExpressions.Add(PrimitiveHelpers.WriteString(outputStream, objToSerialize));
 
             return GenerateNullTrackedOrUntrackedExpression(outputStream,
@@ -420,7 +420,7 @@ namespace DesertOctopus.Serialization
             var isNullExpr = PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0, typeof(byte)));
 
             var isNotNullExpr = Expression.Block(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)),
-                                                 Expression.Assign(trackedObjectPosition, Expression.Call(objTracking, SerializerObjectTrackerMIH.GetTrackedObjectIndex(), objToSerialize)),
+                                                 Expression.Assign(trackedObjectPosition, Expression.Call(objTracking, SerializerObjectTrackerMih.GetTrackedObjectIndex(), objToSerialize)),
                                                  Expression.IfThenElse(Expression.NotEqual(trackedObjectPosition, Expression.Constant(null, typeof(int?))),
                                                                        alreadyTrackedExpr,
                                                                        Expression.Block(new[] { PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1)) }.Concat(notTrackedExpressions))));

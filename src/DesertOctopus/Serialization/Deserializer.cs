@@ -297,23 +297,23 @@ namespace DesertOctopus.Serialization
                                                           Type itemType)
         {
             var readType = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
-                                                               Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_Type(), Expression.Constant(itemType))),
+                                                               Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMih.GetTypeFromFullName_Type(), Expression.Constant(itemType))),
                                                                Expression.Block(Expression.Assign(typeName, Deserializer.GenerateStringExpression(inputStream, objTracking)),
                                                                                 Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
-                                                                                Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMIH.GetTypeFromFullName_String(), typeName)),
+                                                                                Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMih.GetTypeFromFullName_String(), typeName)),
                                                                                 Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
                                                                                                   Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
 
             var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracking);
             Expression convertExpression;
 
-            convertExpression = Expression.Convert(Expression.Call(SerializerMIH.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(itemType)), itemType);
+            convertExpression = Expression.Convert(Expression.Call(SerializerMih.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(itemType)), itemType);
 
             return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
                                                           Expression.Assign(leftSide, Expression.Constant(null, itemType)),
                                                           Expression.Block(
                                                                             readType,
-                                                                            Expression.Assign(deserializer, Expression.Call(DeserializerMIH.GetTypeDeserializer(), Expression.Property(typeExpr, "Type"))),
+                                                                            Expression.Assign(deserializer, Expression.Call(DeserializerMih.GetTypeDeserializer(), Expression.Property(typeExpr, "Type"))),
                                                                             Expression.Assign(leftSide, convertExpression)));
 
         }
@@ -335,7 +335,7 @@ namespace DesertOctopus.Serialization
             Debug.Assert(instance.GetType().IsArray, "Type must be an array");
 
             var elementType = instance.GetType().GetElementType();
-            var m = QueryableMIH.AsQueryable(elementType);
+            var m = QueryableMih.AsQueryable(elementType);
 
             return m.Invoke(null, new[] { instance });
         }
@@ -372,16 +372,16 @@ namespace DesertOctopus.Serialization
             var temporaryVariables = new Dictionary<Type, ParameterExpression>();
 
             List<Expression> notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(FormatterServicesMIH.GetUninitializedObject(), Expression.Constant(type)), type)));
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializingAttributeExpression(type, newInstance, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(FormatterServicesMih.GetUninitializedObject(), Expression.Constant(type)), type)));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializingAttributeExpression(type, newInstance, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
             if (type.IsClass)
             {
-                notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+                notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
             }
             else
             {
-                notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), Expression.Convert(newInstance, typeof(object))));
+                notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), Expression.Convert(newInstance, typeof(object))));
             }
 
             Func<Type, ParameterExpression> getTempVar = t =>
@@ -494,7 +494,7 @@ namespace DesertOctopus.Serialization
                 }
             }
 
-            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
@@ -557,7 +557,7 @@ namespace DesertOctopus.Serialization
 
             List<Expression> notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Assign(newInstance, PrimitiveHelpers.ReadString(inputStream)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(typeof(string),
                                                                          inputStream,
@@ -587,7 +587,7 @@ namespace DesertOctopus.Serialization
                                                                             ParameterExpression trackType,
                                                                             List<ParameterExpression> variables)
         {
-            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(DeserializerMIH.GetTrackedObject(), objTracking, PrimitiveHelpers.ReadInt32(inputStream)), type));
+            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(DeserializerMih.GetTrackedObject(), objTracking, PrimitiveHelpers.ReadInt32(inputStream)), type));
 
             var notAlreadyTrackedExpr = Expression.Block(notTrackedExpressions);
             var isNotNullExpr = Expression.Block(Expression.Assign(trackType, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte))),

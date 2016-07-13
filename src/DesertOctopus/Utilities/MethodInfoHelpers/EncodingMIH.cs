@@ -8,7 +8,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Encoding MethodInfo
     /// </summary>
-    internal static class EncodingMIH
+    internal static class EncodingMih
     {
         /// <summary>
         /// Calls Encoding.GetByteCount

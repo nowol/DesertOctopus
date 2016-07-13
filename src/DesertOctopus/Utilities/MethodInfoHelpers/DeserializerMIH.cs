@@ -9,7 +9,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Deserializer MethodInfo
     /// </summary>
-    internal static class DeserializerMIH
+    internal static class DeserializerMih
     {
         /// <summary>
         /// Calls Deserializer.ConvertObjectToIQueryable

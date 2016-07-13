@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for Stream MethodInfo
     /// </summary>
-    internal static class StreamMIH
+    internal static class StreamMih
     {
         /// <summary>
         /// Calls Stream.WriteByte

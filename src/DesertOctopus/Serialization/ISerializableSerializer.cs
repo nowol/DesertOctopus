@@ -45,7 +45,7 @@ namespace DesertOctopus.Serialization
             }
             else
             {
-                notTrackedExpressions.Add(Expression.IfThenElse(Expression.IsTrue(Expression.Call(DictionaryMIH.IsObjectADictionaryWithDefaultComparer(), objToSerialize)),
+                notTrackedExpressions.Add(Expression.IfThenElse(Expression.IsTrue(Expression.Call(DictionaryMih.IsObjectADictionaryWithDefaultComparer(), objToSerialize)),
                                                                 SerializeDictionary(type, variables, outputStream, objToSerialize, objTracking),
                                                                 SerializeISerializable(type, variables, outputStream, objToSerialize, objTracking)));
             }
@@ -69,7 +69,7 @@ namespace DesertOctopus.Serialization
 
             if (getEnumeratorMethodInfo == null)
             {
-                getEnumeratorMethodInfo = DictionaryMIH.GetEnumerator(dictionaryType);
+                getEnumeratorMethodInfo = DictionaryMih.GetEnumerator(dictionaryType);
                 enumeratorMethod = Expression.Call(Expression.Convert(objToSerialize, dictionaryType), getEnumeratorMethodInfo);
             }
             else
@@ -85,7 +85,7 @@ namespace DesertOctopus.Serialization
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1, typeof(byte))));
             notTrackedExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, dictionaryType), "Count")));
-            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
 
             notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
                                                                                   GetISerializableLoopBodyCargo(outputStream, objTracking, "Key", dictionaryType.GetGenericArguments()[0], "Value", dictionaryType.GetGenericArguments()[1]),
@@ -112,7 +112,7 @@ namespace DesertOctopus.Serialization
             variables.Add(si);
             variables.Add(iser);
 
-            var getEnumeratorMethodInfo = SerializationInfoMIH.GetEnumerator();
+            var getEnumeratorMethodInfo = SerializationInfoMih.GetEnumerator();
 
             var enumeratorMethod = Expression.Call(si, getEnumeratorMethodInfo);
 
@@ -121,27 +121,27 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.KvpType = typeof(SerializationEntry);
 
             var preLoopActions = new List<Expression>();
-            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMIH.MemberCount())));
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMih.MemberCount())));
 
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0, typeof(byte))));
             notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
-            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
-            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(type), fc)));
+            notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMih.Constructor(), Expression.Constant(type), fc)));
             notTrackedExpressions.Add(Expression.Assign(iser, Expression.Convert(objToSerialize, typeof(ISerializable))));
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, context));
-            notTrackedExpressions.Add(Expression.Call(iser, ISerializableMIH.GetObjectData(), si, context));
+            notTrackedExpressions.Add(Expression.Call(iser, ISerializableMih.GetObjectData(), si, context));
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, context));
             notTrackedExpressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsFullTypeNameSetExplicit")),
-                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
+                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
             notTrackedExpressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(si, "IsAssemblyNameSetExplicit")),
-                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(), Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
+                                                        Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
             notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
                                                                                   GetISerializableLoopBodyCargo(outputStream, objTracking, "Name", typeof(string), "Value", typeof(object)),
                                                                                   enumeratorMethod,
                                                                                   preLoopActions,
                                                                                   loopBodyCargo));
-            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMIH.TrackObject(), objToSerialize));
+            notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
 
             return Expression.Block(notTrackedExpressions);
         }

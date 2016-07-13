@@ -26,7 +26,7 @@ namespace DesertOctopus.Cloning
                                                                  ParameterExpression refTrackerParam)
         {
             var enumerableType = typeof(IEnumerable<KeyValuePair<string, object>>);
-            var getEnumeratorMethodInfo = IEnumerableMIH.GetEnumerator<string, object>();
+            var getEnumeratorMethodInfo = IEnumerableMih.GetEnumerator<string, object>();
             var enumeratorMethod = Expression.Call(Expression.Convert(source, enumerableType), getEnumeratorMethodInfo);
             var dictType = typeof(IDictionary<string, object>);
             var cloneAsDict = Expression.Parameter(dictType, "cloneDict");
@@ -36,7 +36,7 @@ namespace DesertOctopus.Cloning
 
             expressions.Add(Expression.Assign(clone, Expression.New(typeof(ExpandoObject))));
             expressions.Add(Expression.Assign(cloneAsDict, Expression.Convert(clone, dictType)));
-            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
 
             var loopBodyCargo = new EnumerableLoopBodyCargo();
             loopBodyCargo.EnumeratorType = typeof(IEnumerator<KeyValuePair<string, object>>);
@@ -64,13 +64,13 @@ namespace DesertOctopus.Cloning
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
 
                 var addExpr = Expression.Call(clone,
-                                              DictionaryMIH.Add<string, object>(),
+                                              DictionaryMih.Add<string, object>(),
                                               keyExpression,
                                               ClassCloner.CallCopyExpression(valueExpression,
                                                                              refTrackerParam,
-                                                                             Expression.Call(valueExpression, ObjectMIH.GetTypeMethod())));
+                                                                             Expression.Call(valueExpression, ObjectMih.GetTypeMethod())));
                 var addNullExpr = Expression.Call(clone,
-                                                DictionaryMIH.Add<string, object>(),
+                                                DictionaryMih.Add<string, object>(),
                                                 keyExpression,
                                                 Expression.Constant(null));
 

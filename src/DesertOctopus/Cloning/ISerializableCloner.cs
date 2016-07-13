@@ -35,7 +35,7 @@ namespace DesertOctopus.Cloning
                 throw new MissingConstructorException("Cannot serialize type " + sourceType + " because it does not have the required constructor for ISerializable.  If you inherits from a class that implements ISerializable you have to expose the serialization constructor.");
             }
 
-            var getEnumeratorMethodInfo = SerializationInfoMIH.GetEnumerator();
+            var getEnumeratorMethodInfo = SerializationInfoMih.GetEnumerator();
             if (getEnumeratorMethodInfo == null)
             {
                 throw new Exception("Could not find GetEnumerator method.");
@@ -66,20 +66,20 @@ namespace DesertOctopus.Cloning
 
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
-            expressions.Add(Expression.Assign(context, Expression.New(StreamingContextMIH.Constructor(), Expression.Constant(StreamingContextStates.All))));
-            expressions.Add(Expression.Assign(siSource, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(sourceType), fc)));
+            expressions.Add(Expression.Assign(context, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
+            expressions.Add(Expression.Assign(siSource, Expression.New(SerializationInfoMih.Constructor(), Expression.Constant(sourceType), fc)));
             expressions.Add(Expression.Assign(iserSource, Expression.Convert(source, typeof(ISerializable))));
-            expressions.Add(Expression.Assign(siClone, Expression.New(SerializationInfoMIH.Constructor(), Expression.Constant(sourceType), fc)));
+            expressions.Add(Expression.Assign(siClone, Expression.New(SerializationInfoMih.Constructor(), Expression.Constant(sourceType), fc)));
 
             expressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(sourceType, source, context));
-            expressions.Add(Expression.Call(iserSource, ISerializableMIH.GetObjectData(), siSource, context));
+            expressions.Add(Expression.Call(iserSource, ISerializableMih.GetObjectData(), siSource, context));
             expressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(sourceType, source, context));
 
             expressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(siSource, "IsFullTypeNameSetExplicit")),
-                                              Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(),
+                                              Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(),
                                                                               Expression.Constant("Changing the full type name for an ISerializable is not supported")))));
             expressions.Add(Expression.IfThen(Expression.IsTrue(Expression.Property(siSource, "IsAssemblyNameSetExplicit")),
-                                              Expression.Throw(Expression.New(InvalidOperationExceptionMIH.Constructor(),
+                                              Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(),
                                                                               Expression.Constant("Changing the assembly name for an ISerializable is not supported")))));
 
             expressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
@@ -89,7 +89,7 @@ namespace DesertOctopus.Cloning
                                                                         loopBodyCargo));
 
             expressions.Add(Expression.Assign(clone, Expression.New(serializationConstructor, siClone, context)));
-            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+            expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
             expressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(sourceType, clone, context));
             expressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(sourceType, clone));
 
@@ -107,10 +107,10 @@ namespace DesertOctopus.Cloning
                 var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
                 var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
                 var cloneValueExpr = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, valueExpression, clonedItem, typeof(object)),
-                                                    Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, clonedItem));
+                                                    Expression.Call(siClone, SerializationInfoMih.AddValue(), keyExpression, clonedItem));
 
                 return Expression.IfThenElse(Expression.Equal(valueExpression, Expression.Constant(null)),
-                                            Expression.Call(siClone, SerializationInfoMIH.AddValue(), keyExpression, Expression.Constant((object)null, typeof(object))),
+                                            Expression.Call(siClone, SerializationInfoMih.AddValue(), keyExpression, Expression.Constant((object)null, typeof(object))),
                                             cloneValueExpr);
             };
 

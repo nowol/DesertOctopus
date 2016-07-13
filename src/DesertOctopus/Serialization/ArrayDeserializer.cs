@@ -80,8 +80,8 @@ namespace DesertOctopus.Serialization
 
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Property(lengths, "Length"))));
-            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMIH.CreateInstance(), Expression.Constant(elementType), lengths), type)));
-            expressions.Add(Expression.Call(objTracking, ListMIH.ObjectListAdd(), newInstance));
+            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), type)));
+            expressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
 
             Expression innerExpression;
             if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
@@ -104,7 +104,7 @@ namespace DesertOctopus.Serialization
 
                 loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
                 loopExpressions.Add(innerExpr);
-                loopExpressions.Add(Expression.Call(newInstance, ArrayMIH.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
+                loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
                 var cond = Expression.LessThan(loopRankIndex, Expression.ArrayIndex(lengths, Expression.Constant(loopRank)));

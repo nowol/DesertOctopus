@@ -30,8 +30,8 @@ namespace DesertOctopus.Cloning
             var elementType = sourceType.GetElementType();
             if (elementType.IsPrimitive || elementType.IsValueType || (elementType == typeof(string)))
             {
-                return Expression.Block(Expression.Assign(clone, Expression.Convert(Expression.Call(Expression.Convert(source, typeof(Array)), ArrayMIH.Clone()), sourceType)),
-                                        Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+                return Expression.Block(Expression.Assign(clone, Expression.Convert(Expression.Call(Expression.Convert(source, typeof(Array)), ArrayMih.Clone()), sourceType)),
+                                        Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
             }
 
             if (elementType.IsArray)
@@ -61,11 +61,11 @@ namespace DesertOctopus.Cloning
             List<Expression> notTrackedExpressions = new List<Expression>();
 
             notTrackedExpressions.Add(Expression.IfThen(Expression.GreaterThanOrEqual(Expression.Constant(rank), Expression.Constant(255)),
-                                                        Expression.Throw(Expression.New(NotSupportedExceptionMIH.ConstructorString(), Expression.Constant("Array with more than 255 dimensions are not supported")))));
+                                                        Expression.Throw(Expression.New(NotSupportedExceptionMih.ConstructorString(), Expression.Constant("Array with more than 255 dimensions are not supported")))));
             notTrackedExpressions.Add(Expression.Assign(lengths, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
             notTrackedExpressions.AddRange(PopulateDimensionalArrayLength(source, i, lengths, rank));
-            notTrackedExpressions.Add(Expression.Assign(clone, Expression.Convert(Expression.Call(ArrayMIH.CreateInstance(), Expression.Constant(elementType), lengths), sourceType)));
-            notTrackedExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+            notTrackedExpressions.Add(Expression.Assign(clone, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), sourceType)));
+            notTrackedExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
             notTrackedExpressions.AddRange(GenerateCopyDimensionalArray(source, clone, sourceType, variables, lengths, rank, refTrackerParam));
 
             return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
@@ -102,12 +102,12 @@ namespace DesertOctopus.Cloning
             {
                 var primitiveCloner = ObjectCloner.CloneImpl(elementType);
                 var c = Expression.Invoke(Expression.Constant(primitiveCloner), Expression.Convert(item, typeof(object)), refTrackerParam);
-                innerExpression = Expression.Call(cloneArray, ArrayMIH.SetValueRank(), Expression.Convert(c, typeof(object)), indices);
+                innerExpression = Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(c, typeof(object)), indices);
             }
             else
             {
                 innerExpression = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, item, clonedItem, elementType),
-                                                   Expression.Call(cloneArray, ArrayMIH.SetValueRank(), Expression.Convert(clonedItem, typeof(object)), indices));
+                                                   Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(clonedItem, typeof(object)), indices));
             }
 
             Func<int, Expression, Expression> makeArrayLoop = (loopRank,
@@ -119,7 +119,7 @@ namespace DesertOctopus.Cloning
                 var loopExpressions = new List<Expression>();
 
                 loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
-                loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(sourceArray, ArrayMIH.GetValueRank(), indices), elementType)));
+                loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(sourceArray, ArrayMih.GetValueRank(), indices), elementType)));
                 loopExpressions.Add(innerExpr);
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
@@ -154,7 +154,7 @@ namespace DesertOctopus.Cloning
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
-            var length = Expression.Call(sourceArray, ArrayMIH.GetLength(), i);
+            var length = Expression.Call(sourceArray, ArrayMih.GetLength(), i);
             loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), length));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
@@ -194,14 +194,14 @@ namespace DesertOctopus.Cloning
             notTrackedExpressions.Add(Expression.Assign(length, Expression.Property(source, "Length")));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(clone, Expression.Convert(Expression.New(sourceType.GetConstructor(new[] { typeof(int) }), length), sourceType)));
-            notTrackedExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMIH.Track(), source, clone));
+            notTrackedExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
 
             Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string), "Element type cannot be a primitive type");
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(source, ArrayMIH.GetValue(), i), elementType)));
+            loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(source, ArrayMih.GetValue(), i), elementType)));
             loopExpressions.Add(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, item, clonedItem, elementType));
-            loopExpressions.Add(Expression.Call(clone, ArrayMIH.SetValue(), Expression.Convert(clonedItem, typeof(object)), i));
+            loopExpressions.Add(Expression.Call(clone, ArrayMih.SetValue(), Expression.Convert(clonedItem, typeof(object)), i));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var cond = Expression.LessThan(i, length);

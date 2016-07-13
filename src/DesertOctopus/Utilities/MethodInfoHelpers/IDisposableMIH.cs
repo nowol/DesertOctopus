@@ -7,7 +7,7 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class for IDisposable MethodInfo
     /// </summary>
-    internal static class IDisposableMIH
+    internal static class IDisposableMih
     {
         /// <summary>
         /// Calls IDisposable.Dispose
