@@ -24,6 +24,20 @@ namespace DesertOctopus.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
+        public void MyTestMethod()
+        {
+            string str = "";
+            foreach (var key in Environment.GetEnvironmentVariables().Keys)
+            {
+                str += key.ToString() + " = ";
+                str += Environment.GetEnvironmentVariables()[key]?.ToString();
+                str += "\r\n";
+            }
+            Assert.Fail(str);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
         [ExpectedException(typeof(TypeNotFoundException))]
         public void DeserializeUnknownType()
         {

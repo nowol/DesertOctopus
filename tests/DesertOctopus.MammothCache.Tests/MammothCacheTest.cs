@@ -56,20 +56,6 @@ namespace DesertOctopus.MammothCache.Tests
             RemoveAllAndWait();
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void MyTestMethod()
-        {
-            string str = "";
-            foreach (var key in Environment.GetEnvironmentVariables().Keys)
-            {
-                str += key.ToString() + " = ";
-                str += Environment.GetEnvironmentVariables()[key]?.ToString();
-                str += "\r\n";
-            }
-            Assert.Fail(str);
-        }
-
         private void RemoveAllAndWait()
         {
             var receivedEvent = false;
