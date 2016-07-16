@@ -5,17 +5,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis.Tests.Models;
+using DesertOctopus.MammothCache.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.MammothCache.Redis.Tests
 {
     [TestClass]
-    public class RedisTest
+    public class RedisTest : BaseTest
     {
         private CachingTestClass _testObject;
         private byte[] _serializedTestObject;
         private RedisConnection _connection;
-        private string _redisConnectionString = "172.16.100.101";
         private IRedisRetryPolicy _redisRetryPolicy;
 
         [TestInitialize]
@@ -25,7 +25,7 @@ namespace DesertOctopus.MammothCache.Redis.Tests
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
 
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
-            _connection = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            _connection = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
         }
 
         [TestCleanup]
@@ -38,20 +38,6 @@ namespace DesertOctopus.MammothCache.Redis.Tests
             }
             catch (ObjectDisposedException)
             {
-            }
-        }
-
-        private static string RandomKey()
-        {
-            return Guid.NewGuid().ToString();
-        }
-
-        private void WaitFor(int seconds)
-        {
-            var sw = Stopwatch.StartNew();
-            while (sw.Elapsed.TotalSeconds <= seconds)
-            {
-                Thread.Sleep(50);
             }
         }
 

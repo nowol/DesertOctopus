@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -28,7 +29,6 @@ namespace DesertOctopus.MammothCache.Tests
         private readonly NotSerializableTestClass _nonSerializableTestObject3 = new NotSerializableTestClass();
 
         private RedisConnection _secondLevelCache;
-        private string _redisConnectionString = "172.16.100.101";
         private IRedisRetryPolicy _redisRetryPolicy;
 
         private MammothCache _cache;
@@ -37,7 +37,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestInitialize]
         public void Initialize()
         {
-            _config.AbsoluteExpiration = TimeSpan.FromSeconds(20);
+            _config.AbsoluteExpiration = TimeSpan.FromSeconds(10);
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 60;
 
@@ -48,17 +48,63 @@ namespace DesertOctopus.MammothCache.Tests
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
 
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
-            _secondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            _secondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
 
             _mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
             _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _nonSerializableCache, _mammothCacheSerializationProvider);
 
+            RemoveAllAndWait();
+        }
+
+        private void RemoveAllAndWait()
+        {
+            var receivedEvent = false;
+
+            _secondLevelCache.OnRemoveAllItems += (sender,
+                                                   args) =>
+                                                  {
+                                                      receivedEvent = true;
+                                                  };
+
             _cache.RemoveAll();
+
+            var sw = Stopwatch.StartNew();
+            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                WaitFor(0.01);
+            }
+        }
+
+        private async Task RemoveAllAndWaitAsync()
+        {
+            var receivedEvent = false;
+
+            _secondLevelCache.OnRemoveAllItems += (sender,
+                                                   args) =>
+                                                  {
+                                                      receivedEvent = true;
+                                                  };
+
+            await _cache.RemoveAllAsync().ConfigureAwait(false);
+
+            var sw = Stopwatch.StartNew();
+            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                WaitFor(0.01);
+            }
         }
 
         [TestCleanup]
         public void Cleanup()
         {
+            try
+            {
+                RemoveAllAndWait();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
             try
             {
                 _firstLevelCache.Dispose();
@@ -67,7 +113,6 @@ namespace DesertOctopus.MammothCache.Tests
             {
             }
 
-            _secondLevelCache.RemoveAll();
             _secondLevelCache.Dispose();
 
             try
@@ -134,7 +179,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task UpdatingAnItemShouldRemoveItFromOtherDistributedCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -167,7 +212,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void UpdatingAnItemShouldRemoveItFromOtherDistributedCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -200,7 +245,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
             var key2 = RandomKey();
@@ -256,7 +301,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
             var key2 = RandomKey();
@@ -479,19 +524,19 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task ItemsEvictedFromBecauseOfMemoryPressureShouldBeRemovedFromFirstLevelCacheAsync()
         {
-            await _cache.RemoveAllAsync().ConfigureAwait(false);
-
+            var c = _secondLevelCache.GetConfig(null);
             var config = await _secondLevelCache.GetConfigAsync(pattern: "maxmemory").ConfigureAwait(false);
-            if (config == null
-                || config.Length != 1)
+            var memoryStr = GetAppSetting("RedisMaxMemory");
+            if (config != null
+                && config.Length == 1)
             {
-                throw new NotSupportedException("Could not find config maxmemory");
+                memoryStr = config[0].Value;
             }
             int memoryLimit;
-            if (!int.TryParse(config[0].Value, out memoryLimit)
+            if (!int.TryParse(memoryStr, out memoryLimit)
                 && memoryLimit > 0)
             {
-                throw new NotSupportedException("Could not parse maxmemory: " + config[0].Value);
+                throw new NotSupportedException("Could not parse maxmemory: " + memoryStr);
             }
 
             int slicedInto = 1000;
@@ -509,13 +554,17 @@ namespace DesertOctopus.MammothCache.Tests
                                                             removedKeys.Add(e.Key);
                                                         };
 
+            var tasks = new List<Task>();
 
             for (int i = 0; i < nbToStore; i++)
             {
                 var key = RandomKey();
                 keys.Add(key);
-                await _cache.SetAsync(key, bigSerializedTestObject, TimeSpan.FromSeconds(300)).ConfigureAwait(false);
+                var task = _cache.SetAsync(key, bigSerializedTestObject, TimeSpan.FromSeconds(300));
+                tasks.Add(task);
             }
+
+            await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
 
             WaitFor(20);
 
@@ -1021,7 +1070,7 @@ namespace DesertOctopus.MammothCache.Tests
             values = await _cache.GetAsync<CachingTestClass>(keys).ConfigureAwait(false);
             _secondLevelCache.Set(key1, _serializedTestObject, TimeSpan.FromSeconds(30));
 
-            WaitFor(10);
+            WaitFor(5);
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
             Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
@@ -1056,7 +1105,7 @@ namespace DesertOctopus.MammothCache.Tests
             values = _cache.Get<CachingTestClass>(keys);
             _secondLevelCache.Set(key1, _serializedTestObject, TimeSpan.FromSeconds(30));
 
-            WaitFor(10);
+            WaitFor(5);
 
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
@@ -1074,7 +1123,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -1096,7 +1145,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -1126,7 +1175,7 @@ namespace DesertOctopus.MammothCache.Tests
             var bytes = _secondLevelCache.Get(key);
             Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
-            await _cache.RemoveAllAsync().ConfigureAwait(false);
+            await RemoveAllAndWaitAsync().ConfigureAwait(false);
 
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             Assert.IsNull(_secondLevelCache.Get(key));
@@ -1143,7 +1192,7 @@ namespace DesertOctopus.MammothCache.Tests
             var bytes = _secondLevelCache.Get(key);
             Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
-            _cache.RemoveAll();
+            RemoveAllAndWait();
 
             Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             Assert.IsNull(_secondLevelCache.Get(key));
@@ -1743,7 +1792,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -1776,7 +1825,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
 
@@ -1809,7 +1858,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
             var key2 = RandomKey();
@@ -1866,7 +1915,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
             var key2 = RandomKey();
@@ -1923,7 +1972,7 @@ namespace DesertOctopus.MammothCache.Tests
         public async Task RemovingAllKeysShouldExpireAllKeysAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
 
             var key1 = RandomKey();
@@ -1973,7 +2022,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void RemovingAllKeysShouldExpireAllKeysSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
-            var otherSecondLevelCache = new RedisConnection(_redisConnectionString, _redisRetryPolicy);
+            var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
 
             var key1 = RandomKey();

@@ -20,7 +20,7 @@ namespace DesertOctopus.Utilities
             return Method;
         }
 
-        private static void CopyReadonlyField(FieldInfo field, object value, object target)
+        internal static void CopyReadonlyField(FieldInfo field, object value, object target)
         {
             // using reflection to copy readonly fields.  It's slower but it's the only choice
             field.SetValue(target, value);

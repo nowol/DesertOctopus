@@ -150,7 +150,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.TimerInterval * 2);
 
-            Assert.AreEqual(969, _cacheRepository.EstimatedMemorySize);
+            Assert.AreEqual(968, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
             Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
             Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
@@ -174,7 +174,7 @@ namespace DesertOctopus.MammothCache.Tests
             WaitFor(_config.TimerInterval * 2);
 
             Assert.AreEqual(numberOfItemsToAdd - 5, _cacheRepository.NumberOfObjects);
-            Assert.AreEqual(845, _cacheRepository.EstimatedMemorySize);
+            Assert.AreEqual(840, _cacheRepository.EstimatedMemorySize);
 
             foreach (var key in keys.Skip(5))
             {

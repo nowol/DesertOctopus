@@ -49,6 +49,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <Choose>
@@ -64,6 +65,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="..\DesertOctopus.MammothCache.Tests\BaseTest.cs">
+      <Link>BaseTest.cs</Link>
+    </Compile>
     <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="RedisTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -87,6 +91,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\DesertOctopus.MammothCache.Tests\App.config">
+      <Link>App.config</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Choose>

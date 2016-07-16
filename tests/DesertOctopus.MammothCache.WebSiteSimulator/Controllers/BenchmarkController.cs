@@ -48,7 +48,6 @@ namespace DesertOctopus.MammothCache.WebSiteSimulator.Controllers
         private static string _redisConnectionString = "172.16.100.100";
         private static readonly IMammothCache _cache;
         private static readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
-        private static readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
         private static readonly INonSerializableCache _nonSerializableCache = new NonSerializableCache();
 
 

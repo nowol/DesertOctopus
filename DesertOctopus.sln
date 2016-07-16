@@ -17,6 +17,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache", "src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj", "{141B4827-785B-4644-87F2-D54770CA4E9B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{520E6EF7-469D-4892-A6B8-976B73D5D82D}"
+	ProjectSection(SolutionItems) = preProject
+		tests\tests.runsettings = tests\tests.runsettings
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Tests", "tests\DesertOctopus.MammothCache.Tests\DesertOctopus.MammothCache.Tests.csproj", "{253CDEB9-46D5-453B-A801-A8AC4F7DF634}"
 EndProject

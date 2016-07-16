@@ -289,12 +289,14 @@ namespace DesertOctopus.MammothCache
                 return;
             }
 
+            await Task.Yield();
+
             if (SerializationProvider.CanSerialize(value.GetType()))
             {
                 var bytes = SerializationProvider.Serialize(value);
 
-                FirstLevelCache.Set(key, bytes, ttl: ttl);
                 await SecondLevelCache.SetAsync(key, bytes, ttl: ttl).ConfigureAwait(false);
+                FirstLevelCache.Set(key, bytes, ttl: ttl);
             }
             else
             {
