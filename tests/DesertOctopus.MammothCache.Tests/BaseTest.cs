@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.MammothCache.Tests
 {
@@ -33,10 +34,9 @@ namespace DesertOctopus.MammothCache.Tests
 
         protected string GetAppSetting(string key)
         {
-            var value = Environment.GetEnvironmentVariable(key);
-            if (!String.IsNullOrWhiteSpace(value))
+            if (TestContext.Properties.Contains(key))
             {
-                return value;
+                return TestContext.Properties[key] as string;
             }
 
             return ConfigurationManager.AppSettings[key];
@@ -44,5 +44,18 @@ namespace DesertOctopus.MammothCache.Tests
 
         protected string RedisConnectionString { get { return GetAppSetting("RedisConnectionString"); } }
 
+
+        private TestContext _testContextInstance;
+        public TestContext TestContext
+        {
+            get
+            {
+                return _testContextInstance;
+            }
+            set
+            {
+                _testContextInstance = value;
+            }
+        }
     }
 }

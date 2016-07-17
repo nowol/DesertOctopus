@@ -2,7 +2,7 @@
 <RunSettings>
   <!-- Parameters used by tests at runtime -->
   <TestRunParameters>
-    <Parameter name="RedisServerConnectionString" value="http://localhost" />
+    <Parameter name="RedisConnectionString" value="http://localhost" />
   </TestRunParameters>
 
 </RunSettings>
