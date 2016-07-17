@@ -245,6 +245,7 @@ namespace DesertOctopus.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateReadOnlyObjectProperty()
         {
             var instance = new ClassWithReadOnlyProperty<ClassWithGenericInt>(new ClassWithGenericInt { Value = 38 });

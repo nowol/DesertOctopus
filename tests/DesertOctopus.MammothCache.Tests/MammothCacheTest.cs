@@ -2067,6 +2067,17 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void AlwaysCloningProviderShouldAlwaysClone()
+        {
+            var cp = new AlwaysCloningProvider();
+            Assert.IsTrue(cp.RequireCloning(_testObject.GetType()));
+            var cloned = cp.Clone(_testObject);
+            Assert.IsFalse(ReferenceEquals(cloned, _testObject));
+            Assert.AreEqual(_testObject.Value, cloned.Value);
+        }
+
 
         /*
                      storing a non serializable object should store a marker in 1st and 2nd level cache

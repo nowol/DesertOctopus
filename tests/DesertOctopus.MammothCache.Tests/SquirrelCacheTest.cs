@@ -39,6 +39,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void AddingItemToCacheWithoutTtlShouldStoreIt()
         {
             var key = Guid.NewGuid().ToString();
@@ -47,6 +48,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ItemsShouldRespectTheAbsoluteExpiration()
         {
             var key = Guid.NewGuid().ToString();
@@ -59,6 +61,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void EstimatedMemoryUsageShouldGrowWhenAddingItems()
         {
             var key1 = Guid.NewGuid().ToString();
@@ -70,6 +73,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void EstimatedMemoryUsageShouldDecreaseWhenRemovingItems()
         {
             var key1 = Guid.NewGuid().ToString();
@@ -85,6 +89,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void EstimatedMemoryUsageShouldDecreaseWhenAnItemIsRemovedDueToAbsoluteExpiration()
         {
             var key = Guid.NewGuid().ToString();
@@ -98,6 +103,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void RemovingItemFromTheCacheShouldRemoveItFromTheStore()
         {
             var key = Guid.NewGuid().ToString();
@@ -108,6 +114,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void RemovingAllItemsFromTheCacheShouldRemoveThemFromTheStore()
         {
             var key1 = Guid.NewGuid().ToString();
@@ -119,6 +126,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectShouldBeRemovedFromTheCacheBecauseTheCacheIsOverTheConfiguredMemoryLimit()
         {
             var bigTestObject = new CachingTestClass() { ByteArray = new bool[1000]};
@@ -136,6 +144,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectsShouldBeRemovedInTheOrderTheyWereAddedOnceTheCacheisOverTheConfiguredMemoryLimit()
         {
             var bigTestObject = new CachingTestClass() { ByteArray = new bool[800]};
@@ -157,6 +166,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectsShouldBeRemovedUntilTheCacheIsNoLongerOverTheConfigureMemoryLimit()
         {
             var keys = new List<string>();
@@ -184,6 +194,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectShouldBeReplaced()
         {
             var bigTestObject = new CachingTestClass() { ByteArray = new bool[800] };
@@ -199,6 +210,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldNotNeverBeCloned()
         {
             var cache = new SquirrelCache(_config, _noCloningProvider);
@@ -212,6 +224,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldAlwaysBeCloned()
         {
             var cache = new SquirrelCache(_config, _alwaysCloningProvider);
@@ -225,6 +238,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldBeClonedIfTheyAreFromASpecificNameSpace()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
@@ -250,6 +264,7 @@ namespace DesertOctopus.MammothCache.Tests
         }
 
         [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectsRemoveFromSquirrelCacheAreRemovedFromTheByAgeCache()
         {
             var key = Guid.NewGuid().ToString();
