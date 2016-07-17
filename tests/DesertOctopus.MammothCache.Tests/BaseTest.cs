@@ -34,9 +34,24 @@ namespace DesertOctopus.MammothCache.Tests
 
         protected string GetAppSetting(string key)
         {
-            if (TestContext.Properties.Contains(key))
+            var propKey = TestContext.Properties.Keys.OfType<string>()
+                                     .FirstOrDefault(x => String.Equals(x,
+                                                                        key,
+                                                                        StringComparison.InvariantCultureIgnoreCase));
+            if (propKey != null)
             {
-                return TestContext.Properties[key] as string;
+                return TestContext.Properties[propKey] as string;
+            }
+
+            var envKey = Environment.GetEnvironmentVariables()
+                                    .Keys.OfType<string>()
+                                    .FirstOrDefault(x => String.Equals(x,
+                                                                       key,
+                                                                       StringComparison.InvariantCultureIgnoreCase));
+            if (envKey != null
+                && Environment.GetEnvironmentVariables()[key] != null)
+            {
+                return Environment.GetEnvironmentVariables()[key].ToString();
             }
 
             return ConfigurationManager.AppSettings[key];

@@ -22,15 +22,29 @@ namespace DesertOctopus.Tests
             return Deserializer.Deserialize<T>(bytes);
         }
 
+
+
+        private TestContext _testContextInstance;
+        public TestContext TestContext
+        {
+            get
+            {
+                return _testContextInstance;
+            }
+            set
+            {
+                _testContextInstance = value;
+            }
+        }
         [TestMethod]
         [TestCategory("Unit")]
         public void MyTestMethod()
         {
             string str = "";
-            foreach (var key in Environment.GetEnvironmentVariables().Keys)
+            foreach (var key in TestContext.Properties.Keys)
             {
                 str += key.ToString() + " = ";
-                str += Environment.GetEnvironmentVariables()[key]?.ToString();
+                str += TestContext.Properties[key]?.ToString();
                 str += "\r\n";
             }
             Assert.Fail(str);
