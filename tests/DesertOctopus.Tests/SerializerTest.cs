@@ -22,34 +22,6 @@ namespace DesertOctopus.Tests
             return Deserializer.Deserialize<T>(bytes);
         }
 
-
-
-        private TestContext _testContextInstance;
-        public TestContext TestContext
-        {
-            get
-            {
-                return _testContextInstance;
-            }
-            set
-            {
-                _testContextInstance = value;
-            }
-        }
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void MyTestMethod()
-        {
-            string str = "";
-            foreach (var key in TestContext.Properties.Keys)
-            {
-                str += key.ToString() + " = ";
-                str += TestContext.Properties[key]?.ToString();
-                str += "\r\n";
-            }
-            Assert.Fail(str);
-        }
-
         [TestMethod]
         [TestCategory("Unit")]
         [ExpectedException(typeof(TypeNotFoundException))]
