@@ -382,11 +382,14 @@ namespace DesertOctopus.Serialization
 
             foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
             {
-                if (type == typeof(string))
+                var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
+
+                if (fieldInfo.FieldType == typeof(string))
                 {
                     if (fieldInfo.IsInitOnly)
                     {
                         var tmpVar = getTempVar(fieldInfo.FieldType);
+                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracking)));
                         notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
                                                                   Expression.Constant(fieldInfo),
                                                                   Expression.Convert(tmpVar, typeof(object)),
@@ -394,8 +397,10 @@ namespace DesertOctopus.Serialization
                     }
                     else
                     {
-                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
-                        notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
+                        var tmpVar = getTempVar(fieldInfo.FieldType);
+                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracking)));
+                        notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
+                        //notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
                     }
                 }
                 else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
@@ -436,7 +441,6 @@ namespace DesertOctopus.Serialization
                     }
                     else
                     {
-                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
                         notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
                     }
                 }
@@ -453,8 +457,6 @@ namespace DesertOctopus.Serialization
                     }
                     else
                     {
-                        var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
-
                         notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, fieldValueExpr, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
                     }
                 }

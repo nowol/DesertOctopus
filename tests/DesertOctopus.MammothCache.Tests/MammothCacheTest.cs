@@ -1167,7 +1167,7 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Integration")]
-        public async Task RemoveAllAsync()
+        public async Task RemoveAllShouldEmptyTheCacheAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
@@ -1184,7 +1184,7 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Integration")]
-        public void RemoveAll()
+        public void RemoveAllShouldEmptyTheCache()
         {
             var key = RandomKey();
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
@@ -1997,9 +1997,7 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
-            await _cache.RemoveAllAsync().ConfigureAwait(false);
-
-            WaitFor(10);
+            await RemoveAllAndWaitAsync().ConfigureAwait(false);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -2047,9 +2045,7 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
-            _cache.RemoveAll();
-
-            WaitFor(10);
+            RemoveAllAndWait();
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);

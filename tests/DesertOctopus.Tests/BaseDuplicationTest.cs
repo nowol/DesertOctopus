@@ -244,6 +244,19 @@ namespace DesertOctopus.Tests
             DuplicateArray<T>(values);
             DuplicateList<T>(values);
             DuplicateReadOnly<T>(values.First());
+            DuplicateWrappedPrimitive<T>(values.First());
+        }
+
+        private void DuplicateWrappedPrimitive<T>(T value)
+        {
+            var instance = new GenericBaseClass<T>();
+            instance.Value = value;
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Value,
+                            duplicatedValue.Value,
+                            string.Format("Type {0} does not have the same value after being deserialized.",
+                                            typeof(T)));
         }
 
         private void DuplicateReadOnly<T>(T value)
@@ -553,6 +566,16 @@ namespace DesertOctopus.Tests
                 Assert.AreEqual(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateWrappedNullDictionary()
+        {
+            var instance = new GenericBaseClass<Dictionary<int, string>>();
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.IsNull(duplicatedValue.Value);
         }
 
         [TestMethod]
@@ -1861,6 +1884,24 @@ namespace DesertOctopus.Tests
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IQueryable> { Value = list.AsQueryable() };
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.IsNotNull(duplicatedValue);
+            Assert.IsNotNull(duplicatedValue.Value);
+            var dList = duplicatedValue.Value.Cast<ClassWithoutSerializableAttribute>().ToArray();
+
+            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.IsNull(dList[1]);
+            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateGenericIQueryableContainedInAClass()
+        {
+            var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
+            var instance = new GenericBaseClass<IQueryable<ClassWithoutSerializableAttribute>> { Value = list.AsQueryable() };
 
             var duplicatedValue = Duplicate(instance);
 

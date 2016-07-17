@@ -301,7 +301,7 @@ namespace DesertOctopus.Serialization
             {
                 var fieldValueExpr = Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo);
 
-                if (type == typeof(string))
+                if (fieldInfo.FieldType == typeof(string))
                 {
                     copyFieldsExpressions.Add(GenerateStringExpression(outputStream, fieldValueExpr, objTracking));
                 }
