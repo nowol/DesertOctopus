@@ -226,24 +226,6 @@ namespace DesertOctopus.Serialization
             {
                 expressions.Add(Expression.Assign(returnValue, Expression.Convert(GenerateClassExpression(type, inputStream, objTracking), typeof(object))));
             }
-            else if (typeof(IQueryable).IsAssignableFrom(type))
-            {
-                var queryableInterface = type.GetInterfaces()
-                                             .FirstOrDefault(t => t.IsGenericType
-                                                                  && t.GetGenericTypeDefinition() == typeof(IQueryable<>)
-                                                                  && t.GetGenericArguments().Length == 1);
-                if (queryableInterface != null)
-                {
-                    var genericArgumentType = queryableInterface.GetGenericArguments()[0];
-                    var deserializedValue = GenerateArrayExpression(genericArgumentType.MakeArrayType(), inputStream, objTracking);
-                    var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(deserializedValue, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
-                    expressions.Add(Expression.Assign(returnValue, Expression.Convert(m, typeof(object))));
-                }
-                else
-                {
-                    throw new NotSupportedException(type.ToString());
-                }
-            }
             else
             {
                 expressions.Add(Expression.Assign(returnValue, Expression.Convert(GenerateClassExpression(type, inputStream, objTracking), typeof(object))));
@@ -443,22 +425,7 @@ namespace DesertOctopus.Serialization
                     }
 
                     var tmpVar = getTempVar(fieldInfo.FieldType);
-                    //newValue = Expression.Convert(newValue, fieldInfo.FieldType);
                     notTrackedExpressions.Add(Expression.Assign(tmpVar, newValue));
-
-
-                    //if (fieldInfo.FieldType == typeof(byte)
-                    //    || fieldInfo.FieldType == typeof(sbyte)
-                    //    || fieldInfo.FieldType == typeof(byte?)
-                    //    || fieldInfo.FieldType == typeof(sbyte?)
-                    //    || IsEnumOrNullableEnum(fieldInfo.FieldType))
-                    //{
-                    //    newValue = Expression.Convert(newValue, fieldInfo.FieldType);
-                    //}
-
-                    //var tmpVar = getTempVar(fieldInfo.FieldType);
-                    //notTrackedExpressions.Add(Expression.Assign(tmpVar, newValue));
-
 
                     if (fieldInfo.IsInitOnly)
                     {
@@ -487,7 +454,6 @@ namespace DesertOctopus.Serialization
                     else
                     {
                         var fieldValueExpr = Expression.Field(newInstance, fieldInfo);
-                        //notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
 
                         notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, fieldValueExpr, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
                     }

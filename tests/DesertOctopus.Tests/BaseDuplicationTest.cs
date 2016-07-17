@@ -27,6 +27,8 @@ namespace DesertOctopus.Tests
         [TestCategory("Unit")]
         public void TestPrimitives()
         {
+            PrimitiveTestSuite<string>("S", "s", null);
+
             PrimitiveTestSuite<bool>(true, false);
             PrimitiveTestSuite<bool?>(true, false, null);
             PrimitiveTestSuite<byte>(byte.MaxValue, Byte.MinValue, 3, 0);
@@ -87,6 +89,17 @@ namespace DesertOctopus.Tests
             PrimitiveTestSuite<EnumForTestingUint16>(EnumForTestingUint16.One, EnumForTestingUint16.Two);
             PrimitiveTestSuite<EnumForTestingUint16?>(EnumForTestingUint16.One, EnumForTestingUint16.Two, null);
 
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateWrappedString()
+        {
+            var instance = new GenericBaseClass<string>();
+            instance.Value = "abc";
+            var duplicate = Duplicate(instance);
+            Assert.AreEqual(instance.Value,
+                            duplicate.Value);
         }
 
         [TestMethod]

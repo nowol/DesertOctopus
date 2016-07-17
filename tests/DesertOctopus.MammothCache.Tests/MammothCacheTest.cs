@@ -23,10 +23,9 @@ namespace DesertOctopus.MammothCache.Tests
         private byte[] _serializedTestObject;
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
         private readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
-        private readonly INonSerializableCache _nonSerializableCache = new NonSerializableCache();
+        private readonly NonSerializableCache _nonSerializableCache = new NonSerializableCache();
         private readonly NotSerializableTestClass _nonSerializableTestObject = new NotSerializableTestClass();
         private readonly NotSerializableTestClass _nonSerializableTestObject2 = new NotSerializableTestClass();
-        private readonly NotSerializableTestClass _nonSerializableTestObject3 = new NotSerializableTestClass();
 
         private RedisConnection _secondLevelCache;
         private IRedisRetryPolicy _redisRetryPolicy;
@@ -122,6 +121,8 @@ namespace DesertOctopus.MammothCache.Tests
             catch (ObjectDisposedException)
             {
             }
+
+            _nonSerializableCache.Dispose();
         }
 
         [TestMethod]
@@ -1200,15 +1201,6 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Integration")]
-        [ExpectedException(typeof(ObjectDisposedException))]
-        public void DisposingTheCacheTwiceShouldThrowAnException()
-        {
-            _cache.Dispose();
-            _cache.Dispose();
-        }
-
-        [TestMethod]
-        [TestCategory("Integration")]
         [ExpectedException(typeof(ArgumentNullException))]
         public async Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
         {
@@ -1599,7 +1591,7 @@ namespace DesertOctopus.MammothCache.Tests
             var key3 = RandomKey();
 
             var keys = new List<CacheItemDefinition>();
-            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) });
+            keys.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30), Cargo = 3});
             keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
             keys.Add(new CacheItemDefinition { Key = key3 });
 
@@ -1608,7 +1600,7 @@ namespace DesertOctopus.MammothCache.Tests
                                                                               {
                                                                                   delegateWasCalled = true;
                                                                                   var results = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
-                                                                                  results.Add(definitions.Single(x => x.Key == key1), _nonSerializableTestObject);
+                                                                                  results.Add(definitions.Single(x => x.Cargo != null && (int)x.Cargo == 3), _nonSerializableTestObject);
 
                                                                                   return Task.FromResult(results);
                                                                               })
@@ -2077,6 +2069,24 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.IsFalse(ReferenceEquals(cloned, _testObject));
             Assert.AreEqual(_testObject.Value, cloned.Value);
         }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void UnableToAcquireLockExceptionShouldInitializeItsMessageWithSerializationContext()
+        {
+            var ex = new UnableToAcquireLockException("abc");
+            var clonedEx = ObjectCloner.Clone(ex);
+            Assert.AreEqual("abc", clonedEx.Message);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void NonSerializableCacheSettingANullValueShouldDoNothing()
+        {
+            _nonSerializableCache.Set(RandomKey(), null, TimeSpan.FromSeconds(30));
+            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
+        }
+
 
 
         /*

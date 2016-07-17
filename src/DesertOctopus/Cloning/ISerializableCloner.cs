@@ -36,11 +36,6 @@ namespace DesertOctopus.Cloning
             }
 
             var getEnumeratorMethodInfo = SerializationInfoMih.GetEnumerator();
-            if (getEnumeratorMethodInfo == null)
-            {
-                throw new Exception("Could not find GetEnumerator method.");
-            }
-
             var siSource = Expression.Parameter(typeof(SerializationInfo), "siSource");
             var fc = Expression.Parameter(typeof(FormatterConverter), "fc");
             var context = Expression.Parameter(typeof(StreamingContext), "context");

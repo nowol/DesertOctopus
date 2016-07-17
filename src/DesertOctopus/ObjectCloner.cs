@@ -102,10 +102,6 @@ namespace DesertOctopus
             {
                 expressions.Add(ArrayCloner.GenerateArrayExpression(variables, source, clone, sourceType, refTrackerParam));
             }
-            else if (ObjectCleaner.IsEnumeratingType(sourceType))
-            {
-                expressions.Add(IQueryableCloner.GenerateEnumeratingExpression(variables, source, clone, sourceType, refTrackerParam));
-            }
             else
             {
                 expressions.Add(ClassCloner.GenerateClassExpressions(variables, sourceType, source, clone, refTrackerParam));

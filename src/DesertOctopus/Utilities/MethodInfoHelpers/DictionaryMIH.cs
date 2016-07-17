@@ -27,12 +27,6 @@ namespace DesertOctopus.Utilities
             return dictionaryType.GetMethod("Add", new[] { keyType, valueType });
         }
 
-        public static MethodInfo GetEnumerator(Type dictionaryType)
-        {
-            Debug.Assert(dictionaryType.IsGenericType && dictionaryType.GetGenericTypeDefinition() == typeof(Dictionary<,>), "Type " + dictionaryType + " is not a dictionary");
-            return dictionaryType.GetMethod("GetEnumerator");
-        }
-
         public static MethodInfo IsObjectADictionaryWithDefaultComparer()
         {
             return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparer),

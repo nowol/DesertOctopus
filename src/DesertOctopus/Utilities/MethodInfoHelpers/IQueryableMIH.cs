@@ -12,15 +12,6 @@ namespace DesertOctopus.Utilities
     internal static class IQueryableMih
     {
         /// <summary>
-        /// Calls IQueryableCloner.IsGenericIQueryableType
-        /// </summary>
-        /// <returns>The method info for IQueryableCloner.IsGenericIQueryableType</returns>
-        public static MethodInfo IsGenericIQueryableType()
-        {
-            return typeof(IQueryableCloner).GetMethod(nameof(IQueryableCloner.IsGenericIQueryableType), new[] { typeof(Type) });
-        }
-
-        /// <summary>
         /// Calls IQueryableCloner.ConvertToNonGenericQueryable
         /// </summary>
         /// <returns>The method info for IQueryableCloner.ConvertToNonGenericQueryable</returns>

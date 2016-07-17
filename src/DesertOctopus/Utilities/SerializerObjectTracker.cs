@@ -42,6 +42,14 @@ namespace DesertOctopus.Utilities
         }
 
         /// <summary>
+        /// Gets the number of tracked objects
+        /// </summary>
+        public int NumberOfTrackedObjects
+        {
+            get { return _trackedObjects.Count; }
+        }
+
+        /// <summary>
         /// Get the index of a tracked object
         /// </summary>
         /// <param name="obj">Object to get the index of</param>

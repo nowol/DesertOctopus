@@ -46,12 +46,11 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         public void Dispose()
         {
-            if (_isDisposed)
+            if (!_isDisposed)
             {
-                GuardDisposed();
+                SecondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
             }
 
-            SecondLevelCache.OnItemRemovedFromCache -= OnItemRemovedFromSecondLevelCache;
             _isDisposed = true;
         }
 

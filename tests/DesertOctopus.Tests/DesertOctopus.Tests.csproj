@@ -75,6 +75,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="TrackerTest.cs" />
+    <Compile Include="ExceptionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ClonerTest.cs" />
     <Compile Include="SerializerTest.cs" />

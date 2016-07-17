@@ -33,17 +33,17 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public bool RequireCloning(Type type)
         {
-            return _requireCloning.GetOrAdd(type, IsCloningRequired);
-        }
-
-        private bool IsCloningRequired(Type type)
-        {
             if (type == null
                 || type.Namespace == null)
             {
                 return false;
             }
 
+            return _requireCloning.GetOrAdd(type, IsCloningRequired);
+        }
+
+        private bool IsCloningRequired(Type type)
+        {
             return _namespacesToClone.Any(x => type.Namespace.StartsWith(x));
         }
     }

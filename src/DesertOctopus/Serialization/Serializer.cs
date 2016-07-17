@@ -186,23 +186,6 @@ namespace DesertOctopus.Serialization
             {
                 expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objTracking));
             }
-            else if (typeof(IQueryable).IsAssignableFrom(type))
-            {
-                var queryableInterface = type.GetInterfaces()
-                                             .FirstOrDefault(t => t.IsGenericType
-                                                                  && t.GetGenericTypeDefinition() == typeof(IQueryable<>)
-                                                                  && t.GetGenericArguments()
-                                                                      .Length == 1);
-                if (queryableInterface != null)
-                {
-                    var genericArgumentType = queryableInterface.GetGenericArguments()[0];
-                    expressions.Add(GenerateArrayExpression(genericArgumentType.MakeArrayType(), outputStream, objToSerialize, objTracking));
-                }
-                else
-                {
-                    throw new NotSupportedException(type.ToString());
-                }
-            }
             else
             {
                 expressions.Add(GenerateClassExpression(type, outputStream, objToSerialize, objTracking));

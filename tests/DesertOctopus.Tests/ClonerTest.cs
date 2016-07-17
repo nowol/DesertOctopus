@@ -119,6 +119,13 @@ namespace DesertOctopus.Tests
             Assert.IsNull(duplicatedValueProperty6AsArray[1]);
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void QueryableClonerConvertToNonGenericQueryableShouldReturnNull()
+        {
+            Assert.IsNull(IQueryableCloner.ConvertToNonGenericQueryable(null));
+        }
+
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{

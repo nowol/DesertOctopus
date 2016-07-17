@@ -46,8 +46,8 @@ namespace DesertOctopus.MammothCache.Redis
                                      .Or<TimeoutException>()
                                      .Or<SocketException>()
                                      .Or<IOException>();  // for async
-            _retryPolicy = _baseRetryPolicy.WaitAndRetry(redisRetryPolicy.SleepDurations);
-            _retryPolicyAsync = _baseRetryPolicy.WaitAndRetryAsync(redisRetryPolicy.SleepDurations);
+            _retryPolicy = GetBaseRetryPolicyBuilder().WaitAndRetry(redisRetryPolicy.SleepDurations);
+            _retryPolicyAsync = GetBaseRetryPolicyBuilder().WaitAndRetryAsync(redisRetryPolicy.SleepDurations);
 
             var options = ConfigurationOptions.Parse(connectionString);
             ConfigureIfMissing(options, "abortConnect", connectionString, o => { o.AbortOnConnectFail = false; });

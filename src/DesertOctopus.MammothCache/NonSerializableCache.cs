@@ -54,15 +54,6 @@ namespace DesertOctopus.MammothCache
 
         /// <inheritdoc/>
         public void Set(string key,
-                        object value)
-        {
-            Set(key,
-                value,
-                null);
-        }
-
-        /// <inheritdoc/>
-        public void Set(string key,
                         object value,
                         TimeSpan? ttl)
         {

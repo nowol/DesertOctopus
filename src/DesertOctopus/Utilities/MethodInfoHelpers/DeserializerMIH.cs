@@ -12,15 +12,6 @@ namespace DesertOctopus.Utilities
     internal static class DeserializerMih
     {
         /// <summary>
-        /// Calls Deserializer.ConvertObjectToIQueryable
-        /// </summary>
-        /// <returns>The method info for Deserializer.ConvertObjectToIQueryable</returns>
-        public static MethodInfo ConvertObjectToIQueryable()
-        {
-            return typeof(Deserializer).GetMethod(nameof(Deserializer.ConvertObjectToIQueryable), BindingFlags.Static | BindingFlags.NonPublic);
-        }
-
-        /// <summary>
         /// Calls Deserializer.GetTypeDeserializer
         /// </summary>
         /// <returns>The method info for Deserializer.GetTypeDeserializer</returns>

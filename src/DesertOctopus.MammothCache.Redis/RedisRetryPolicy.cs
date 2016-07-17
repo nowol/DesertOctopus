@@ -16,7 +16,7 @@ namespace DesertOctopus.MammothCache.Redis
         /// Initializes a new instance of the <see cref="RedisRetryPolicy"/> class.
         /// </summary>
         /// <param name="sleepDurations">Sleep times when retrying</param>
-        public RedisRetryPolicy(IEnumerable<TimeSpan> sleepDurations)
+        public RedisRetryPolicy(params TimeSpan[] sleepDurations)
         {
             SleepDurations = sleepDurations.ToArray();
         }

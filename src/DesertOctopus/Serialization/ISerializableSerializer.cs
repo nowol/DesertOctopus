@@ -64,19 +64,8 @@ namespace DesertOctopus.Serialization
                                                       ParameterExpression objTracking)
         {
             MethodInfo getEnumeratorMethodInfo = type.GetMethod("GetEnumerator");
-            MethodCallExpression enumeratorMethod;
             var dictionaryType = DictionaryHelper.GetDictionaryType(type);
-
-            if (getEnumeratorMethodInfo == null)
-            {
-                getEnumeratorMethodInfo = DictionaryMih.GetEnumerator(dictionaryType);
-                enumeratorMethod = Expression.Call(Expression.Convert(objToSerialize, dictionaryType), getEnumeratorMethodInfo);
-            }
-            else
-            {
-                enumeratorMethod = Expression.Call(Expression.Convert(objToSerialize, type), getEnumeratorMethodInfo);
-            }
-
+            var enumeratorMethod = Expression.Call(Expression.Convert(objToSerialize, type), getEnumeratorMethodInfo);
 
             var loopBodyCargo = new EnumerableLoopBodyCargo();
             loopBodyCargo.EnumeratorType = getEnumeratorMethodInfo.ReturnType;

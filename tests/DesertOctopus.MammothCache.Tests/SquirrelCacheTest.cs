@@ -265,6 +265,40 @@ namespace DesertOctopus.MammothCache.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
+        public void NamespacesBasedCloningProviderShouldReturnFalseForNullObjects()
+        {
+            var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
+            Assert.IsFalse(namespaceCloningProvider.RequireCloning(null));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void ObjectRetrievedFromFirstLevelCacheShouldNotBeClonedIfTheyAreFromASpecificNameSpace()
+        {
+            var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "System" });
+            var cache = new SquirrelCache(_config, namespaceCloningProvider);
+
+            var testObject2 = EqualityComparer<string>.Default;
+            var serializedTestObject2 = KrakenSerializer.Serialize(testObject2);
+
+            var key1 = RandomKey();
+            var key2 = RandomKey();
+            cache.Set(key1, _serializedTestObject);
+            cache.Set(key2, serializedTestObject2);
+
+            var obj1_1 = cache.Get<object>(key1).Value;
+            var obj1_2 = cache.Get<object>(key1).Value;
+            Assert.IsNotNull(obj1_1);
+            Assert.IsTrue(ReferenceEquals(obj1_1, obj1_2));
+
+            var obj2_1 = cache.Get<object>(key2).Value;
+            var obj2_2 = cache.Get<object>(key2).Value;
+            Assert.IsNotNull(obj2_1);
+            Assert.IsFalse(ReferenceEquals(obj2_1, obj2_2));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
         public void ObjectsRemoveFromSquirrelCacheAreRemovedFromTheByAgeCache()
         {
             var key = Guid.NewGuid().ToString();
@@ -278,6 +312,14 @@ namespace DesertOctopus.MammothCache.Tests
             WaitFor(1);
 
             Assert.AreEqual(0, _cacheRepository.CachedObjectsByAge.Count);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        [ExpectedException(typeof(NotImplementedException))]
+        public void NoCloningProviderShouldThrowWhenCloning()
+        {
+            _noCloningProvider.Clone(new object());
         }
     }
 }

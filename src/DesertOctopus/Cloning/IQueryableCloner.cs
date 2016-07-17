@@ -14,66 +14,6 @@ namespace DesertOctopus.Cloning
     internal static class IQueryableCloner
     {
         /// <summary>
-        /// Generate an expression that represents an enumerable loop
-        /// </summary>
-        /// <param name="variables">Global variables for the expression tree</param>
-        /// <param name="source">Source object</param>
-        /// <param name="clone">Clone object</param>
-        /// <param name="sourceType">Type of the source object</param>
-        /// <param name="refTrackerParam">Reference tracker</param>
-        /// <returns>An expression that represents an enumerable loop</returns>
-        public static Expression GenerateEnumeratingExpression(List<ParameterExpression> variables,
-                                                               ParameterExpression source,
-                                                               ParameterExpression clone,
-                                                               Type sourceType,
-                                                               ParameterExpression refTrackerParam)
-        {
-            Type enumerableInterface = GetInterfaceType(sourceType, typeof(IEnumerable<>));
-
-            if (enumerableInterface == null)
-            {
-                throw new NotSupportedException(sourceType.ToString());
-            }
-
-            Type queryableInterface = GetInterfaceType(sourceType, typeof(IQueryable<>));
-
-            var genericArgumentType = enumerableInterface.GetGenericArguments()[0];
-            var arrayType = genericArgumentType.MakeArrayType();
-            var arrSource = Expression.Parameter(arrayType, "arrSource");
-            var arrClone = Expression.Parameter(arrayType, "arrClone");
-            var cloner = ObjectCloner.CloneImpl(arrayType);
-            var toArrayMethod = typeof(System.Linq.Enumerable).GetMethod("ToArray").MakeGenericMethod(genericArgumentType);
-
-            variables.Add(arrSource);
-            variables.Add(arrClone);
-
-            var expressions = new List<Expression>();
-
-            expressions.Add(Expression.Assign(arrSource, Expression.Call(toArrayMethod, source)));
-
-            var c = Expression.Invoke(Expression.Constant(cloner), Expression.Convert(arrSource, typeof(object)), refTrackerParam);
-            expressions.Add(Expression.Assign(arrClone, Expression.Convert(c, arrayType)));
-
-            if (queryableInterface != null)
-            {
-                var m = Expression.Call(typeof(Queryable), "AsQueryable", new Type[] { genericArgumentType }, Expression.Convert(arrClone, typeof(IEnumerable<>).MakeGenericType(genericArgumentType)));
-                expressions.Add(Expression.Assign(clone, Expression.Convert(m, sourceType)));
-                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
-            }
-            else
-            {
-                expressions.Add(Expression.Assign(clone, Expression.Convert(arrClone, sourceType)));
-                expressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
-            }
-
-            return ObjectCloner.GenerateNullTrackedOrUntrackedExpression(source,
-                                                                         clone,
-                                                                         sourceType,
-                                                                         refTrackerParam,
-                                                                         Expression.Block(expressions));
-        }
-
-        /// <summary>
         /// Detect if the type implements the expected generic interface
         /// </summary>
         /// <param name="type">Type to analyze</param>
