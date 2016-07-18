@@ -1998,6 +1998,7 @@ namespace DesertOctopus.MammothCache.Tests
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
             await RemoveAllAndWaitAsync().ConfigureAwait(false);
+            WaitFor(10);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -2046,6 +2047,7 @@ namespace DesertOctopus.MammothCache.Tests
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
             RemoveAllAndWait();
+            WaitFor(10);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
