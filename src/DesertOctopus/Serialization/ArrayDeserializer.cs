@@ -74,20 +74,57 @@ namespace DesertOctopus.Serialization
             variables.Add(deserializer);
             variables.Add(typeName);
             variables.Add(typeExpr);
-            variables.Add(indices);
             variables.Add(tmpValue);
             variables.Add(typeHashCode);
 
             var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Property(lengths, "Length"))));
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), type)));
             expressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
 
-            Expression innerExpression;
-            if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
+            if (rank > 1)
             {
-                Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
-                innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
+                variables.Add(indices);
+                expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Property(lengths, "Length"))));
+            }
+
+            Expression innerExpression;
+            //if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
+            //{
+            //    Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+            //    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
+            //}
+            //else
+            //{
+            //    innerExpression = Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType);
+            //}
+
+            if (elementType == typeof(string))
+            {
+                innerExpression = Expression.Assign(tmpValue, Deserializer.GenerateStringExpression(inputStream, objTracking));
+            }
+            else if (elementType.IsPrimitive || elementType.IsValueType)
+            {
+                var primitiveReader = Deserializer.GetPrimitiveReader(elementType);
+                if (primitiveReader == null)
+                {
+                    Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+                    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
+                }
+                else
+                {
+                    if (elementType == typeof(byte)
+                        || elementType == typeof(sbyte)
+                        || elementType == typeof(byte?)
+                        || elementType == typeof(sbyte?)
+                        || Deserializer.IsEnumOrNullableEnum(elementType))
+                    {
+                        innerExpression = Expression.Assign(tmpValue, Expression.Convert(primitiveReader(inputStream), elementType));
+                    }
+                    else
+                    {
+                        innerExpression = Expression.Assign(tmpValue, primitiveReader(inputStream));
+                    }
+                }
             }
             else
             {
@@ -102,9 +139,25 @@ namespace DesertOctopus.Serialization
 
                 var loopExpressions = new List<Expression>();
 
-                loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
-                loopExpressions.Add(innerExpr);
-                loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
+
+
+                if (rank == 1)
+                {
+                    loopExpressions.Add(innerExpr);
+                    loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(newInstance, loopRankIndex), tmpValue));
+                    //Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
+                }
+                else
+                {
+                    loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
+                    loopExpressions.Add(innerExpr);
+                    loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
+                }
+
+
+                //loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
+                //loopExpressions.Add(innerExpr);
+                //loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
                 var cond = Expression.LessThan(loopRankIndex, Expression.ArrayIndex(lengths, Expression.Constant(loopRank)));

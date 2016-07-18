@@ -74,16 +74,33 @@ namespace DesertOctopus.Serialization
             variables.Add(itemAsObj);
             variables.Add(serializer);
             variables.Add(item);
-            variables.Add(indices);
 
             var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
+            if (rank != 1)
+            {
+                variables.Add(indices);
+                expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
+            }
 
             Expression innerExpression;
-            if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
+
+            if (elementType == typeof(string))
             {
-                Action<Stream, object, SerializerObjectTracker> primitiveSerializer = Serializer.GetTypeSerializer(elementType);
-                innerExpression = Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(item, typeof(object)), objTracking);
+                innerExpression = Serializer.GenerateStringExpression(outputStream, item, objTracking);
+            }
+            else if (elementType.IsPrimitive || elementType.IsValueType)
+            {
+                var primitiveWriter = Serializer.GetPrimitiveWriter(elementType);
+
+                if (primitiveWriter == null)
+                {
+                    Action<Stream, object, SerializerObjectTracker> primitiveSerializer = Serializer.GetTypeSerializer(elementType);
+                    innerExpression = Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(item, typeof(object)), objTracking);
+                }
+                else
+                {
+                    innerExpression = primitiveWriter(outputStream, item);
+                }
             }
             else
             {
@@ -98,8 +115,16 @@ namespace DesertOctopus.Serialization
 
                 var loopExpressions = new List<Expression>();
 
-                loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
-                loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMih.GetValueRank(), indices), elementType)));
+                if (rank == 1)
+                {
+                    loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, loopRankIndex)));
+                }
+                else
+                {
+                    loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
+                    loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(arr, ArrayMih.GetValueRank(), indices), elementType)));
+                }
+
                 loopExpressions.Add(innerExpr);
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
@@ -131,10 +156,11 @@ namespace DesertOctopus.Serialization
                                                                            ParameterExpression lengths,
                                                                            int rank)
         {
-            var loopExpressions = new List<Expression>();
             var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)rank)));
+
+            var loopExpressions = new List<Expression>();
+            expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
             var length = Expression.Call(arr, ArrayMih.GetLength(), i);
             loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), length));
@@ -145,9 +171,9 @@ namespace DesertOctopus.Serialization
             var breakLabel = Expression.Label("breakLabel");
             var cond = Expression.LessThan(i, Expression.Constant(rank));
             var loop = Expression.Loop(Expression.IfThenElse(cond,
-                                                             loopBody,
-                                                             Expression.Break(breakLabel)),
-                                       breakLabel);
+                                                                loopBody,
+                                                                Expression.Break(breakLabel)),
+                                        breakLabel);
             expressions.Add(loop);
 
             return expressions;

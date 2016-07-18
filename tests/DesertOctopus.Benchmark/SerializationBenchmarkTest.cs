@@ -18,11 +18,19 @@ namespace DesertOctopus.Benchmark
     {
         public SerializationBenchmarkTest()
         {
-#if DEBUG
-            throw new Exception("Use release mode");
-#endif
+//#if DEBUG
+//            throw new Exception("Use release mode");
+//#endif
         }
 
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void ForOptimization()
+        {
+            new IntArraySerializationBenchmark();
+
+        }
 
         [TestMethod]
         [TestCategory("Benchmark")]
@@ -43,6 +51,31 @@ namespace DesertOctopus.Benchmark
             {
                 //krakenBytes = DesertOctopus.KrakenSerializer.Serialize(product);
                 DesertOctopus.KrakenSerializer.Deserialize<Product>(krakenBytes);
+                //DesertOctopus.ObjectCloner.Clone(product);
+            }
+
+            sw.Stop();
+            Assert.Fail(sw.Elapsed.ToString());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void ProfileSerialization2()
+        {
+            var instance = Enumerable.Range(0, 100).ToArray();
+            var krakenBytes = DesertOctopus.KrakenSerializer.Serialize(instance);
+            krakenBytes = DesertOctopus.KrakenSerializer.Serialize(instance);
+            System.IO.File.WriteAllBytes(@"d:\z.bin", krakenBytes);
+
+            //DesertOctopus.KrakenSerializer.Deserialize<int[]>(krakenBytes);
+            //DesertOctopus.ObjectCloner.Clone(instance);
+
+            Stopwatch sw = Stopwatch.StartNew();
+
+            for (int i = 0; i < 100000; i++)
+            {
+                krakenBytes = DesertOctopus.KrakenSerializer.Serialize(instance);
+                //DesertOctopus.KrakenSerializer.Deserialize<int[]>(krakenBytes);
                 //DesertOctopus.ObjectCloner.Clone(product);
             }
 
@@ -102,6 +135,42 @@ namespace DesertOctopus.Benchmark
         public void SimpleDtoWithEveryPrimitivesSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<SimpleDtoWithEveryPrimitivesSerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void IntArraySerializationBenchmark()
+        {
+            var ii = new IntArraySerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<IntArraySerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void TwoDimIntArraySerializationBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<TwoDimIntArraySerializationBenchmark>();
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
             Console.WriteLine(k.First());
@@ -262,20 +331,69 @@ namespace DesertOctopus.Benchmark
         }
     }
 
-    public class SimpleDtoWithEveryPrimitivesSerializationBenchmark
+    public class SimpleDtoWithEveryPrimitivesSerializationBenchmark : SerializationBenchmarkBase<ClassWithAllPrimitiveTypes>
+    {
+        public SimpleDtoWithEveryPrimitivesSerializationBenchmark()
+            : base(new ClassWithAllPrimitiveTypes())
+        {
+        }
+    }
+
+    public class IntArraySerializationBenchmark : SerializationBenchmarkBase<int[]>
+    {
+        public IntArraySerializationBenchmark()
+            : base(IntArraySerializationBenchmark.Array)
+        {
+        }
+
+        public static int[] Array = Enumerable.Range(0, 100000).Select(x => int.MaxValue).ToArray();
+    }
+
+    public class TwoDimIntArraySerializationBenchmark : SerializationBenchmarkBase<int[,]>
+    {
+        public TwoDimIntArraySerializationBenchmark()
+            : base(TwoDimIntArraySerializationBenchmark.Array, false, false)
+        {
+        }
+
+        public static int[,] Array = CreateArray();
+
+        private static int[,] CreateArray()
+        {
+            var arr = new int[10,10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    arr[i, j] = i;
+                }
+            }
+
+            return arr;
+        }
+    }
+
+    public class SerializationBenchmarkBase<T>
+        where T: class
     {
         private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         private BinaryFormatter bf = new BinaryFormatter();
         private byte[] krakenBytes;
         private byte[] bfBytes;
         private byte[] omniBytes;
-        private ClassWithAllPrimitiveTypes obj;
+        protected object obj;
         private string Json = String.Empty;
 
-        public SimpleDtoWithEveryPrimitivesSerializationBenchmark()
+        public SerializationBenchmarkBase(object objectToTest, bool benchmarkOmni = true, bool benchmarkSS = true)
         {
-            obj = new ClassWithAllPrimitiveTypes();
-            Json = ServiceStack.Text.JsonSerializer.SerializeToString(obj);
+            BenchmarkOmni = benchmarkOmni;
+            BenchmarkSs = benchmarkSS;
+            obj = objectToTest;
+            if (benchmarkSS)
+            {
+                Json = ServiceStack.Text.JsonSerializer.SerializeToString(obj);
+            }
             krakenBytes = DesertOctopus.KrakenSerializer.Serialize(obj);
 
             using (var ms = new MemoryStream())
@@ -286,19 +404,33 @@ namespace DesertOctopus.Benchmark
 
             using (var ms = new MemoryStream())
             {
-                omni.SerializeObject(ms, obj);
-                omniBytes = ms.ToArray();
+                if (benchmarkOmni)
+                {
+                    omni.SerializeObject(ms, obj);
+                    omniBytes = ms.ToArray();
+                }
             }
 
-            DesertOctopus.KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(krakenBytes);
+            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
 
-            ServiceStack.Text.JsonSerializer.DeserializeFromString<ClassWithAllPrimitiveTypes>(Json);
+            if (benchmarkSS)
+            {
+                ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
+            }
         }
+
+        public bool BenchmarkOmni { get; set; }
+        public bool BenchmarkSs { get; set; }
 
 
         [Benchmark]
         public byte[] JsonSerialization()
         {
+            if (!BenchmarkSs)
+            {
+                return null;
+            }
+
             using (var ms = new MemoryStream())
             {
                 ServiceStack.Text.JsonSerializer.SerializeToStream(obj, ms);
@@ -307,14 +439,24 @@ namespace DesertOctopus.Benchmark
         }
 
         [Benchmark]
-        public ClassWithAllPrimitiveTypes JsonDeserialization()
+        public T JsonDeserialization()
         {
-            return ServiceStack.Text.JsonSerializer.DeserializeFromString<ClassWithAllPrimitiveTypes>(Json);
+            if (!BenchmarkSs)
+            {
+                return null;
+            }
+
+            return ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
         }
 
         [Benchmark]
         public byte[] OmniSerialization()
         {
+            if (!BenchmarkOmni)
+            {
+                return null;
+            }
+
             using (var ms = new MemoryStream())
             {
                 omni.SerializeObject(ms, obj);
@@ -323,11 +465,16 @@ namespace DesertOctopus.Benchmark
         }
 
         [Benchmark]
-        public ClassWithAllPrimitiveTypes OmniDeserialization()
+        public T OmniDeserialization()
         {
+            if (!BenchmarkOmni)
+            {
+                return null;
+            }
+
             using (var ms = new MemoryStream(omniBytes))
             {
-                return omni.Deserialize(ms) as ClassWithAllPrimitiveTypes;
+                return omni.Deserialize(ms) as T;
             }
         }
 
@@ -338,9 +485,9 @@ namespace DesertOctopus.Benchmark
         }
 
         [Benchmark]
-        public ClassWithAllPrimitiveTypes KrakenDeserialization()
+        public T KrakenDeserialization()
         {
-            return DesertOctopus.KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(krakenBytes);
+            return DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
         }
 
         [Benchmark]
@@ -354,11 +501,11 @@ namespace DesertOctopus.Benchmark
         }
 
         [Benchmark]
-        public ClassWithAllPrimitiveTypes BinaryFormatterDeserialization()
+        public T BinaryFormatterDeserialization()
         {
             using (var ms = new MemoryStream(bfBytes))
             {
-                return bf.Deserialize(ms) as ClassWithAllPrimitiveTypes;
+                return bf.Deserialize(ms) as T;
             }
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
 using DesertOctopus.Utilities;
 
@@ -28,6 +29,7 @@ namespace DesertOctopus.Serialization
 
             return Expression.Block(variables,
                                     Expression.Assign(length, Expression.Property(Expression.Convert(obj, typeof(byte[])), "Length")),
+                                    Expression.Assign(i, Expression.Constant(0, typeof(int))),
                                     WriteInt32(outputStream, length),
                                     Expression.Loop(Expression.IfThenElse(cond,
                                                                           loopBody,
@@ -53,6 +55,7 @@ namespace DesertOctopus.Serialization
 
             return Expression.Block(variables,
                                     Expression.Assign(length, ReadInt32(inputStream)),
+                                    Expression.Assign(i, Expression.Constant(0, typeof(int))),
                                     Expression.Assign(arr, Expression.NewArrayBounds(typeof(byte), length)),
                                     Expression.Loop(Expression.IfThenElse(cond,
                                                                           loopBody,
@@ -131,7 +134,7 @@ namespace DesertOctopus.Serialization
             return singleValue;
         }
 
-        #region byte
+#region byte
 
         /// <summary>
         /// Generates an expression to handle nullable boolean serialization
@@ -175,9 +178,9 @@ namespace DesertOctopus.Serialization
             return Expression.Condition(Expression.Equal(ReadByte(inputStream), Expression.Constant(1)), Expression.Constant(true), Expression.Constant(false));
         }
 
-        #endregion
+#endregion
 
-        #region byte?
+#region byte?
 
         /// <summary>
         /// Generates an expression to handle nullable byte serialization
@@ -263,9 +266,9 @@ namespace DesertOctopus.Serialization
             return Expression.Convert(Expression.Call(inputStream, StreamMih.ReadByte()), typeof(sbyte));
         }
 
-        #endregion
+#endregion
 
-        #region Int16
+#region Int16
 
         /// <summary>
         /// Generates an expression to handle nullable int16 serialization
@@ -351,9 +354,9 @@ namespace DesertOctopus.Serialization
             return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ushort)), typeof(ushort));
         }
 
-        #endregion
+#endregion
 
-        #region Int32
+#region Int32
 
         /// <summary>
         /// Generates an expression to handle nullable int32 serialization
@@ -439,9 +442,9 @@ namespace DesertOctopus.Serialization
             return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
         }
 
-        #endregion
+#endregion
 
-        #region Int64
+#region Int64
 
         /// <summary>
         /// Generates an expression to handle nullable int64 serialization
@@ -514,7 +517,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint64 serialization</returns>
         public static Expression WriteUInt64(ParameterExpression outputStream, Expression obj)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(ulong), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(ulong), typeof(ulong));
         }
 
         /// <summary>
@@ -527,9 +530,9 @@ namespace DesertOctopus.Serialization
             return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ulong)), typeof(ulong));
         }
 
-        #endregion
+#endregion
 
-        #region Decimal
+#region Decimal
 
         /// <summary>
         /// Generates an expression to handle nullable decimal serialization
@@ -630,9 +633,9 @@ namespace DesertOctopus.Serialization
                                     Expression.New(typeof(decimal).GetConstructor(new Type[] { typeof(int[]) }), arr));
         }
 
-        #endregion
+#endregion
 
-        #region double
+#region double
 
         /// <summary>
         /// Generates an expression to handle nullable double serialization
@@ -679,9 +682,9 @@ namespace DesertOctopus.Serialization
             return Expression.Call(PrimitiveHelpersMih.GetDoubleFromLong(), longValue);
         }
 
-        #endregion
+#endregion
 
-        #region single
+#region single
 
         /// <summary>
         /// Generates an expression to handle nullable single serialization
@@ -728,9 +731,9 @@ namespace DesertOctopus.Serialization
             return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), longValue);
         }
 
-        #endregion
+#endregion
 
-        #region Char
+#region Char
 
         /// <summary>
         /// Generates an expression to handle nullable char serialization
@@ -774,9 +777,9 @@ namespace DesertOctopus.Serialization
             return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short)), typeof(char));
         }
 
-        #endregion
+#endregion
 
-        #region DateTime
+#region DateTime
 
         /// <summary>
         /// Generates an expression to handle nullable DateTime serialization
@@ -821,9 +824,9 @@ namespace DesertOctopus.Serialization
                                    ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
         }
 
-        #endregion
+#endregion
 
-        #region TimeSpan
+#region TimeSpan
 
         /// <summary>
         /// Generates an expression to handle nullable TimeSpan serialization
@@ -868,9 +871,9 @@ namespace DesertOctopus.Serialization
                                    ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
         }
 
-        #endregion
+#endregion
 
-        #region BigInteger
+#region BigInteger
 
         /// <summary>
         /// Generates an expression to handle nullable BigInteger serialization
@@ -915,9 +918,9 @@ namespace DesertOctopus.Serialization
                                   ReadByteArray(inputStream));
         }
 
-        #endregion
+#endregion
 
-        #region nullable
+#region nullable
 
         private static Expression WriteNullable(ParameterExpression outputStream, Expression obj, Type nullableType, Func<ParameterExpression, Expression, Expression> primitiveWriter)
         {
@@ -939,9 +942,9 @@ namespace DesertOctopus.Serialization
                                     tmp);
         }
 
-        #endregion
+#endregion
 
-        #region string
+#region string
 
         /// <summary>
         /// Generates an expression to handle string deserialization
@@ -1037,6 +1040,6 @@ namespace DesertOctopus.Serialization
             return Expression.Block(variables, expressions);
         }
 
-        #endregion
+#endregion
     }
 }

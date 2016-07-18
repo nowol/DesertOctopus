@@ -40,6 +40,7 @@ namespace DesertOctopus.Serialization
                 object objToSerialize = ObjectCleaner.PrepareObjectForSerialization(obj);
                 var cargo = new SerializerObjectTracker();
 
+
                 Action<Stream, object, SerializerObjectTracker> shortSerializerMethod = GetTypeSerializer(typeof(short));
                 Action<Stream, object, SerializerObjectTracker> serializerMethod = GetTypeSerializer(obj.GetType());
                 Action<Stream, object, SerializerObjectTracker> stringSerializerMethod = GetTypeSerializer(typeof(string));
@@ -122,7 +123,7 @@ namespace DesertOctopus.Serialization
             return map;
         }
 
-        private static Func<ParameterExpression, Expression, Expression> GetPrimitiveWriter(Type type)
+        internal static Func<ParameterExpression, Expression, Expression> GetPrimitiveWriter(Type type)
         {
             Func<ParameterExpression, Expression, Expression> writer;
             if (LazyPrimitiveMap.Value.TryGetValue(type, out writer))

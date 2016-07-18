@@ -162,7 +162,7 @@ namespace DesertOctopus.Serialization
             return map;
         }
 
-        private static Func<ParameterExpression, Expression> GetPrimitiveReader(Type type)
+        internal static Func<ParameterExpression, Expression> GetPrimitiveReader(Type type)
         {
             Func<ParameterExpression, Expression> reader;
             if (LazyPrimitiveMap.Value.TryGetValue(type, out reader))
@@ -411,9 +411,7 @@ namespace DesertOctopus.Serialization
                     if (primitiveReader == null)
                     {
                         Func<Stream, List<object>, object> primitiveDeserializer = GetTypeDeserializer(fieldInfo.FieldType);
-                        newValue = Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking);
-
-                        newValue = Expression.Convert(newValue, fieldInfo.FieldType);
+                        newValue = Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), fieldInfo.FieldType);
                     }
                     else
                     {
@@ -483,7 +481,7 @@ namespace DesertOctopus.Serialization
             return isStruct;
         }
 
-        private static bool IsEnumOrNullableEnum(Type type)
+        internal static bool IsEnumOrNullableEnum(Type type)
         {
             if (type.IsEnum)
             {
