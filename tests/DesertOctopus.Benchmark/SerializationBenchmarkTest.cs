@@ -1,9 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnostics.Windows;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using DesertOctopus.Benchmark.Models;
 using DesertOctopus.MammothCache;
@@ -130,6 +137,73 @@ namespace DesertOctopus.Benchmark
             Assert.Fail(k.First());
         }
 
+
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void KrakenBenchmarks()
+        {
+            var benchmarks = new Dictionary<string, Type>();
+            benchmarks.Add("This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.", typeof(ProductSerializationBenchMark));
+            benchmarks.Add("This benchmark serialize and deserialize a normal sized object that contains all primitives types.", typeof(SimpleDtoWithEveryPrimitivesSerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an array of 100000 ints.", typeof(IntArraySerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an array of 100000 doubles.", typeof(DoubleArraySerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.", typeof(DictionaryIntIntSerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.", typeof(DictionaryStringIntSerializationBenchmark));
+
+            var sb = new StringBuilder();
+
+            foreach (var kvp in benchmarks)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    using (var sw = new StreamWriter(ms))
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine(kvp.Key);
+                        sb.AppendLine();
+
+                        var logger = new StreamLogger(sw);
+                        var summary = BenchmarkRunner.Run(kvp.Value);
+
+                        if (summary.ValidationErrors.Length > 0)
+                        {
+                            foreach (var validationError in summary.ValidationErrors)
+                            {
+                                Console.WriteLine(validationError.Message);
+                            }
+                            Assert.Fail(kvp.Key);
+                        }
+
+                        BenchmarkDotNet.Exporters.MarkdownExporter.GitHub.ExportToLog(summary, logger);
+                        sw.Flush();
+
+
+                        sb.AppendLine(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+
+                    }
+                }
+            }
+
+            // ### Benchmark
+
+            var file = @"..\..\..\..\Docs\KrakenSerializer.md";
+            var fileContent = System.IO.File.ReadAllText(file);
+            var marker = "### Benchmark";
+            var pos = fileContent.IndexOf(marker, StringComparison.InvariantCultureIgnoreCase);
+            if (pos == -1)
+            {
+                Assert.Fail("Could not find position of " + marker);
+            }
+
+            fileContent = fileContent.Substring(0, pos + marker.Length);
+            fileContent += "\r\n\r\n" + sb.ToString();
+
+            System.IO.File.WriteAllText(file, fileContent, Encoding.UTF8);
+        }
+
+
+
         [TestMethod]
         [TestCategory("Benchmark")]
         public void SimpleDtoWithEveryPrimitivesSerializationBenchmark()
@@ -154,6 +228,73 @@ namespace DesertOctopus.Benchmark
             var ii = new IntArraySerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<IntArraySerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void DoubleArraySerializationBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<DoubleArraySerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void DictionaryStringIntSerializationBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<DictionaryStringIntSerializationBenchmark>();
+
+            using (var ms = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(ms))
+                {
+                    var logger = new StreamLogger(sw);
+                    BenchmarkDotNet.Exporters.MarkdownExporter.GitHub.ExportToLog(summary, logger);
+                    sw.Flush();
+
+
+
+                }
+
+                
+            }
+
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void DictionaryIntIntSerializationBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<DictionaryIntIntSerializationBenchmark>();
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
             Console.WriteLine(k.First());
@@ -349,6 +490,54 @@ namespace DesertOctopus.Benchmark
         public static int[] Array = Enumerable.Range(0, 100000).Select(x => int.MaxValue).ToArray();
     }
 
+    public class DoubleArraySerializationBenchmark : SerializationBenchmarkBase<double[]>
+    {
+        public DoubleArraySerializationBenchmark()
+            : base(DoubleArraySerializationBenchmark.Array)
+        {
+        }
+
+        public static double[] Array = Enumerable.Range(0, 100000).Select(x => 5456465.564D).ToArray();
+    }
+
+    public class DictionaryStringIntSerializationBenchmark : SerializationBenchmarkBase<Dictionary<string, int>>
+    {
+        public DictionaryStringIntSerializationBenchmark()
+            : base(DictionaryStringIntSerializationBenchmark.Dict)
+        {
+            
+        }
+
+        static DictionaryStringIntSerializationBenchmark()
+        {
+            for (int i = 0; i < 100000; i++)
+            {
+                Dict.Add(i.ToString(), i);
+            }
+        }
+
+        public static Dictionary<string, int> Dict = new Dictionary<string, int>();
+    }
+
+    public class DictionaryIntIntSerializationBenchmark : SerializationBenchmarkBase<Dictionary<int, int>>
+    {
+        public DictionaryIntIntSerializationBenchmark()
+            : base(DictionaryIntIntSerializationBenchmark.Dict)
+        {
+            
+        }
+
+        static DictionaryIntIntSerializationBenchmark()
+        {
+            for (int i = 0; i < 100000; i++)
+            {
+                Dict.Add(int.MaxValue - i, int.MaxValue);
+            }
+        }
+
+        public static Dictionary<int, int> Dict = new Dictionary<int, int>();
+    }
+
     public class TwoDimIntArraySerializationBenchmark : SerializationBenchmarkBase<int[,]>
     {
         public TwoDimIntArraySerializationBenchmark()
@@ -374,9 +563,43 @@ namespace DesertOctopus.Benchmark
         }
     }
 
+    [Serializable]
+    public class ObjectWrapper<T>
+    {
+        public T Value { get; set; }
+    }
+
+    public class Config : ManualConfig
+    {
+        public Config()
+        {
+            Add(new MemoryDiagnoser());
+            Add(new InliningDiagnoser());
+        }
+    }
+
+    [Config(typeof(Config))]
     public class SerializationBenchmarkBase<T>
         where T: class
     {
+        //private class Config : BenchmarkDotNet.Configs.ManualConfig
+        //{
+        //    public Config()
+        //    {
+        //        //Add(Job.Dry);
+        //        //// You can add custom tags per each method using Columns
+        //        //Add(new TagColumn("Foo or Bar", name => name.Substring(0, 3)));
+        //        //Add(new TagColumn("Number", name => name.Substring(3)));
+        //        BenchmarkDotNet.Configs.DefaultConfig
+
+        //        Add(Job.AllJits);
+        //        Add(Job.LegacyX64, Job.RyuJitX64);
+        //        Add(Job.Default.With(Mode.SingleRun).WithProcessCount(1).WithWarmupCount(1).WithTargetCount(1));
+        //        Add(Job.Default.With(Framework.V40).With(Runtime.Mono).With(Platform.X64));
+
+        //    }
+        //}
+
         private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         private BinaryFormatter bf = new BinaryFormatter();
         private byte[] krakenBytes;
