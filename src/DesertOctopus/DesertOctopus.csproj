@@ -110,6 +110,7 @@
     <Compile Include="Utilities\MethodInfoHelpers\SerializationInfoMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializedTypeResolverMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DeserializerObjectTrackerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\SerializerObjectTrackerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\StreamingContextMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\StreamMIH.cs" />
@@ -118,6 +119,7 @@
     <Compile Include="Utilities\ObjectCleaner.cs" />
     <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
     <Compile Include="Utilities\SerializedTypeResolver.cs" />
+    <Compile Include="Utilities\DeserializerObjectTracker.cs" />
     <Compile Include="Utilities\TypeWithHashCode.cs" />
     <Compile Include="Utilities\InternalSerializationStuff.cs" />
     <Compile Include="Serialization\ISerializableDeserializer.cs" />

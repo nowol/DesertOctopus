@@ -47,7 +47,7 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.IfThen(Expression.GreaterThanOrEqual(Expression.Constant(rank), Expression.Constant(255)),
                                                         Expression.Throw(Expression.New(NotSupportedExceptionMih.ConstructorString(), Expression.Constant("Array with more than 255 dimensions are not supported")))));
-            notTrackedExpressions.AddRange(WriteDimensionalArrayLength(outputStream, i, arr, lengths, rank));
+            notTrackedExpressions.AddRange(WriteDimensionalArrayLength(outputStream, objTracking, i, arr, lengths, rank));
             notTrackedExpressions.AddRange(WriteDimensionalArray(elementType, variables, outputStream, arr, rank, lengths, objTracking));
 
             return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
@@ -99,7 +99,7 @@ namespace DesertOctopus.Serialization
                 }
                 else
                 {
-                    innerExpression = primitiveWriter(outputStream, item);
+                    innerExpression = primitiveWriter(outputStream, item, objTracking);
                 }
             }
             else
@@ -151,20 +151,21 @@ namespace DesertOctopus.Serialization
         }
 
         private static IEnumerable<Expression> WriteDimensionalArrayLength(ParameterExpression outputStream,
+                                                                           Expression objTracking,
                                                                            Expression i,
                                                                            ParameterExpression arr,
                                                                            ParameterExpression lengths,
                                                                            int rank)
         {
             var expressions = new List<Expression>();
-            expressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)rank)));
+            expressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)rank), objTracking));
 
             var loopExpressions = new List<Expression>();
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
             var length = Expression.Call(arr, ArrayMih.GetLength(), i);
             loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), length));
-            loopExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.ArrayIndex(lengths, i)));
+            loopExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.ArrayIndex(lengths, i), objTracking));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var loopBody = Expression.Block(loopExpressions);

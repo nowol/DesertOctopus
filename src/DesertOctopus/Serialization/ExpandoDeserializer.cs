@@ -31,7 +31,7 @@ namespace DesertOctopus.Serialization
             var value = Expression.Parameter(typeof(object), "value");
             var typeName = Expression.Parameter(typeof(string), "typeName");
             var typeExpr = Expression.Parameter(typeof(TypeWithHashCode), "type");
-            var deserializer = Expression.Parameter(typeof(Func<Stream, List<object>, object>), "deserializer");
+            var deserializer = Expression.Parameter(typeof(Func<Stream, DeserializerObjectTracker, object>), "deserializer");
             var newInstance = Expression.Parameter(typeof(ExpandoObject), "newInstance");
             var destDict = Expression.Parameter(dictType, "destDict");
             var typeHashCode = Expression.Parameter(typeof(int), "typeHashCode");
@@ -68,7 +68,7 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(typeof(ExpandoObject))));
             notTrackedExpressions.Add(Expression.Assign(destDict, Expression.Convert(newInstance, dictType)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
 
             notTrackedExpressions.Add(loop);
 

@@ -104,6 +104,17 @@ namespace DesertOctopus.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
+        public void DuplicateWrappedInt32()
+        {
+            var instance = new GenericBaseClass<int>();
+            instance.Value = 32;
+            var duplicate = Duplicate(instance);
+            Assert.AreEqual(instance.Value,
+                            duplicate.Value);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTuple()
         {
             PrimitiveTestSuite<Tuple<int, string>>(new Tuple<int, string>(1, "a"), new Tuple<int, string>(2, "b"));

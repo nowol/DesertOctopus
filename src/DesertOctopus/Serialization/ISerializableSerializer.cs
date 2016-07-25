@@ -72,8 +72,8 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.KvpType = typeof(KeyValuePair<,>).MakeGenericType(dictionaryType.GetGenericArguments());
 
             var notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)1, typeof(byte))));
-            notTrackedExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, dictionaryType), "Count")));
+            notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value1), objTracking));
+            notTrackedExpressions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, dictionaryType), "Count"), objTracking));
             notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
 
             notTrackedExpressions.Add(EnumerableLoopHelper.GenerateEnumeratorLoop(variables,
@@ -110,10 +110,10 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.KvpType = typeof(SerializationEntry);
 
             var preLoopActions = new List<Expression>();
-            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMih.MemberCount())));
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(si, SerializationInfoMih.MemberCount()), objTracking));
 
             var notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant((byte)0, typeof(byte))));
+            notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value0, typeof(byte)), objTracking));
             notTrackedExpressions.Add(Expression.Assign(fc, Expression.New(typeof(FormatterConverter))));
             notTrackedExpressions.Add(Expression.Assign(context, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
             notTrackedExpressions.Add(Expression.Assign(si, Expression.New(SerializationInfoMih.Constructor(), Expression.Constant(type), fc)));

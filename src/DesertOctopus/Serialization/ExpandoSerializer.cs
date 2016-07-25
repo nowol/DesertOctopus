@@ -33,7 +33,7 @@ namespace DesertOctopus.Serialization
             loopBodyCargo.KvpType = typeof(KeyValuePair<string, object>);
 
             var preLoopActions = new List<Expression>();
-            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), CollectionMih.Count<KeyValuePair<string, object>>())));
+            preLoopActions.Add(PrimitiveHelpers.WriteInt32(outputStream, Expression.Property(Expression.Convert(objToSerialize, typeof(ICollection<KeyValuePair<string, object>>)), CollectionMih.Count<KeyValuePair<string, object>>()), objTracking));
 
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));

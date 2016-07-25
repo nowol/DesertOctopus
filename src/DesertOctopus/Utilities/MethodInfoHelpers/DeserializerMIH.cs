@@ -19,14 +19,5 @@ namespace DesertOctopus.Utilities
         {
             return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTypeDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
         }
-
-        /// <summary>
-        /// Calls Deserializer.GetTrackedObject
-        /// </summary>
-        /// <returns>The method info for Deserializer.GetTrackedObject</returns>
-        public static MethodInfo GetTrackedObject()
-        {
-            return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTrackedObject), BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(List<object>), typeof(int) }, new ParameterModifier[0]);
-        }
     }
 }

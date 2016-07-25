@@ -13,7 +13,7 @@ namespace DesertOctopus.Serialization
     /// </summary>
     internal static class PrimitiveHelpers
     {
-        private static Expression WriteByteArray(ParameterExpression outputStream, Expression obj)
+        private static Expression WriteByteArray(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
             var variables = new List<ParameterExpression>();
             var length = Expression.Parameter(typeof(int), "length");
@@ -24,13 +24,13 @@ namespace DesertOctopus.Serialization
 
             var breakLabel = Expression.Label("breakLabel");
             var cond = Expression.LessThan(i, length);
-            var loopBody = Expression.Block(WriteByte(outputStream, Expression.ArrayAccess(Expression.Convert(obj, typeof(byte[])), i)),
+            var loopBody = Expression.Block(WriteByte(outputStream, Expression.ArrayAccess(Expression.Convert(obj, typeof(byte[])), i), objTracker),
                                             Expression.Assign(i, Expression.Increment(i)));
 
             return Expression.Block(variables,
                                     Expression.Assign(length, Expression.Property(Expression.Convert(obj, typeof(byte[])), "Length")),
                                     Expression.Assign(i, Expression.Constant(0, typeof(int))),
-                                    WriteInt32(outputStream, length),
+                                    WriteInt32(outputStream, length, objTracker),
                                     Expression.Loop(Expression.IfThenElse(cond,
                                                                           loopBody,
                                                                           Expression.Break(breakLabel)),
@@ -64,7 +64,94 @@ namespace DesertOctopus.Serialization
                                     arr);
         }
 
-        private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, int numberOfBytes, Type expectedType)
+        private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        {
+            var expressions = new List<Expression>();
+            var breakLabel = Expression.Label("breakLabel");
+            var tmp = Expression.Property(objTracker, nameof(SerializerObjectTracker.Uint32Value));
+            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))));
+
+            //var loopCondition = Expression.IfThen();
+
+            var cond = Expression.GreaterThanOrEqual(tmp, Expression.Constant(0x80u));
+            var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, Expression.Constant(0x80u)), typeof(byte))),
+                                            //Expression.Assign(tmp, Expression.RightShiftAssign())
+                                            Expression.RightShiftAssign(tmp, Expression.Constant(7))
+                                            );
+
+            expressions.Add(Expression.Loop(Expression.IfThenElse(cond,
+                                                                  loopBody,
+                                                                  Expression.Break(breakLabel)),
+                                            breakLabel));
+            expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(tmp, typeof(byte))));
+
+            return Expression.Block(expressions);
+        }
+
+
+        private static Expression ReadVarint32(ParameterExpression inputStream, Type expectedType)
+        {
+            var variables = new List<ParameterExpression>();
+
+            var result = Expression.Parameter(typeof(int), "result");
+            var offset = Expression.Parameter(typeof(int), "offset");
+            var b = Expression.Parameter(typeof(int), "b");
+            var returnLabel = Expression.Label("returnLabel");
+            var breakLabel = Expression.Label("breakLabel");
+
+            variables.Add(result);
+            variables.Add(offset);
+            variables.Add(b);
+
+            var cond = Expression.LessThan(offset, Expression.Constant(32));
+            var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream)),
+                                            Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
+                                                              Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
+
+                                            Expression.OrAssign(result,
+                                                                Expression.LeftShift(Expression.And(b, Expression.Constant(0x7f)),
+                                                                                                    offset)),
+
+                                            Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
+                                                              Expression.Goto(returnLabel)),
+                                            Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
+
+
+            return Expression.Block(variables,
+                                    Expression.Assign(result, Expression.Constant(0)),
+                                    Expression.Assign(offset, Expression.Constant(0)),
+                                    Expression.Loop(Expression.IfThenElse(cond,
+                                                                          loopBody,
+                                                                          Expression.Break(breakLabel)),
+                                                    breakLabel),
+
+                                    //Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
+
+                                    Expression.Label(returnLabel),
+                                    Expression.Convert(result, expectedType)
+                );
+
+            /*
+            int result = 0;
+            int offset = 0;
+
+            for (; offset < 32; offset += 7)
+            {
+                int b = stream.ReadByte();
+                if (b == -1)
+                    throw new EndOfStreamException();
+
+                result |= (b & 0x7f) << offset;
+
+                if ((b & 0x80) == 0)
+                    return (uint)result;
+            }
+
+            throw new InvalidDataException();
+            */
+        }
+
+        private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
             var tmp = Expression.Parameter(expectedType, "tmp");
             var expressions = new List<Expression>();
@@ -141,10 +228,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable boolean serialization</returns>
-        public static Expression WriteNullableBool(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableBool(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(bool?), WriteBool);
+            return WriteNullable(outputStream, obj, objTracker, typeof(bool?), WriteBool);
         }
 
         /// <summary>
@@ -162,10 +250,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle boolean serialization</returns>
-        public static Expression WriteBool(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteBool(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, Expression.Condition(Expression.IsTrue(obj), Expression.Constant((byte)1), Expression.Constant((byte)0)), sizeof(byte), typeof(byte));
+            return WriteIntegerNumberPrimitive(outputStream, Expression.Condition(Expression.IsTrue(obj), Expression.Constant(SerializerObjectTracker.Value1), Expression.Constant(SerializerObjectTracker.Value0)), objTracker, sizeof(byte), typeof(byte));
         }
 
         /// <summary>
@@ -187,10 +276,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable byte serialization</returns>
-        public static Expression WriteNullableByte(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableByte(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(byte?), WriteByte);
+            return WriteNullable(outputStream, obj, objTracker, typeof(byte?), WriteByte);
         }
 
         /// <summary>
@@ -208,10 +298,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle byte serialization</returns>
-        public static Expression WriteByte(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteByte(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(byte), typeof(byte));
+            return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(byte), typeof(byte));
         }
 
         /// <summary>
@@ -229,10 +320,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable sbyte serialization</returns>
-        public static Expression WriteNullableSByte(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableSByte(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(sbyte?), WriteSByte);
+            return WriteNullable(outputStream, obj, objTracker, typeof(sbyte?), WriteSByte);
         }
 
         /// <summary>
@@ -250,10 +342,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle sbyte serialization</returns>
-        public static Expression WriteSByte(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteSByte(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(sbyte), typeof(sbyte));
+            return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(sbyte), typeof(sbyte));
         }
 
         /// <summary>
@@ -275,10 +368,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int16 serialization</returns>
-        public static Expression WriteNullableInt16(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableInt16(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(short?), WriteInt16);
+            return WriteNullable(outputStream, obj, objTracker, typeof(short?), WriteInt16);
         }
 
         /// <summary>
@@ -296,10 +390,12 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable boolean serialization</returns>
-        public static Expression WriteInt16(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteInt16(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(short), typeof(short));
+            return WriteVarint32(outputStream, obj, objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(short), typeof(short));
         }
 
         /// <summary>
@@ -309,7 +405,8 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle int16 deserialization</returns>
         public static Expression ReadInt16(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short));
+            //return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short));
+            return ReadVarint32(inputStream, typeof(short));
         }
 
         /// <summary>
@@ -317,10 +414,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint16 serialization</returns>
-        public static Expression WriteNullableUInt16(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableUInt16(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(ushort?), WriteUInt16);
+            return WriteNullable(outputStream, obj, objTracker, typeof(ushort?), WriteUInt16);
         }
 
         /// <summary>
@@ -338,10 +436,12 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint16 serialization</returns>
-        public static Expression WriteUInt16(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteUInt16(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(ushort), typeof(ushort));
+            return WriteVarint32(outputStream, obj, objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(ushort), typeof(ushort));
         }
 
         /// <summary>
@@ -351,22 +451,24 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint16 deserialization</returns>
         public static Expression ReadUInt16(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ushort)), typeof(ushort));
+            //return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ushort)), typeof(ushort));
+            return ReadVarint32(inputStream, typeof(ushort));
         }
 
-#endregion
+        #endregion
 
-#region Int32
+        #region Int32
 
         /// <summary>
         /// Generates an expression to handle nullable int32 serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int32 serialization</returns>
-        public static Expression WriteNullableInt32(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableInt32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(int?), WriteInt32);
+            return WriteNullable(outputStream, obj, objTracker, typeof(int?), WriteInt32);
         }
 
         /// <summary>
@@ -384,10 +486,12 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle int32 serialization</returns>
-        public static Expression WriteInt32(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteInt32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(int), typeof(int));
+            return WriteVarint32(outputStream, obj, objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(int), typeof(int));
         }
 
         /// <summary>
@@ -397,7 +501,8 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle int32 deserialization</returns>
         public static Expression ReadInt32(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(int)), typeof(int));
+            //return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(int)), typeof(int));
+            return ReadVarint32(inputStream, typeof(int));
         }
 
         /// <summary>
@@ -405,10 +510,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint32 serialization</returns>
-        public static Expression WriteNullableUInt32(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableUInt32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(uint?), WriteUInt32);
+            return WriteNullable(outputStream, obj, objTracker, typeof(uint?), WriteUInt32);
         }
 
         /// <summary>
@@ -426,10 +532,12 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint32 serialization</returns>
-        public static Expression WriteUInt32(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteUInt32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(uint), typeof(uint));
+            return WriteVarint32(outputStream, obj, objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(uint), typeof(uint));
         }
 
         /// <summary>
@@ -439,22 +547,24 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint32 deserialization</returns>
         public static Expression ReadUInt32(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
+            //return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
+            return ReadVarint32(inputStream, typeof(uint));
         }
 
-#endregion
+        #endregion
 
-#region Int64
+        #region Int64
 
         /// <summary>
         /// Generates an expression to handle nullable int64 serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int64 serialization</returns>
-        public static Expression WriteNullableInt64(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableInt64(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(long?), WriteInt64);
+            return WriteNullable(outputStream, obj, objTracker, typeof(long?), WriteInt64);
         }
 
         /// <summary>
@@ -472,10 +582,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle int64 serialization</returns>
-        public static Expression WriteInt64(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteInt64(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -493,10 +604,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint64 serialization</returns>
-        public static Expression WriteNullableUInt64(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableUInt64(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(ulong?), WriteUInt64);
+            return WriteNullable(outputStream, obj, objTracker, typeof(ulong?), WriteUInt64);
         }
 
         /// <summary>
@@ -514,10 +626,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint64 serialization</returns>
-        public static Expression WriteUInt64(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteUInt64(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, obj, sizeof(ulong), typeof(ulong));
+            return WriteIntegerNumberPrimitive(outputStream, obj, objTracker, sizeof(ulong), typeof(ulong));
         }
 
         /// <summary>
@@ -539,10 +652,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable decimal serialization</returns>
-        public static Expression WriteNullableDecimal(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableDecimal(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(decimal?), WriteDecimal);
+            return WriteNullable(outputStream, obj, objTracker, typeof(decimal?), WriteDecimal);
         }
 
         /// <summary>
@@ -560,8 +674,9 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle decimal serialization</returns>
-        public static Expression WriteDecimal(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteDecimal(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
             var variables = new List<ParameterExpression>();
             var bits = Expression.Parameter(typeof(int[]), "bits");
@@ -591,9 +706,9 @@ namespace DesertOctopus.Serialization
                                     Expression.Assign(scale, Expression.And(Expression.RightShift(Expression.Convert(Expression.ArrayAccess(bits, Expression.Constant(3)), typeof(uint)), Expression.Constant(15)), Expression.Convert(Expression.Constant(0x01fe), typeof(uint)))),
                                     Expression.Assign(sign, Expression.RightShift(Expression.Convert(Expression.ArrayAccess(bits, Expression.Constant(3)), typeof(uint)), Expression.Constant(31))),
                                     Expression.Assign(scaleSign, Expression.Or(scale, sign)),
-                                    WriteUInt64(outputStream, lowmid),
-                                    WriteUInt32(outputStream, high),
-                                    WriteUInt32(outputStream, scaleSign));
+                                    WriteUInt64(outputStream, lowmid, objTracker),
+                                    WriteUInt32(outputStream, high, objTracker),
+                                    WriteUInt32(outputStream, scaleSign, objTracker));
         }
 
         /// <summary>
@@ -642,10 +757,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable double serialization</returns>
-        public static Expression WriteNullableDouble(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableDouble(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(double?), WriteDouble);
+            return WriteNullable(outputStream, obj, objTracker, typeof(double?), WriteDouble);
         }
 
         /// <summary>
@@ -663,12 +779,13 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle double serialization</returns>
-        public static Expression WriteDouble(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteDouble(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
             var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetLongFromDouble(), obj);
 
-            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -691,10 +808,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable single serialization</returns>
-        public static Expression WriteNullableSingle(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableSingle(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(float?), WriteSingle);
+            return WriteNullable(outputStream, obj, objTracker, typeof(float?), WriteSingle);
         }
 
         /// <summary>
@@ -712,12 +830,14 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle single serialization</returns>
-        public static Expression WriteSingle(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteSingle(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
             var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetUintFromSingle(), obj);
 
-            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, sizeof(uint), typeof(uint));
+            return WriteVarint32(outputStream, convertedExpr, objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(uint), typeof(uint));
         }
 
         /// <summary>
@@ -727,8 +847,9 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle single deserialization</returns>
         public static Expression ReadSingle(ParameterExpression inputStream)
         {
-            var longValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
-            return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), longValue);
+            var unitValue = ReadVarint32(inputStream, typeof(uint));
+            //var unitValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
+            return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), unitValue);
         }
 
 #endregion
@@ -740,10 +861,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable char serialization</returns>
-        public static Expression WriteNullableChar(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableChar(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(char?), WriteChar);
+            return WriteNullable(outputStream, obj, objTracker, typeof(char?), WriteChar);
         }
 
         /// <summary>
@@ -761,10 +883,12 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle char serialization</returns>
-        public static Expression WriteChar(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteChar(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, Expression.Convert(obj, typeof(short)), sizeof(short), typeof(short));
+            return WriteVarint32(outputStream, Expression.Convert(obj, typeof(short)), objTracker);
+            //return WriteIntegerNumberPrimitive(outputStream, Expression.Convert(obj, typeof(short)), objTracker, sizeof(short), typeof(short));
         }
 
         /// <summary>
@@ -774,7 +898,8 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle char deserialization</returns>
         public static Expression ReadChar(ParameterExpression inputStream)
         {
-            return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short)), typeof(char));
+            return Expression.Convert(ReadVarint32(inputStream, typeof(short)), typeof(char));
+            //return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short)), typeof(char));
         }
 
 #endregion
@@ -786,10 +911,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable DateTime serialization</returns>
-        public static Expression WriteNullableDateTime(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableDateTime(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(DateTime?), WriteDateTime);
+            return WriteNullable(outputStream, obj, objTracker, typeof(DateTime?), WriteDateTime);
         }
 
         /// <summary>
@@ -807,10 +933,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle DateTime serialization</returns>
-        public static Expression WriteDateTime(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteDateTime(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, Expression.Call(Expression.Convert(obj, typeof(DateTime)), DateTimeMih.ToBinary()), sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, Expression.Call(Expression.Convert(obj, typeof(DateTime)), DateTimeMih.ToBinary()), objTracker, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -833,10 +960,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable TimeSpan serialization</returns>
-        public static Expression WriteNullableTimeSpan(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableTimeSpan(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(TimeSpan?), WriteTimeSpan);
+            return WriteNullable(outputStream, obj, objTracker, typeof(TimeSpan?), WriteTimeSpan);
         }
 
         /// <summary>
@@ -854,10 +982,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle TimeSpan serialization</returns>
-        public static Expression WriteTimeSpan(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteTimeSpan(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteIntegerNumberPrimitive(outputStream, Expression.Property(Expression.Convert(obj, typeof(TimeSpan)), typeof(TimeSpan).GetProperty("Ticks")), sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, Expression.Property(Expression.Convert(obj, typeof(TimeSpan)), typeof(TimeSpan).GetProperty("Ticks")), objTracker, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -880,10 +1009,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable BigInteger serialization</returns>
-        public static Expression WriteNullableBigInteger(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteNullableBigInteger(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteNullable(outputStream, obj, typeof(BigInteger?), WriteBigInteger);
+            return WriteNullable(outputStream, obj, objTracker, typeof(BigInteger?), WriteBigInteger);
         }
 
         /// <summary>
@@ -901,10 +1031,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle BigInteger serialization</returns>
-        public static Expression WriteBigInteger(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteBigInteger(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
-            return WriteByteArray(outputStream, Expression.Call(Expression.Convert(obj, typeof(BigInteger)), BigIntegerMih.ToByteArray()));
+            return WriteByteArray(outputStream, Expression.Call(Expression.Convert(obj, typeof(BigInteger)), BigIntegerMih.ToByteArray()), objTracker);
         }
 
         /// <summary>
@@ -922,21 +1053,21 @@ namespace DesertOctopus.Serialization
 
 #region nullable
 
-        private static Expression WriteNullable(ParameterExpression outputStream, Expression obj, Type nullableType, Func<ParameterExpression, Expression, Expression> primitiveWriter)
+        private static Expression WriteNullable(ParameterExpression outputStream, Expression obj, Expression objTracker, Type nullableType, Func<ParameterExpression, Expression, Expression, Expression> primitiveWriter)
         {
             var underlyingType = Nullable.GetUnderlyingType(nullableType);
 
             return Expression.IfThenElse(Expression.Equal(obj, Expression.Constant(null)),
-                                         WriteByte(outputStream, Expression.Constant((byte)0)),
-                                         Expression.Block(WriteByte(outputStream, Expression.Constant((byte)1)),
-                                                          primitiveWriter(outputStream, Expression.Convert(obj, underlyingType))));
+                                         WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value0), objTracker),
+                                         Expression.Block(WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value1), objTracker),
+                                                          primitiveWriter(outputStream, Expression.Convert(obj, underlyingType), objTracker)));
         }
 
         private static Expression ReadNullable(ParameterExpression inputStream, Type nullableType, Func<ParameterExpression, Expression> primitiveReader)
         {
             var tmp = Expression.Parameter(nullableType, "tmp");
             return Expression.Block(new List<ParameterExpression> { tmp },
-                                    Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
+                                    Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                          Expression.Assign(tmp, Expression.Constant(null, nullableType)),
                                          Expression.Assign(tmp, Expression.Convert(primitiveReader(inputStream), nullableType))),
                                     tmp);
@@ -950,23 +1081,24 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle string deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle string deserialization</returns>
-        public static Expression ReadString(ParameterExpression inputStream)
+        public static Expression ReadString(ParameterExpression inputStream, Expression objTracker)
         {
             var expressions = new List<Expression>();
             var variables = new List<ParameterExpression>();
             var encoding = Expression.Parameter(typeof(UTF8Encoding), "encoding");
             var nbBytes = Expression.Parameter(typeof(byte), "nbBytes");
             var length = Expression.Parameter(typeof(int), "length");
-            var buffer = Expression.Parameter(typeof(byte[]), "buffer");
+            //var buffer = Expression.Parameter(typeof(byte[]), "buffer");
             var i = Expression.Parameter(typeof(int), "i");
             var r = Expression.Parameter(typeof(int), "r");
             var newInstance = Expression.Parameter(typeof(string), "newInstance");
+            var buffer = Expression.Property(objTracker, nameof(SerializerObjectTracker.Buffer));
 
             variables.Add(encoding);
             variables.Add(nbBytes);
             variables.Add(length);
-            variables.Add(buffer);
             variables.Add(i);
             variables.Add(r);
             variables.Add(newInstance);
@@ -974,7 +1106,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(Expression.Assign(r, Expression.Constant(0)));
             expressions.Add(Expression.Assign(length, Expression.Convert(ReadInt32(inputStream), typeof(int))));
-            expressions.Add(Expression.Assign(buffer, Expression.NewArrayBounds(typeof(byte), length)));
+            expressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.EnsureBufferSize(), length));
             expressions.Add(Expression.Assign(encoding, Expression.New(typeof(UTF8Encoding).GetConstructor(new[] { typeof(bool), typeof(bool) }), Expression.Constant(false), Expression.Constant(true))));
 
             var loopBody = Expression.Block(Expression.Assign(r, Expression.Call(inputStream, StreamMih.Read(), buffer, i, Expression.Convert(Expression.Subtract(length, i), typeof(int)))),
@@ -988,12 +1120,11 @@ namespace DesertOctopus.Serialization
                                                              loopBody,
                                                              Expression.Break(breakLabel)),
                                        breakLabel);
-
             expressions.Add(loop);
-            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(encoding, Utf8EncodingMih.GetString(), buffer), typeof(string))));
+            expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(encoding, Utf8EncodingMih.GetStringResuableBuffer(), buffer, Expression.Constant(0), length), typeof(string))));
 
             return Expression.Block(variables,
-                                    Expression.Block(Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant((byte)0)),
+                                    Expression.Block(Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                                                            Expression.Assign(newInstance, Expression.Constant(null, typeof(string))),
                                                                            Expression.Block(expressions)),
                                                      newInstance));
@@ -1004,37 +1135,37 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle string serialization</returns>
-        public static Expression WriteString(ParameterExpression outputStream, Expression obj)
+        public static Expression WriteString(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
             var expressions = new List<Expression>();
             var variables = new List<ParameterExpression>();
             var encoding = Expression.Parameter(typeof(Encoding), "encoding");
             var length = Expression.Parameter(typeof(int), "length");
-            var buffer = Expression.Parameter(typeof(byte[]), "buffer");
-            var writeLength = WriteInt32(outputStream, length);
+            var writeLength = WriteInt32(outputStream, length, objTracker);
+            var buffer = Expression.Property(objTracker, nameof(SerializerObjectTracker.Buffer));
 
             variables.Add(encoding);
             variables.Add(length);
-            variables.Add(buffer);
 
             Expression stringNotNull = Expression.Block(variables,
                                                         Expression.Assign(encoding, Expression.Constant(System.Text.Encoding.UTF8)),
                                                         Expression.Assign(length, Expression.Call(encoding, EncodingMih.GetByteCount(), Expression.Convert(obj, typeof(string)))),
-                                                        WriteByte(outputStream, Expression.Constant((byte)1)),
+                                                        WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value1), objTracker),
                                                         writeLength,
-                                                        Expression.Assign(buffer, Expression.NewArrayBounds(typeof(byte), length)),
+                                                        Expression.Call(objTracker, SerializerObjectTrackerMih.EnsureBufferSize(), length),
                                                         Expression.Call(encoding,
                                                                         EncodingMih.GetBytes(),
                                                                         Expression.Convert(obj, typeof(string)),
                                                                         Expression.Constant(0),
-                                                                        Expression.Property(Expression.Convert(obj, typeof(string)), "Length"),
+                                                                        Expression.Property(Expression.Convert(obj, typeof(string)), nameof(String.Length)),
                                                                         buffer,
                                                                         Expression.Constant(0)),
                                                         Expression.Call(outputStream, StreamMih.Write(), buffer, Expression.Constant(0), length));
 
             expressions.Add(Expression.IfThenElse(Expression.Equal(obj, Expression.Constant(null)),
-                                                  WriteByte(outputStream, Expression.Constant((byte)0)),
+                                                  WriteByte(outputStream, Expression.Constant(SerializerObjectTracker.Value0), objTracker),
                                                   stringNotNull));
 
             return Expression.Block(variables, expressions);

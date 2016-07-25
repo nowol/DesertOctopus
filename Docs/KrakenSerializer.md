@@ -65,16 +65,16 @@ JitModules=clrjit-v4.6.1055.0
 Type=ProductSerializationBenchMark  Mode=Throughput  GarbageCollection=Concurrent Workstation  
 
 ```
-                         Method |      Median |    StdDev |
-------------------------------- |------------ |---------- |
-              JsonSerialization |  88.6700 us | 0.8293 us |
-            JsonDeserialization | 170.2807 us | 2.4112 us |
-              OmniSerialization | 189.9103 us | 1.8282 us |
-            OmniDeserialization |  83.1365 us | 0.9025 us |
-            KrakenSerialization | 237.4399 us | 2.1391 us |
-          KrakenDeserialization | 138.3925 us | 1.6673 us |
-   BinaryFormatterSerialization | 402.5713 us | 2.6870 us |
- BinaryFormatterDeserialization | 387.0419 us | 3.6949 us |
+                         Method |      Median |    StdDev |  Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
+------------------------------- |------------ |---------- |------- |------ |------ |------------------- |
+              JsonSerialization |  89.3981 us | 0.6611 us | 123.25 |  0.12 |     - |          20 951,54 |
+            JsonDeserialization | 167.2077 us | 1.9596 us | 294.21 |  0.25 |     - |          43 232,20 |
+              OmniSerialization | 190.7253 us | 2.7334 us | 373.35 |  0.24 |     - |          58 023,73 |
+            OmniDeserialization |  84.1456 us | 1.4532 us | 123.36 |  0.12 |     - |          17 588,03 |
+            KrakenSerialization | 243.3185 us | 2.8817 us | 297.97 |  0.50 |     - |          46 345,63 |
+          KrakenDeserialization | 142.9836 us | 1.3913 us | 182.79 |  0.26 |     - |          26 075,27 |
+   BinaryFormatterSerialization | 411.8838 us | 8.4578 us | 649.00 |  1.00 |     - |         101 161,91 |
+ BinaryFormatterDeserialization | 384.1768 us | 2.5481 us | 587.93 |  0.98 |     - |          84 071,98 |
 
 
 This benchmark serialize and deserialize a normal sized object that contains all primitives types.
@@ -95,14 +95,14 @@ Type=SimpleDtoWithEveryPrimitivesSerializationBenchmark  Mode=Throughput  Garbag
 ```
                          Method |     Median |    StdDev |    Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
 ------------------------------- |----------- |---------- |--------- |------ |------ |------------------- |
-              JsonSerialization | 15.5479 us | 0.0937 us |   452.93 |     - |     - |           4 526,10 |
-            JsonDeserialization | 14.9042 us | 0.1866 us |   236.05 |     - |     - |           2 207,70 |
-              OmniSerialization |  1.7040 us | 0.0122 us |    57.61 |     - |     - |             531,44 |
-            OmniDeserialization |  1.1246 us | 0.0081 us |    29.59 |     - |     - |             273,82 |
-            KrakenSerialization |  2.8756 us | 0.0295 us |   135.99 |     - |     - |           1 238,14 |
-          KrakenDeserialization |  1.5519 us | 0.0133 us |    65.78 |     - |     - |             603,52 |
-   BinaryFormatterSerialization | 41.0101 us | 0.4093 us | 1,017.00 |     - |     - |           9 519,36 |
- BinaryFormatterDeserialization | 23.4704 us | 0.3266 us |   667.93 |     - |     - |           6 073,19 |
+              JsonSerialization | 15.5069 us | 0.0926 us |   433.86 |     - |     - |           4 238,79 |
+            JsonDeserialization | 14.6484 us | 0.2614 us |   193.51 |     - |     - |           1 770,51 |
+              OmniSerialization |  1.7146 us | 0.0206 us |    60.25 |     - |     - |             543,25 |
+            OmniDeserialization |  1.1227 us | 0.0141 us |    32.91 |     - |     - |             297,44 |
+            KrakenSerialization |  2.8897 us | 0.0165 us |   137.95 |     - |     - |           1 230,98 |
+          KrakenDeserialization |  1.6331 us | 0.0253 us |    67.64 |     - |     - |             610,14 |
+   BinaryFormatterSerialization | 41.5045 us | 0.3234 us | 1,030.17 |     - |     - |           9 421,77 |
+ BinaryFormatterDeserialization | 23.7353 us | 0.1882 us |   699.00 |     - |     - |           6 211,09 |
 
 
 This benchmark serialize and deserialize an array of 100000 ints.
@@ -123,14 +123,14 @@ Type=IntArraySerializationBenchmark  Mode=Throughput  GarbageCollection=Concurre
 ```
                          Method |         Median |      StdDev |  Gen 0 | Gen 1 |  Gen 2 | Bytes Allocated/Op |
 ------------------------------- |--------------- |------------ |------- |------ |------- |------------------- |
-              JsonSerialization | 14,053.5865 us | 141.0809 us | 736.00 |  4.00 | 144.00 |       5 378 245,27 |
-            JsonDeserialization | 18,149.1075 us | 154.2761 us | 736.00 |  3.00 | 139.00 |       4 675 040,35 |
-              OmniSerialization |  3,157.4893 us |  42.5340 us |   9.44 |  1.99 |  76.02 |         615 464,45 |
-            OmniDeserialization |  2,338.1632 us |  93.4456 us |   0.27 |  0.13 |  24.59 |         178 476,87 |
-            KrakenSerialization |  2,470.0386 us |  39.4308 us |  11.47 |  0.11 |  77.16 |         584 150,15 |
-          KrakenDeserialization |  1,324.0410 us |   7.1417 us |   0.12 |  0.06 |  31.60 |         186 382,51 |
-   BinaryFormatterSerialization |    537.8107 us |  10.4295 us |  14.94 |  0.15 |  98.41 |         694 775,42 |
- BinaryFormatterDeserialization |    154.4521 us |   2.1852 us |   0.63 |  0.01 |  28.36 |         173 973,33 |
+              JsonSerialization | 13,918.9631 us | 169.6306 us | 742.15 |  1.83 | 144.76 |       5 791 535,09 |
+            JsonDeserialization | 17,944.3896 us | 169.5754 us | 662.00 |  3.00 | 125.00 |       4 497 848,86 |
+              OmniSerialization |  3,133.6778 us |  13.0959 us |   9.71 |  0.25 |  70.70 |         656 478,66 |
+            OmniDeserialization |  2,245.8171 us |  43.4993 us |   0.25 |  0.12 |  21.77 |         169 371,80 |
+            KrakenSerialization |  2,471.3236 us |  17.7188 us |  11.45 |  0.13 |  77.25 |         623 993,94 |
+          KrakenDeserialization |  1,218.7227 us |   7.3965 us |   0.12 |  0.06 |  26.30 |         166 846,81 |
+   BinaryFormatterSerialization |    525.9088 us |   7.8323 us |  12.40 |  0.19 |  82.36 |         619 895,14 |
+ BinaryFormatterDeserialization |    150.7751 us |   2.1502 us |   0.55 |  0.01 |  24.55 |         161 691,99 |
 
 
 This benchmark serialize and deserialize an array of 100000 doubles.
@@ -151,14 +151,42 @@ Type=DoubleArraySerializationBenchmark  Mode=Throughput  GarbageCollection=Concu
 ```
                          Method |         Median |      StdDev |  Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
 ------------------------------- |--------------- |------------ |------- |------ |------ |------------------- |
-              JsonSerialization | 63,102.4858 us | 876.2506 us | 370.00 |  2.00 |  4.00 |       8 745 208,74 |
-            JsonDeserialization | 21,806.7454 us | 153.0074 us | 170.38 |  0.51 | 36.75 |       5 081 079,14 |
-              OmniSerialization |  5,743.8343 us |  79.7935 us |   2.43 |  0.06 | 20.60 |       1 228 679,58 |
-            OmniDeserialization |  3,915.5329 us |  45.8703 us |   0.19 |  0.06 |  6.38 |         364 667,07 |
-            KrakenSerialization |  5,523.3790 us |  64.5997 us |   2.48 |  0.07 | 24.24 |       1 174 222,22 |
-          KrakenDeserialization |  3,190.8341 us |  34.7238 us |   0.21 |  0.07 |  5.83 |         342 307,55 |
-   BinaryFormatterSerialization |  1,060.3438 us |  13.3393 us |   3.17 |  0.05 | 28.82 |       1 190 667,43 |
- BinaryFormatterDeserialization |    303.9988 us |   3.9599 us |   0.15 |  0.00 |  9.05 |         313 206,02 |
+              JsonSerialization | 62,244.3285 us | 380.6121 us | 412.00 |  2.00 |  4.00 |       9 714 517,17 |
+            JsonDeserialization | 22,327.5584 us | 147.4108 us | 172.19 |  0.49 | 37.14 |       5 132 350,74 |
+              OmniSerialization |  5,497.0063 us |  48.2634 us |   2.63 |  0.06 | 22.91 |       1 333 915,17 |
+            OmniDeserialization |  4,035.3816 us |  33.3874 us |   0.19 |  0.06 |  5.89 |         337 141,82 |
+            KrakenSerialization |  5,542.4402 us | 102.5323 us |   2.68 |  0.07 | 25.85 |       1 280 667,50 |
+          KrakenDeserialization |  3,235.1326 us |  45.4099 us |   0.20 |  0.07 |  6.03 |         353 046,84 |
+   BinaryFormatterSerialization |  1,061.1412 us |  17.1481 us |   3.04 |  0.03 | 27.70 |       1 138 366,88 |
+ BinaryFormatterDeserialization |    302.8572 us |   3.8349 us |   0.15 |  0.00 |  9.15 |         320 510,70 |
+
+
+This benchmark serialize and deserialize an array of 100000 decimals.
+
+```ini
+
+Host Process Environment Information:
+BenchmarkDotNet=v0.9.8.0
+OS=Microsoft Windows NT 6.3.9600.0
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
+Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
+CLR=MS.NET 4.0.30319.42000, Arch=64-bit ? [RyuJIT]
+GC=Concurrent Workstation
+JitModules=clrjit-v4.6.1055.0
+
+Type=DecimalArraySerializationBenchmark  Mode=Throughput  GarbageCollection=Concurrent Workstation  
+
+```
+                         Method |     Median |    StdDev |  Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
+------------------------------- |----------- |---------- |------- |------ |------ |------------------- |
+              JsonSerialization | 27.4200 ms | 0.2824 ms | 373.60 |  1.96 | 40.10 |       5 749 060,99 |
+            JsonDeserialization | 34.3730 ms | 0.3438 ms | 373.60 |  1.96 | 43.03 |       6 899 350,73 |
+              OmniSerialization |  5.7768 ms | 0.0467 ms | 194.46 |  8.36 | 39.12 |       2 977 283,54 |
+            OmniDeserialization |  4.9785 ms | 0.0845 ms |   0.99 |  0.12 | 12.50 |         700 969,35 |
+            KrakenSerialization | 10.7834 ms | 0.0743 ms | 190.17 |  3.04 | 49.95 |       4 072 580,58 |
+          KrakenDeserialization |  6.1768 ms | 0.0371 ms | 196.65 |  0.24 | 23.98 |       2 467 990,50 |
+   BinaryFormatterSerialization | 32.0796 ms | 0.3367 ms | 382.00 |  2.00 | 41.00 |       5 877 397,08 |
+ BinaryFormatterDeserialization | 45.7325 ms | 0.6659 ms | 403.85 |  1.91 |  3.83 |       4 500 078,88 |
 
 
 This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.
@@ -179,14 +207,14 @@ Type=DictionaryIntIntSerializationBenchmark  Mode=Throughput  GarbageCollection=
 ```
                          Method |      Median |    StdDev |  Gen 0 |  Gen 1 | Gen 2 | Bytes Allocated/Op |
 ------------------------------- |------------ |---------- |------- |------- |------ |------------------- |
-              JsonSerialization |  30.0451 ms | 0.2822 ms | 328.97 |  10.34 | 20.17 |      10 619 497,56 |
-            JsonDeserialization |  38.9162 ms | 0.3967 ms | 330.67 |   9.61 | 18.71 |       8 490 183,06 |
-              OmniSerialization |   7.5919 ms | 0.0941 ms |   3.97 |   0.38 | 16.03 |       1 677 001,83 |
-            OmniDeserialization |   7.7030 ms | 0.0784 ms |   6.39 |   0.38 | 33.09 |       2 972 142,56 |
-            KrakenSerialization |   6.9969 ms | 0.0535 ms | 122.28 |   5.28 | 10.08 |       3 526 410,26 |
-          KrakenDeserialization |   7.3306 ms | 0.0956 ms | 107.38 |   5.52 | 21.87 |       4 287 087,08 |
-   BinaryFormatterSerialization | 119.4860 ms | 0.8852 ms | 449.02 |   2.93 |  3.91 |      10 769 106,39 |
- BinaryFormatterDeserialization | 292.8191 ms | 2.9905 ms | 262.00 | 135.00 | 52.00 |      15 340 173,16 |
+              JsonSerialization |  29.8051 ms | 0.3534 ms | 300.61 |   8.97 | 17.93 |      10 381 338,43 |
+            JsonDeserialization |  38.4057 ms | 0.3939 ms | 342.13 |  10.38 | 19.82 |       9 414 004,65 |
+              OmniSerialization |   7.5552 ms | 0.0615 ms |   3.51 |   0.23 | 13.69 |       1 552 405,31 |
+            OmniDeserialization |   8.2013 ms | 0.0703 ms |   6.02 |   0.25 | 29.34 |       2 857 062,59 |
+            KrakenSerialization |   6.9564 ms | 0.0730 ms | 100.25 |   4.23 |  8.24 |       3 097 498,00 |
+          KrakenDeserialization |   7.4698 ms | 0.0447 ms | 112.84 |   5.26 | 24.15 |       4 804 845,19 |
+   BinaryFormatterSerialization | 119.6410 ms | 0.6596 ms | 483.45 |   1.79 |  2.68 |      12 355 691,49 |
+ BinaryFormatterDeserialization | 293.9149 ms | 1.6072 ms | 261.00 | 135.00 | 52.00 |      16 436 123,57 |
 
 
 This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.
@@ -207,12 +235,40 @@ Type=DictionaryStringIntSerializationBenchmark  Mode=Throughput  GarbageCollecti
 ```
                          Method |      Median |    StdDev |  Gen 0 |  Gen 1 | Gen 2 | Bytes Allocated/Op |
 ------------------------------- |------------ |---------- |------- |------- |------ |------------------- |
-              JsonSerialization |  18.3806 ms | 0.1672 ms | 132.00 |   4.80 | 16.56 |       4 854 621,68 |
-            JsonDeserialization |  55.8819 ms | 1.1299 ms | 139.40 |  39.32 | 23.23 |      10 841 007,11 |
-              OmniSerialization |  12.5285 ms | 0.1959 ms |   3.20 |   0.34 | 11.79 |       1 840 550,13 |
-            OmniDeserialization |  25.3816 ms | 0.4350 ms |  23.49 |  27.47 | 27.47 |       6 029 341,32 |
-            KrakenSerialization |  37.1892 ms | 0.5032 ms | 115.16 |  18.06 | 38.84 |       9 295 262,86 |
-          KrakenDeserialization |  60.8138 ms | 2.2220 ms | 159.92 |  65.42 | 22.62 |      11 961 579,50 |
-   BinaryFormatterSerialization | 156.1871 ms | 1.6842 ms | 393.87 |   4.67 | 50.40 |      17 618 396,18 |
- BinaryFormatterDeserialization | 464.7215 ms | 4.1593 ms | 359.00 | 168.00 | 56.00 |      22 602 531,95 |
+              JsonSerialization |  18.5081 ms | 0.1024 ms | 120.41 |   3.93 | 15.31 |       4 414 288,93 |
+            JsonDeserialization |  56.7711 ms | 0.6508 ms | 121.23 |  33.41 | 21.00 |       9 454 629,95 |
+              OmniSerialization |  12.2460 ms | 0.0820 ms |   3.41 |   0.21 | 14.34 |       2 210 255,12 |
+            OmniDeserialization |  25.2952 ms | 0.6064 ms |  24.77 |  27.57 | 27.78 |       6 228 613,59 |
+            KrakenSerialization |  38.0625 ms | 0.4450 ms |  56.31 |   9.69 | 36.92 |       8 158 516,75 |
+          KrakenDeserialization |  63.8471 ms | 2.3487 ms | 127.79 |  67.02 | 21.45 |      11 916 924,68 |
+   BinaryFormatterSerialization | 157.8951 ms | 1.0261 ms | 422.00 |   3.00 | 54.00 |      18 840 072,67 |
+ BinaryFormatterDeserialization | 466.9921 ms | 6.2495 ms | 365.22 | 170.74 | 57.52 |      23 004 729,91 |
+
+
+This benchmark serialize and deserialize a string of 1000 characters.
+
+```ini
+
+Host Process Environment Information:
+BenchmarkDotNet=v0.9.8.0
+OS=Microsoft Windows NT 6.3.9600.0
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
+Frequency=14318180 ticks, Resolution=69.8413 ns, Timer=HPET
+CLR=MS.NET 4.0.30319.42000, Arch=64-bit ? [RyuJIT]
+GC=Concurrent Workstation
+JitModules=clrjit-v4.6.1055.0
+
+Type=StringSerializationBenchmark  Mode=Throughput  GarbageCollection=Concurrent Workstation  
+
+```
+                         Method |    Median |    StdDev |    Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
+------------------------------- |---------- |---------- |--------- |------ |------ |------------------- |
+              JsonSerialization | 2.6216 us | 0.0275 us | 2,635.26 |     - |     - |           3 424,54 |
+            JsonDeserialization | 3.5067 us | 0.0306 us | 1,441.00 |     - |     - |           1 881,89 |
+              OmniSerialization | 2.9927 us | 0.0640 us | 2,054.09 |     - |     - |           2 543,10 |
+            OmniDeserialization | 1.7698 us | 0.0339 us | 1,525.67 |     - |     - |           1 953,50 |
+            KrakenSerialization | 4.8746 us | 0.0454 us | 1,735.07 |     - |     - |           2 101,51 |
+          KrakenDeserialization | 1.8286 us | 0.0242 us | 1,500.54 |     - |     - |           1 870,91 |
+   BinaryFormatterSerialization | 5.2552 us | 0.0684 us | 3,472.93 |     - |     - |           4 200,71 |
+ BinaryFormatterDeserialization | 4.5291 us | 0.0415 us | 3,499.12 |     - |     - |           4 278,91 |
 

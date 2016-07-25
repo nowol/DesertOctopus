@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using BenchmarkDotNet.Attributes;
@@ -16,6 +18,8 @@ using DesertOctopus.Benchmark.Models;
 using DesertOctopus.MammothCache;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis;
+using DesertOctopus.Serialization;
+using DesertOctopus.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.Benchmark
@@ -31,10 +35,27 @@ namespace DesertOctopus.Benchmark
         }
 
 
+
         [TestMethod]
         [TestCategory("Benchmark")]
         public void ForOptimization()
         {
+            ParameterExpression outputStream = Expression.Parameter(typeof(Stream)), objTracking = Expression.Parameter(typeof(SerializerObjectTracker));
+            var notTrackedExpressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
+
+            var b = Expression.Parameter(typeof(byte));
+
+            variables.Add(b);
+
+            notTrackedExpressions.Add(Expression.Assign(b, Expression.Constant((byte)0)));
+            //notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, b, objTracking));
+
+            notTrackedExpressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), b ));
+
+
+            var block = Expression.Block(variables, notTrackedExpressions);
+
             new IntArraySerializationBenchmark();
 
         }
@@ -148,8 +169,10 @@ namespace DesertOctopus.Benchmark
             benchmarks.Add("This benchmark serialize and deserialize a normal sized object that contains all primitives types.", typeof(SimpleDtoWithEveryPrimitivesSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 ints.", typeof(IntArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 doubles.", typeof(DoubleArraySerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an array of 100000 decimals.", typeof(DecimalArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.", typeof(DictionaryIntIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.", typeof(DictionaryStringIntSerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize a string of 1000 characters.", typeof(StringSerializationBenchmark));
 
             var sb = new StringBuilder();
 
@@ -259,25 +282,30 @@ namespace DesertOctopus.Benchmark
 
         [TestMethod]
         [TestCategory("Benchmark")]
-        public void DictionaryStringIntSerializationBenchmark()
+        public void DecimalArraySerializationBenchmark()
         {
-            var summary = BenchmarkRunner.Run<DictionaryStringIntSerializationBenchmark>();
+            var ii = new DecimalArraySerializationBenchmark();
 
-            using (var ms = new MemoryStream())
+            var summary = BenchmarkRunner.Run<DecimalArraySerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
             {
-                using (var sw = new StreamWriter(ms))
-                {
-                    var logger = new StreamLogger(sw);
-                    BenchmarkDotNet.Exporters.MarkdownExporter.GitHub.ExportToLog(summary, logger);
-                    sw.Flush();
-
-
-
-                }
-
-                
+                Console.WriteLine(validationError.Message);
             }
 
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void DictionaryStringIntSerializationBenchmark()
+        {
+            var ii = new DictionaryStringIntSerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<DictionaryStringIntSerializationBenchmark>();
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
             Console.WriteLine(k.First());
@@ -295,6 +323,25 @@ namespace DesertOctopus.Benchmark
         public void DictionaryIntIntSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<DictionaryIntIntSerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void StringSerializationBenchmark()
+        {
+            var ii = new StringSerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<StringSerializationBenchmark>();
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
             Console.WriteLine(k.First());
@@ -487,6 +534,7 @@ namespace DesertOctopus.Benchmark
         {
         }
 
+        //public static int[] Array = Enumerable.Range(0, 100000).Select(x => 55555).ToArray();
         public static int[] Array = Enumerable.Range(0, 100000).Select(x => int.MaxValue).ToArray();
     }
 
@@ -498,6 +546,17 @@ namespace DesertOctopus.Benchmark
         }
 
         public static double[] Array = Enumerable.Range(0, 100000).Select(x => 5456465.564D).ToArray();
+    }
+
+    public class DecimalArraySerializationBenchmark : SerializationBenchmarkBase<decimal[]>
+    {
+        public DecimalArraySerializationBenchmark()
+            : base(DecimalArraySerializationBenchmark.Array)
+        {
+        }
+
+        //public static decimal[] Array = Enumerable.Range(0, 100000).Select(x => Decimal.MaxValue).ToArray();
+        public static decimal[] Array = Enumerable.Range(0, 100000).Select(x => 5456465.564M).ToArray();
     }
 
     public class DictionaryStringIntSerializationBenchmark : SerializationBenchmarkBase<Dictionary<string, int>>
@@ -536,6 +595,17 @@ namespace DesertOctopus.Benchmark
         }
 
         public static Dictionary<int, int> Dict = new Dictionary<int, int>();
+    }
+
+    public class StringSerializationBenchmark : SerializationBenchmarkBase<ObjectWrapper<string>>
+    {
+        public StringSerializationBenchmark()
+            : base(StringSerializationBenchmark.Str)
+        {
+            
+        }
+        
+        public static ObjectWrapper<string> Str = new ObjectWrapper<string>() { Value = new string('c', 1000) };
     }
 
     public class TwoDimIntArraySerializationBenchmark : SerializationBenchmarkBase<int[,]>
@@ -733,6 +803,7 @@ namespace DesertOctopus.Benchmark
         }
     }
 
+    [Config(typeof(Config))]
     public class ProductSerializationBenchMark
     {
         private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();

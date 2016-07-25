@@ -47,7 +47,7 @@ namespace DesertOctopus.Tests
 
             // this is a hackish way to change the hashcode of a serialized object
             // if the way/order (currently TypeName + Hash) that an object is serialized changes the line below will need to be modified to target a byte of the hashcode
-            bytes[index + needle.Length + 1] = (bytes[index + needle.Length + 1] == 255) ? (byte)0 : (byte)(bytes[index + needle.Length] + 1); // change the hashcode to something invalid
+            bytes[index + needle.Length + 1] = (bytes[index + needle.Length + 1] == 255) ? SerializerObjectTracker.Value0 : (byte)(bytes[index + needle.Length] + 1); // change the hashcode to something invalid
 
             Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
         }

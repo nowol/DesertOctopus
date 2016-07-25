@@ -68,7 +68,7 @@ namespace DesertOctopus.Serialization
             var typeExpr = Expression.Parameter(typeof(TypeWithHashCode), "type");
             var indices = Expression.Parameter(typeof(int[]), "indices");
             var tmpValue = Expression.Parameter(elementType, "tmpValue");
-            var deserializer = Expression.Parameter(typeof(Func<Stream, List<object>, object>), "deserializer");
+            var deserializer = Expression.Parameter(typeof(Func<Stream, DeserializerObjectTracker, object>), "deserializer");
             var typeHashCode = Expression.Parameter(typeof(int), "typeHashCode");
 
             variables.Add(deserializer);
@@ -79,7 +79,7 @@ namespace DesertOctopus.Serialization
 
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), type)));
-            expressions.Add(Expression.Call(objTracking, ListMih.ObjectListAdd(), newInstance));
+            expressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
 
             if (rank > 1)
             {
@@ -90,7 +90,7 @@ namespace DesertOctopus.Serialization
             Expression innerExpression;
             //if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
             //{
-            //    Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+            //    Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
             //    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
             //}
             //else
@@ -107,7 +107,7 @@ namespace DesertOctopus.Serialization
                 var primitiveReader = Deserializer.GetPrimitiveReader(elementType);
                 if (primitiveReader == null)
                 {
-                    Func<Stream, List<object>, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+                    Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
                     innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
                 }
                 else

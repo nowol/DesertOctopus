@@ -7,24 +7,16 @@ namespace DesertOctopus.Utilities
     /// <summary>
     /// Helper class to track object references
     /// </summary>
-    internal class SerializerObjectTracker
+    internal class DeserializerObjectTracker
     {
-        private readonly Dictionary<object, int> _trackedObjects;
-        private readonly List<object> _trackedObjects2;
-
-        public const byte Value0 = 0;
-
-        public const byte Value1 = 1;
-
-        public uint Uint32Value { get; set; }
+        private readonly List<object> _trackedObjects;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SerializerObjectTracker"/> class.
+        /// Initializes a new instance of the <see cref="DeserializerObjectTracker"/> class.
         /// </summary>
-        public SerializerObjectTracker()
+        public DeserializerObjectTracker()
         {
-            _trackedObjects = new Dictionary<object, int>();
-            _trackedObjects2 = new List<object>();
+            _trackedObjects = new List<object>();
         }
 
         /// <summary>
@@ -38,13 +30,7 @@ namespace DesertOctopus.Utilities
                 return;
             }
 
-            _trackedObjects2.Add(obj);
-
-            if (obj.GetType().IsClass
-                && !_trackedObjects.ContainsKey(obj))
-            {
-                _trackedObjects.Add(obj, _trackedObjects2.Count - 1);
-            }
+            _trackedObjects.Add(obj);
         }
 
         /// <summary>
@@ -56,24 +42,13 @@ namespace DesertOctopus.Utilities
         }
 
         /// <summary>
-        /// Get the index of a tracked object
+        /// Gets the object at the specified index
         /// </summary>
-        /// <param name="obj">Object to get the index of</param>
-        /// <returns>The index of a tracked object</returns>
-        public int? GetTrackedObjectIndex(object obj)
+        /// <param name="index">Index to read from</param>
+        /// <returns>The object at the specified index</returns>
+        public object GetTrackedObject(int index)
         {
-            if (obj == null)
-            {
-                return null;
-            }
-
-            int index;
-            if (_trackedObjects.TryGetValue(obj, out index))
-            {
-                return index;
-            }
-
-            return null;
+            return _trackedObjects[index];
         }
 
         /// <summary>
