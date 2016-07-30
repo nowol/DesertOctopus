@@ -100,26 +100,37 @@ namespace DesertOctopus.MammothCache.Tests
             {
                 RemoveAllAndWait();
             }
-            catch (ObjectDisposedException)
+            catch
             {
+                // dont really care if it fails
             }
 
             try
             {
                 _firstLevelCache.Dispose();
             }
-            catch (ObjectDisposedException)
+            catch
             {
+                // dont really care if it fails
             }
 
-            _secondLevelCache.Dispose();
+            try
+            {
+                _secondLevelCache.Dispose();
+            }
+            catch
+            {
+                // dont really care if it fails
+            }
+
 
             try
             {
                 _cache.Dispose();
             }
-            catch (ObjectDisposedException)
+            catch
             {
+                // dont really care if it fails
             }
 
             _nonSerializableCache.Dispose();

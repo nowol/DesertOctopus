@@ -534,8 +534,8 @@ namespace DesertOctopus.Benchmark
         {
         }
 
-        //public static int[] Array = Enumerable.Range(0, 100000).Select(x => 55555).ToArray();
-        public static int[] Array = Enumerable.Range(0, 100000).Select(x => int.MaxValue).ToArray();
+        public static int[] Array = Enumerable.Range(0, 100000).Select(x => 55555).ToArray();
+        //public static int[] Array = Enumerable.Range(0, 100000).Select(x => int.MaxValue).ToArray();
     }
 
     public class DoubleArraySerializationBenchmark : SerializationBenchmarkBase<double[]>
