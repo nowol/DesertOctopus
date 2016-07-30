@@ -14,7 +14,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace DesertOctopus.MammothCache.Tests
 {
     [TestClass]
-    public class MammothCacheTest : BaseTest
+    public class MammothCacheIntegrationTest : BaseTest
     {
         private SquirrelCache _firstLevelCache;
         private CachingTestClass _testObject;

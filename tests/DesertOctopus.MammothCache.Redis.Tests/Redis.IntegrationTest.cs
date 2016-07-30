@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace DesertOctopus.MammothCache.Redis.Tests
 {
     [TestClass]
-    public class RedisTest : BaseTest
+    public class RedisIntegrationTest : BaseTest
     {
         private CachingTestClass _testObject;
         private byte[] _serializedTestObject;
@@ -278,19 +278,6 @@ namespace DesertOctopus.MammothCache.Redis.Tests
                          });
             Assert.IsFalse(inLock);
             Assert.AreEqual(10, counter);
-        }
-
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void SleepsDurationOfTheRetryPolicyShouldBeInitialized()
-        {
-            var policy = new RedisRetryPolicy(TimeSpan.FromSeconds(1),
-                                              TimeSpan.FromSeconds(2),
-                                              TimeSpan.FromSeconds(3));
-            Assert.AreEqual(3, policy.SleepDurations.Count);
-            Assert.AreEqual(1, policy.SleepDurations.ElementAt(0).TotalSeconds);
-            Assert.AreEqual(2, policy.SleepDurations.ElementAt(1).TotalSeconds);
-            Assert.AreEqual(3, policy.SleepDurations.ElementAt(2).TotalSeconds);
         }
     }
 }

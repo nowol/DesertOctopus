@@ -69,7 +69,8 @@
       <Link>BaseTest.cs</Link>
     </Compile>
     <Compile Include="Models\CachingTestClass.cs" />
-    <Compile Include="RedisTest.cs" />
+    <Compile Include="Redis.UnitTest.cs" />
+    <Compile Include="Redis.IntegrationTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
