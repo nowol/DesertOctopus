@@ -2068,34 +2068,6 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void AlwaysCloningProviderShouldAlwaysClone()
-        {
-            var cp = new AlwaysCloningProvider();
-            Assert.IsTrue(cp.RequireCloning(_testObject.GetType()));
-            var cloned = cp.Clone(_testObject);
-            Assert.IsFalse(ReferenceEquals(cloned, _testObject));
-            Assert.AreEqual(_testObject.Value, cloned.Value);
-        }
-
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void UnableToAcquireLockExceptionShouldInitializeItsMessageWithSerializationContext()
-        {
-            var ex = new UnableToAcquireLockException("abc");
-            var clonedEx = ObjectCloner.Clone(ex);
-            Assert.AreEqual("abc", clonedEx.Message);
-        }
-
-        [TestMethod]
-        [TestCategory("Unit")]
-        public void NonSerializableCacheSettingANullValueShouldDoNothing()
-        {
-            _nonSerializableCache.Set(RandomKey(), null, TimeSpan.FromSeconds(30));
-            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
-        }
-
 
 
         /*
