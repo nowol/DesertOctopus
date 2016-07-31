@@ -126,6 +126,14 @@ namespace DesertOctopus.Tests
             Assert.IsNull(IQueryableCloner.ConvertToNonGenericQueryable(null));
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void QueryableClonerConvertToNonGenericQueryableShouldNotModifyAClass()
+        {
+            var instance = new ClassWithGenericInt() { Value = 44 };
+            Assert.IsTrue(ReferenceEquals(instance, IQueryableCloner.ConvertToNonGenericQueryable(instance)));
+        }
+
         //[TestMethod]
         //public void z_AdditionalTestsToImplements()
         //{

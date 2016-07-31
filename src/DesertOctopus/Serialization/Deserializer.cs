@@ -387,7 +387,6 @@ namespace DesertOctopus.Serialization
                         var tmpVar = getTempVar(fieldInfo.FieldType);
                         notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracking)));
                         notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
-                        //notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, GenerateStringExpression(inputStream, objTracking)));
                     }
                 }
                 else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
@@ -457,15 +456,6 @@ namespace DesertOctopus.Serialization
                                                                          notTrackedExpressions,
                                                                          trackType,
                                                                          variables);
-        }
-
-        private static bool ValueTypeRequiresTemporaryVariable(Type type)
-        {
-            bool isStruct = type.IsValueType
-                            && !type.IsEnum
-                            && !type.IsPrimitive
-                            && type != typeof(decimal);
-            return isStruct;
         }
 
         internal static bool IsEnumOrNullableEnum(Type type)

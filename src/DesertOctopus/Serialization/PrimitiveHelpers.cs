@@ -150,30 +150,20 @@ namespace DesertOctopus.Serialization
             return Expression.Block(new[] { tmp }, expressions);
         }
 
-        private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, Expression numberOfBytes, Type expectedType)
+        private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, int numberOfBytes, Type expectedType)
         {
-            var tmp = Expression.Parameter(expectedType, "tmp");
-            var i = Expression.Parameter(typeof(int), "i");
             var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(tmp, Expression.Default(expectedType)));
-            expressions.Add(Expression.Assign(i, Expression.Constant(0)));
+            var tmp = Expression.Parameter(expectedType, "tmp");
+            expressions.Add(Expression.Assign(tmp, Expression.Convert(Expression.Constant(0), expectedType)));
 
-            // todo remove loop and 'hard code' the read bytes stuff?
-            var breakLabel = Expression.Label("breakLabel");
-            var loopBody = Expression.Block(Expression.Assign(tmp,
-                                                              Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)),
-                                                                            Expression.Convert(ReadByte(inputStream), expectedType))),
-                                                              Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
+            for (int i = 0; i < numberOfBytes; i++)
+            {
+                expressions.Add(Expression.Assign(tmp, Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)), Expression.Convert(ReadByte(inputStream), expectedType))));
+            }
 
-            var loop = Expression.Loop(Expression.IfThenElse(Expression.LessThan(i, Expression.Convert(numberOfBytes, typeof(int))),
-                                                             loopBody,
-                                                             Expression.Break(breakLabel)),
-                                                            breakLabel);
-
-            expressions.Add(loop);
             expressions.Add(tmp);
 
-            return Expression.Block(new[] { tmp, i }, expressions);
+            return Expression.Block(new[] { tmp }, expressions);
         }
 
         [System.Security.SecuritySafeCritical]
@@ -387,7 +377,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle int16 deserialization</returns>
         public static Expression ReadInt16(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(short), typeof(short));
         }
 
         /// <summary>
@@ -431,7 +421,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint16 deserialization</returns>
         public static Expression ReadUInt16(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ushort)), typeof(ushort));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(ushort), typeof(ushort));
         }
 
 #endregion
@@ -479,7 +469,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle int32 deserialization</returns>
         public static Expression ReadInt32(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(int)), typeof(int));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(int), typeof(int));
         }
 
         /// <summary>
@@ -523,7 +513,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint32 deserialization</returns>
         public static Expression ReadUInt32(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(uint), typeof(uint));
         }
 
 #endregion
@@ -571,7 +561,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle int64 deserialization</returns>
         public static Expression ReadInt64(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -615,7 +605,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle uint64 deserialization</returns>
         public static Expression ReadUInt64(ParameterExpression inputStream)
         {
-            return ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(ulong)), typeof(ulong));
+            return ReadIntegerNumberPrimitive(inputStream, sizeof(ulong), typeof(ulong));
         }
 
 #endregion
@@ -770,7 +760,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle double deserialization</returns>
         public static Expression ReadDouble(ParameterExpression inputStream)
         {
-            var longValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long));
+            var longValue = ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long));
             return Expression.Call(PrimitiveHelpersMih.GetDoubleFromLong(), longValue);
         }
 
@@ -821,7 +811,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle single deserialization</returns>
         public static Expression ReadSingle(ParameterExpression inputStream)
         {
-            var unitValue = ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(uint)), typeof(uint));
+            var unitValue = ReadIntegerNumberPrimitive(inputStream, sizeof(uint), typeof(uint));
             return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), unitValue);
         }
 
@@ -870,7 +860,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle char deserialization</returns>
         public static Expression ReadChar(ParameterExpression inputStream)
         {
-            return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(short)), typeof(short)), typeof(char));
+            return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, sizeof(short), typeof(short)), typeof(char));
         }
 
 #endregion
@@ -919,7 +909,7 @@ namespace DesertOctopus.Serialization
         public static Expression ReadDateTime(ParameterExpression inputStream)
         {
             return Expression.Call(DateTimeMih.FromBinary(),
-                                   ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
+                                   ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long)));
         }
 
 #endregion
@@ -968,7 +958,7 @@ namespace DesertOctopus.Serialization
         public static Expression ReadTimeSpan(ParameterExpression inputStream)
         {
             return Expression.Call(TimeSpanMih.FromTicks(),
-                                   ReadIntegerNumberPrimitive(inputStream, Expression.Constant(sizeof(long)), typeof(long)));
+                                   ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long)));
         }
 
 #endregion
@@ -1061,7 +1051,6 @@ namespace DesertOctopus.Serialization
             var encoding = Expression.Parameter(typeof(UTF8Encoding), "encoding");
             var nbBytes = Expression.Parameter(typeof(byte), "nbBytes");
             var length = Expression.Parameter(typeof(int), "length");
-            //var buffer = Expression.Parameter(typeof(byte[]), "buffer");
             var i = Expression.Parameter(typeof(int), "i");
             var r = Expression.Parameter(typeof(int), "r");
             var newInstance = Expression.Parameter(typeof(string), "newInstance");
