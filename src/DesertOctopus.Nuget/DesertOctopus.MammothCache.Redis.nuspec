@@ -15,7 +15,7 @@
     <copyright>Copyright 2016</copyright>
     <tags>DistributedCache Caching Redis</tags>
     <dependencies>
-      <group targetFramework="net461">
+      <group targetFramework="net452">
         <dependency id="Microsoft.CSharp" version="4.0.1" />
         <dependency id="DesertOctopus" version="0.0.6.0" />
         <dependency id="DesertOctopus.MammothCache.Common" version="0.0.6.0" />
@@ -26,6 +26,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Release\DesertOctopus.MammothCache.Redis.dll" target="lib\net461" />
+    <file src="bin\Release\DesertOctopus.MammothCache.Redis.dll" target="lib\net452" />
   </files>
 </package>

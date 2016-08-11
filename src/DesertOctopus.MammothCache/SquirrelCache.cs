@@ -29,6 +29,8 @@ namespace DesertOctopus.MammothCache
             _config = config;
             _cloningProvider = cloningProvider;
 
+//_config.TimerInterval should be > 0
+
             _cleanUpTimer = new Timer(_config.TimerInterval);
             _cleanUpTimer.Elapsed += CleanUpTimerOnElapsed;
             _cleanUpTimer.AutoReset = true;

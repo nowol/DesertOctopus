@@ -15,7 +15,7 @@
     <copyright>Copyright 2016</copyright>
     <tags>Serialization Serializer Clone Cloning Deep</tags>
     <dependencies>
-      <group targetFramework="net461">
+      <group targetFramework="net452">
         <dependency id="Microsoft.CSharp" version="4.0.1" />
         <!--<dependency id="StyleCop.Analyzers" version="1.1.0" />-->
         <!--<dependency id="jQuery" />
@@ -24,7 +24,7 @@
       </group>
     </dependencies>
     <references>
-      <!--<group targetFramework="net461">
+      <!--<group targetFramework="net452">
         <reference file="Microsoft.CSharp" />
       </group>-->
       <!--<group targetFramework="netcore45">
@@ -36,6 +36,6 @@
     </references>
   </metadata>
   <files>
-    <file src="bin\Release\DesertOctopus.dll" target="lib\net461" />
+    <file src="bin\Release\DesertOctopus.dll" target="lib\net452" />
   </files>
 </package>
