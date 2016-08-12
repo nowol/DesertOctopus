@@ -19,6 +19,7 @@ namespace DesertOctopus.MammothCache.Tests
         private readonly FirstLevelCacheConfig _config = new FirstLevelCacheConfig();
         private readonly IFirstLevelCacheCloningProvider _noCloningProvider = new NoCloningProvider();
         private readonly IFirstLevelCacheCloningProvider _alwaysCloningProvider = new AlwaysCloningProvider();
+        private readonly IMammothCacheSerializationProvider _serializationProvider = new MammothCacheSerializationProvider();
 
         [TestInitialize]
         public void Initialize()
@@ -27,7 +28,7 @@ namespace DesertOctopus.MammothCache.Tests
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 1;
 
-            _cacheRepository = new SquirrelCache(_config, _noCloningProvider);
+            _cacheRepository = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             _testObject = new CachingTestClass();
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
         }
@@ -36,6 +37,53 @@ namespace DesertOctopus.MammothCache.Tests
         public void Cleanup()
         {
             _cacheRepository.Dispose();
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CreatingASquirrelCacheWithInvalidTimerValueShoudThrowException()
+        {
+            var config = new FirstLevelCacheConfig();
+            config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
+            config.MaximumMemorySize = 1000;
+            config.TimerInterval = 0;
+            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CreatingASquirrelCacheWithInvalidAbsoluteExpirationValueShoudThrowException()
+        {
+            var config = new FirstLevelCacheConfig();
+            config.AbsoluteExpiration = TimeSpan.FromSeconds(0);
+            config.MaximumMemorySize = 1000;
+            config.TimerInterval = 1;
+            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CreatingASquirrelCacheWithInvalidMemorySizeValueShoudThrowException()
+        {
+            var config = new FirstLevelCacheConfig();
+            config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
+            config.MaximumMemorySize = 0;
+            config.TimerInterval = 1;
+            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void UsingACustomSerializationProviderShouldWork()
+        {
+            var key = Guid.NewGuid().ToString();
+            var sp = new BinaryFormatterSerializationProvider();
+            var cacheRepository = new SquirrelCache(_config, _noCloningProvider, sp);
+            _cacheRepository.Set(key, _serializedTestObject);
+            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]
@@ -213,7 +261,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldNotNeverBeCloned()
         {
-            var cache = new SquirrelCache(_config, _noCloningProvider);
+            var cache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
 
             var key = RandomKey();
             cache.Set(key, _serializedTestObject);
@@ -227,7 +275,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldAlwaysBeCloned()
         {
-            var cache = new SquirrelCache(_config, _alwaysCloningProvider);
+            var cache = new SquirrelCache(_config, _alwaysCloningProvider, _serializationProvider);
 
             var key = RandomKey();
             cache.Set(key, _serializedTestObject);
@@ -242,7 +290,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void ObjectRetrievedFromFirstLevelCacheShouldBeClonedIfTheyAreFromASpecificNameSpace()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
-            var cache = new SquirrelCache(_config, namespaceCloningProvider);
+            var cache = new SquirrelCache(_config, namespaceCloningProvider, _serializationProvider);
 
             var testObject2 = EqualityComparer<string>.Default;
             var serializedTestObject2 = KrakenSerializer.Serialize(testObject2);
@@ -276,7 +324,7 @@ namespace DesertOctopus.MammothCache.Tests
         public void ObjectRetrievedFromFirstLevelCacheShouldNotBeClonedIfTheyAreFromASpecificNameSpace()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "System" });
-            var cache = new SquirrelCache(_config, namespaceCloningProvider);
+            var cache = new SquirrelCache(_config, namespaceCloningProvider, _serializationProvider);
 
             var testObject2 = EqualityComparer<string>.Default;
             var serializedTestObject2 = KrakenSerializer.Serialize(testObject2);

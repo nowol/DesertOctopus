@@ -61,6 +61,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
+    <Compile Include="BinaryFormatterSerializationProvider.cs" />
     <Compile Include="MammothCacheUnitTest.cs" />
     <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="Models\NotSerializableTestClass.cs" />

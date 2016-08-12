@@ -26,6 +26,7 @@ namespace DesertOctopus.MammothCache.Tests
         private readonly NonSerializableCache _nonSerializableCache = new NonSerializableCache();
         private readonly NotSerializableTestClass _nonSerializableTestObject = new NotSerializableTestClass();
         private readonly NotSerializableTestClass _nonSerializableTestObject2 = new NotSerializableTestClass();
+        private readonly IMammothCacheSerializationProvider _serializationProvider = new MammothCacheSerializationProvider();
 
         private RedisConnection _secondLevelCache;
         private IRedisRetryPolicy _redisRetryPolicy;
@@ -40,7 +41,7 @@ namespace DesertOctopus.MammothCache.Tests
             _config.MaximumMemorySize = 1000;
             _config.TimerInterval = 60;
 
-            _firstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            _firstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             _testObject = new CachingTestClass();
             _testObject2 = new CachingTestClass();
             _testObject3 = new CachingTestClass();
@@ -190,7 +191,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task UpdatingAnItemShouldRemoveItFromOtherDistributedCacheAsync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -223,7 +224,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void UpdatingAnItemShouldRemoveItFromOtherDistributedCacheSync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -256,7 +257,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheAsync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
@@ -312,7 +313,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheSync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
@@ -1134,7 +1135,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -1156,7 +1157,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -1794,7 +1795,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -1827,7 +1828,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key = RandomKey();
@@ -1860,7 +1861,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
@@ -1917,7 +1918,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
             var key1 = RandomKey();
@@ -1974,7 +1975,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public async Task RemovingAllKeysShouldExpireAllKeysAsync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
 
@@ -2023,7 +2024,7 @@ namespace DesertOctopus.MammothCache.Tests
         [TestCategory("Integration")]
         public void RemovingAllKeysShouldExpireAllKeysSync()
         {
-            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider);
+            var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             var otherSecondLevelCache = new RedisConnection(RedisConnectionString, _redisRetryPolicy);
             var otherCache = new MammothCache(otherFirstLevelCache, otherSecondLevelCache, _nonSerializableCache, new MammothCacheSerializationProvider());
 
