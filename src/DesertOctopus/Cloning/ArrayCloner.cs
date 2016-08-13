@@ -97,18 +97,10 @@ namespace DesertOctopus.Cloning
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
 
-            Expression innerExpression;
-            if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
-            {
-                var primitiveCloner = ObjectCloner.CloneImpl(elementType);
-                var c = Expression.Invoke(Expression.Constant(primitiveCloner), Expression.Convert(item, typeof(object)), refTrackerParam);
-                innerExpression = Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(c, typeof(object)), indices);
-            }
-            else
-            {
-                innerExpression = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, item, clonedItem, elementType),
-                                                   Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(clonedItem, typeof(object)), indices));
-            }
+            Debug.Assert(!(elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string)), "This method is not made to handle primitive types");
+
+            Expression innerExpression = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, item, clonedItem, elementType),
+                                                          Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(clonedItem, typeof(object)), indices));
 
             Func<int, Expression, Expression> makeArrayLoop = (loopRank,
                                                                innerExpr) =>

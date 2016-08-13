@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DesertOctopus.MammothCache.Tests</RootNamespace>
     <AssemblyName>DesertOctopus.MammothCache.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -61,10 +61,12 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
+    <Compile Include="BinaryFormatterSerializationProvider.cs" />
     <Compile Include="MammothCacheUnitTest.cs" />
     <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="Models\NotSerializableTestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="NullFirstLevelCacheTest.cs" />
     <Compile Include="SquirrelCacheTest.cs" />
     <Compile Include="MammothCacheIntegrationTest.cs" />
   </ItemGroup>

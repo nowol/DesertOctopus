@@ -227,6 +227,25 @@ namespace DesertOctopus.Tests
             Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DeserializerObjectTrackerShouldNotTrackNullObjects()
+        {
+            var tracker = new DeserializerObjectTracker();
+            tracker.TrackObject(null);
+            Assert.AreEqual(0, tracker.NumberOfTrackedObjects);
+        }
+
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DeserializerObjectTrackerShouldTrackNullObjects()
+        {
+            var tracker = new DeserializerObjectTracker();
+            tracker.TrackObject(3);
+            Assert.AreEqual(1, tracker.NumberOfTrackedObjects);
+        }
+
 
 
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace DesertOctopus.MammothCache.Tests.Models
 {
+    [Serializable]
     public class CachingTestClass
     {
         public Guid Value { get; set; }

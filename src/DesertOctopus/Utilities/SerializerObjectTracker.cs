@@ -16,8 +16,6 @@ namespace DesertOctopus.Utilities
 
         public const byte Value1 = 1;
 
-        public uint Uint32Value { get; set; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SerializerObjectTracker"/> class.
         /// </summary>

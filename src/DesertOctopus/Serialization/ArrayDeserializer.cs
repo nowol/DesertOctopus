@@ -11,7 +11,7 @@ namespace DesertOctopus.Serialization
     /// <summary>
     /// Helper class to handle array deserialization
     /// </summary>
-    internal class ArrayDeserializer
+    internal static class ArrayDeserializer
     {
         /// <summary>
         /// Generate an expression tree to handle array deserialization
@@ -88,15 +88,6 @@ namespace DesertOctopus.Serialization
             }
 
             Expression innerExpression;
-            //if (elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string))
-            //{
-            //    Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
-            //    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
-            //}
-            //else
-            //{
-            //    innerExpression = Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType);
-            //}
 
             if (elementType == typeof(string))
             {
@@ -145,7 +136,6 @@ namespace DesertOctopus.Serialization
                 {
                     loopExpressions.Add(innerExpr);
                     loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(newInstance, loopRankIndex), tmpValue));
-                    //Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 }
                 else
                 {
@@ -154,10 +144,6 @@ namespace DesertOctopus.Serialization
                     loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 }
 
-
-                //loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(indices, Expression.Constant(loopRank)), loopRankIndex));
-                //loopExpressions.Add(innerExpr);
-                //loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValueRank(), Expression.Convert(tmpValue, typeof(object)), indices));
                 loopExpressions.Add(Expression.Assign(loopRankIndex, Expression.Add(loopRankIndex, Expression.Constant(1))));
 
                 var cond = Expression.LessThan(loopRankIndex, Expression.ArrayIndex(lengths, Expression.Constant(loopRank)));

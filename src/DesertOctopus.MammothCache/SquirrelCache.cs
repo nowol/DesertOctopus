@@ -15,6 +15,7 @@ namespace DesertOctopus.MammothCache
     {
         private readonly IFirstLevelCacheConfig _config;
         private readonly IFirstLevelCacheCloningProvider _cloningProvider;
+        private readonly IMammothCacheSerializationProvider _serializationProvider;
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
         private readonly System.Timers.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
@@ -24,10 +25,27 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         /// <param name="config">Configuration of the <see cref="SquirrelCache"/></param>
         /// <param name="cloningProvider">Cloning provider</param>
-        public SquirrelCache(IFirstLevelCacheConfig config, IFirstLevelCacheCloningProvider cloningProvider)
+        /// <param name="serializationProvider">Serialization provider</param>
+        public SquirrelCache(IFirstLevelCacheConfig config, IFirstLevelCacheCloningProvider cloningProvider, IMammothCacheSerializationProvider serializationProvider)
         {
             _config = config;
             _cloningProvider = cloningProvider;
+            _serializationProvider = serializationProvider;
+
+            if (_config.AbsoluteExpiration.TotalSeconds <= 0)
+            {
+                throw new ArgumentException("AbsoluteExpiration must be greater than 0");
+            }
+
+            if (_config.MaximumMemorySize <= 0)
+            {
+                throw new ArgumentException("MaximumMemorySize must be greater than 0");
+            }
+
+            if (_config.TimerInterval <= 0)
+            {
+                throw new ArgumentException("TimerInterval must be greater than 0");
+            }
 
             _cleanUpTimer = new Timer(_config.TimerInterval);
             _cleanUpTimer.Elapsed += CleanUpTimerOnElapsed;

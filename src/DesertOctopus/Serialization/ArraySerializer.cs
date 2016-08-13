@@ -10,7 +10,7 @@ namespace DesertOctopus.Serialization
     /// <summary>
     /// Helper class to handle array serialization
     /// </summary>
-    internal class ArraySerializer
+    internal static class ArraySerializer
     {
         /// <summary>
         /// Generate an expression tree to handle array serialization

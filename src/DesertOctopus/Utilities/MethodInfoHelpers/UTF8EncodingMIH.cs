@@ -10,6 +10,7 @@ namespace DesertOctopus.Utilities
     /// </summary>
     internal static class Utf8EncodingMih
     {
+#if FALSE
         /// <summary>
         /// Calls UTF8Encoding.GetString
         /// </summary>
@@ -18,6 +19,7 @@ namespace DesertOctopus.Utilities
         {
             return typeof(UTF8Encoding).GetMethod(nameof(UTF8Encoding.GetString), new Type[] { typeof(byte[]) });
         }
+#endif
 
         /// <summary>
         /// Calls UTF8Encoding.GetString
