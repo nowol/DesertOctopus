@@ -66,6 +66,7 @@
     <Compile Include="Models\CachingTestClass.cs" />
     <Compile Include="Models\NotSerializableTestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="NullFirstLevelCacheTest.cs" />
     <Compile Include="SquirrelCacheTest.cs" />
     <Compile Include="MammothCacheIntegrationTest.cs" />
   </ItemGroup>

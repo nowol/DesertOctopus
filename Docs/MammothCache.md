@@ -37,6 +37,8 @@ To initialize a `MammothCache` you have to pass 4 variables to its constructor:
 The `MammothCache` is made to be shared between multiple thread. Typical usage would be to configure it as a singleton in your choosen IoC container.
 
 ```csharp
+// This class is used to serialize and deserialize objects
+var mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
 // This configuration object controls the lifetime of objects stored in the first level cache
 var config = new FirstLevelCacheConfig();
 // Objects will stay at most 20 seconds in the cache.  You will want to increase this value for your use case.
@@ -48,13 +50,12 @@ config.TimerInterval = 60;
 // This cloning provider always cloned objects from the first level cache
 // Other providers available are NoCloningProvider and NamespacesBasedCloningProvider
 var cloningProvider = new AlwaysCloningProvider()
-var firstLevelCache = new SquirrelCache(config, cloningProvider);
+var firstLevelCache = new SquirrelCache(config, cloningProvider, mammothCacheSerializationProvider);
 // Create a retry policy that will retry 3  times and it will wait 50ms, then 100ms and finally 150ms for each respective retries
 var redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
 // Create an instance of the Redis second level cache
 var secondLevelCache = new RedisConnection(connectionString, redisRetryPolicy);
 
-var mammothCacheSerializationProvider = new MammothCacheSerializationProvider();
 var cache = new MammothCache(firstLevelCache, secondLevelCache, new NonSerializableCache(), mammothCacheSerializationProvider);
 
 ```
