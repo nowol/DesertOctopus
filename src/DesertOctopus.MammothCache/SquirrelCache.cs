@@ -174,7 +174,7 @@ namespace DesertOctopus.MammothCache
         {
             var co = new CachedObject();
             co.Key = key;
-            co.Value = KrakenSerializer.Deserialize(serializedValue);
+            co.Value = _serializationProvider.Deserialize(serializedValue);
             co.ObjectSize = serializedValue.Length;
 
             return co;

@@ -81,9 +81,11 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var key = Guid.NewGuid().ToString();
             var sp = new BinaryFormatterSerializationProvider();
+            var objBytes = sp.Serialize(_testObject);
+
             var cacheRepository = new SquirrelCache(_config, _noCloningProvider, sp);
-            _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
+            cacheRepository.Set(key, objBytes);
+            Assert.AreEqual(_testObject.Value, cacheRepository.Get<CachingTestClass>(key).Value.Value);
         }
 
         [TestMethod]

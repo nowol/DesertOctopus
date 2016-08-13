@@ -35,21 +35,25 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void Remove(string key)
         {
+            // Null pattern
         }
 
         /// <inheritdoc/>
         public void RemoveAll()
         {
+            // Null pattern
         }
 
         /// <inheritdoc/>
         public void Set(string key, byte[] serializedValue)
         {
+            // Null pattern
         }
 
         /// <inheritdoc/>
         public void Set(string key, byte[] serializedValue, TimeSpan? ttl)
         {
+            // Null pattern
         }
 
         /// <summary>
@@ -57,6 +61,7 @@ namespace DesertOctopus.MammothCache
         /// </summary>
         public void Dispose()
         {
+            // Null pattern
         }
     }
 }

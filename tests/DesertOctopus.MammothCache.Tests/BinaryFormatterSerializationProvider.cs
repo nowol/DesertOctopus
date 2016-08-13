@@ -24,7 +24,7 @@ namespace DesertOctopus.MammothCache.Tests
 
         public object Deserialize(byte[] bytes)
         {
-            using (var ms = new MemoryStream())
+            using (var ms = new MemoryStream(bytes))
             {
                 var bf = new BinaryFormatter();
                 return bf.Deserialize(ms);
