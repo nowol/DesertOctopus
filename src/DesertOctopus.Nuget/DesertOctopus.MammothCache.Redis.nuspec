@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>DesertOctopus.MammothCache.Redis</id>
-    <version>0.0.6.0</version>
+    <version>0.0.8.0</version>
     <title>DesertOctopus.MammothCache.Redis</title>
     <authors>NoWoL</authors>
     <owners>NoWoL</owners>
@@ -17,9 +17,9 @@
     <dependencies>
       <group targetFramework="net452">
         <dependency id="Microsoft.CSharp" version="4.0.1" />
-        <dependency id="DesertOctopus" version="0.0.6.0" />
-        <dependency id="DesertOctopus.MammothCache.Common" version="0.0.6.0" />
-        <dependency id="DesertOctopus.MammothCache" version="0.0.6.0" />
+        <dependency id="DesertOctopus" version="0.0.8.0" />
+        <dependency id="DesertOctopus.MammothCache.Common" version="0.0.8.0" />
+        <dependency id="DesertOctopus.MammothCache" version="0.0.8.0" />
         <dependency id="Polly-Signed" version="4.3.0" />
         <dependency id="StackExchange.Redis.StrongName" version="1.0.488" />
       </group>
