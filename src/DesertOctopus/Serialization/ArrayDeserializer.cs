@@ -79,7 +79,10 @@ namespace DesertOctopus.Serialization
 
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), type)));
-            expressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            if (type.IsClass)
+            {
+                expressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            }
 
             if (rank > 1)
             {
@@ -98,7 +101,7 @@ namespace DesertOctopus.Serialization
                 var primitiveReader = Deserializer.GetPrimitiveReader(elementType);
                 if (primitiveReader == null)
                 {
-                    Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+                    var primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
                     innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
                 }
                 else

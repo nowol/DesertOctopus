@@ -50,7 +50,8 @@ namespace DesertOctopus.Serialization
                                                                 SerializeISerializable(type, variables, outputStream, objToSerialize, objTracking)));
             }
 
-            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                       outputStream,
                                                                        objToSerialize,
                                                                        objTracking,
                                                                        notTrackedExpressions,
@@ -175,8 +176,8 @@ namespace DesertOctopus.Serialization
 
             if (valueType.IsPrimitive || valueType.IsValueType)
             {
-                Action<Stream, object, SerializerObjectTracker> primitiveSerializer = Serializer.GetTypeSerializer(valueType);
-                return Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(valueExpression, typeof(object)), objTracking);
+                var primitiveSerializer = Serializer.GetTypeSerializer(valueType);
+                return Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, valueExpression, objTracking);
             }
 
             return Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, valueType);

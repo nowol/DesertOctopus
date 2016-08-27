@@ -74,6 +74,7 @@
     <Compile Include="Serialization\ArraySerializer.cs" />
     <Compile Include="Utilities\DictionaryHelper.cs" />
     <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
+    <Compile Include="Utilities\ExtensionMethods.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />

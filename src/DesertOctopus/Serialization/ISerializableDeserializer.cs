@@ -102,7 +102,11 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(type.GetConstructor(new Type[0]))));
-            notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            if (type.IsClass)
+            {
+                notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            }
+
             notTrackedExpressions.Add(loop);
             notTrackedExpressions.Add(newInstance);
 
@@ -163,7 +167,11 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(loop);
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(ISerializableSerializer.GetSerializationConstructor(type), si, context)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            if (type.IsClass)
+            {
+                notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            }
+
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializedAttributeExpression(type, newInstance, context));
             notTrackedExpressions.Add(SerializationCallbacksHelper.GenerateCallIDeserializationExpression(type, newInstance));
             notTrackedExpressions.Add(newInstance);
@@ -187,7 +195,7 @@ namespace DesertOctopus.Serialization
             }
             else if (expectedType.IsPrimitive || expectedType.IsValueType)
             {
-                Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(expectedType);
+                var primitiveDeserializer = Deserializer.GetTypeDeserializer(expectedType);
                 loopExpressions.Add(Expression.Assign(tmpVariable, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), expectedType)));
             }
             else

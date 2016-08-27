@@ -36,23 +36,6 @@ namespace DesertOctopus.Benchmark
         }
 
         [TestMethod]
-        public void WireTest()
-        {
-            Wire.Serializer wireSerializer = new Wire.Serializer();
-
-            var obj = new BigInteger(93884398);
-
-            using (var ms = new MemoryStream())
-            {
-                wireSerializer.Serialize(obj, ms);
-                var wireBytes = ms.ToArray();
-                ms.Position = 0;
-                var d = wireSerializer.Deserialize(ms);
-            }
-        }
-
-
-        [TestMethod]
         [TestCategory("Benchmark")]
         public void ForOptimization()
         {
@@ -180,6 +163,10 @@ namespace DesertOctopus.Benchmark
         [TestCategory("Benchmark")]
         public void KrakenBenchmarks()
         {
+#if DEBUG
+            throw new Exception("Use release mode");
+#endif
+
             var benchmarks = new Dictionary<string, Type>();
             benchmarks.Add("This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.", typeof(ProductSerializationBenchMark));
             benchmarks.Add("This benchmark serialize and deserialize a normal sized object that contains all primitives types.", typeof(SimpleDtoWithEveryPrimitivesSerializationBenchmark));
@@ -189,6 +176,9 @@ namespace DesertOctopus.Benchmark
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.", typeof(DictionaryIntIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.", typeof(DictionaryStringIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize a string of 1000 characters.", typeof(StringSerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize a large struct.", typeof(LargeStructSerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize a small class used by the Wire project.", typeof(WireSmallObjectSerializationBenchmark));
+            
 
             var sb = new StringBuilder();
 

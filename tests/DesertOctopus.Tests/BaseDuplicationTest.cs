@@ -19,7 +19,7 @@ namespace DesertOctopus.Tests
     [TestClass]
     public abstract class BaseDuplicationTest
     {
-        public abstract T Duplicate<T>(T obj) where T : class;
+        public abstract T Duplicate<T>(T obj);
 
 
 
@@ -248,6 +248,7 @@ namespace DesertOctopus.Tests
         {
             foreach (var value in values)
             {
+                DuplicatePrimitiveValue(value);
                 DuplicateWrappedValue(value);
                 DuplicateArrayOfOne(value);
                 DuplicateListOfOne(value);
@@ -267,6 +268,16 @@ namespace DesertOctopus.Tests
 
             Assert.AreEqual(instance.Value,
                             duplicatedValue.Value,
+                            string.Format("Type {0} does not have the same value after being deserialized.",
+                                            typeof(T)));
+        }
+
+        private void DuplicatePrimitiveValue<T>(T instance)
+        {
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance,
+                            duplicatedValue,
                             string.Format("Type {0} does not have the same value after being deserialized.",
                                             typeof(T)));
         }
@@ -955,6 +966,24 @@ namespace DesertOctopus.Tests
                                 duplicatedValue.SwitchedDictionary);
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryWithNullDictionaryProperty()
+        {
+            var instance = new CustomDictionaryWithDictionaryProperty<string, object>
+            {
+                {"Key1", 123},
+                {"Key2", "abc"},
+                {"Key3", new ClassWithGenericInt(3) },
+            };
+
+            var duplicatedValue = Duplicate(instance);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+            Assert.IsNull(instance.SwitchedDictionary);
+        }
+
         private static void CompareDictionaries<TKey, TValue>(Dictionary<TKey, TValue> instance, Dictionary<TKey, TValue> duplicatedValue)
         {
             Assert.AreEqual(instance.Count,
@@ -995,6 +1024,32 @@ namespace DesertOctopus.Tests
                 {"Key3", 789},
             };
             instance.SomeProperty = 849;
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.SomeProperty,
+                            duplicatedValue.SomeProperty);
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryWithOfObjectString()
+        {
+            var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<object, string>
+            {
+                { 123, "Key1"},
+                { "abc", "Key2"},
+                { new ClassWithGenericInt(3), "Key3" },
+            };
 
             var duplicatedValue = Duplicate(instance);
 

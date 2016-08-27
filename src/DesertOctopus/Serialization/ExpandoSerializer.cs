@@ -14,12 +14,14 @@ namespace DesertOctopus.Serialization
         /// <summary>
         /// Generates an expression tree to handle ExpandoObject serialization
         /// </summary>
+        /// <param name="type">Type of <paramref name="objToSerialize"/></param>
         /// <param name="variables">Global variables for the expression tree</param>
         /// <param name="outputStream">Stream to write to</param>
         /// <param name="objToSerialize">Object to serialize</param>
         /// <param name="objTracking">Reference tracker</param>
         /// <returns>An expression tree to handle ExpandoObject serialization</returns>
-        public static Expression GenerateExpandoObjectExpression(List<ParameterExpression> variables,
+        public static Expression GenerateExpandoObjectExpression(Type type,
+                                                                 List<ParameterExpression> variables,
                                                                  ParameterExpression outputStream,
                                                                  ParameterExpression objToSerialize,
                                                                  ParameterExpression objTracking)
@@ -43,7 +45,8 @@ namespace DesertOctopus.Serialization
                                                                                   preLoopActions,
                                                                                   loopBodyCargo));
 
-            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                       outputStream,
                                                                        objToSerialize,
                                                                        objTracking,
                                                                        notTrackedExpressions,

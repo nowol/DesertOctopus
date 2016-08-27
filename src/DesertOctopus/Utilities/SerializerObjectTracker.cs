@@ -46,6 +46,16 @@ namespace DesertOctopus.Utilities
         }
 
         /// <summary>
+        /// Detect if a type can be tracked
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        /// <returns>True if the type can be tracked otherwise false.</returns>
+        public bool CanBeTracked(Type type)
+        {
+            return type.IsClass;
+        }
+
+        /// <summary>
         /// Gets the number of tracked objects
         /// </summary>
         public int NumberOfTrackedObjects

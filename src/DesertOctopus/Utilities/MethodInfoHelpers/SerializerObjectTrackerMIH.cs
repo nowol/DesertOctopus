@@ -35,5 +35,14 @@ namespace DesertOctopus.Utilities
         {
             return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.EnsureBufferSize));
         }
+
+        /// <summary>
+        /// Calls SerializerObjectTracker.CanBeTracked
+        /// </summary>
+        /// <returns>The method info for SerializerObjectTracker.CanBeTracked</returns>
+        public static MethodInfo CanBeTracked()
+        {
+            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.CanBeTracked));
+        }
     }
 }

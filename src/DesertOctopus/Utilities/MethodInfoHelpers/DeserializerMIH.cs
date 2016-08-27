@@ -15,9 +15,9 @@ namespace DesertOctopus.Utilities
         /// Calls Deserializer.GetTypeDeserializer
         /// </summary>
         /// <returns>The method info for Deserializer.GetTypeDeserializer</returns>
-        public static MethodInfo GetTypeDeserializer()
+        public static MethodInfo GetTypeToObjectDeserializer()
         {
-            return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTypeDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(Deserializer).GetMethod(nameof(Deserializer.GetTypeToObjectDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
         }
     }
 }
