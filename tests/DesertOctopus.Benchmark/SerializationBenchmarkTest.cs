@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Numerics;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using BenchmarkDotNet.Attributes;
@@ -34,29 +35,44 @@ namespace DesertOctopus.Benchmark
 //#endif
         }
 
+        [TestMethod]
+        public void WireTest()
+        {
+            Wire.Serializer wireSerializer = new Wire.Serializer();
+
+            var obj = new BigInteger(93884398);
+
+            using (var ms = new MemoryStream())
+            {
+                wireSerializer.Serialize(obj, ms);
+                var wireBytes = ms.ToArray();
+                ms.Position = 0;
+                var d = wireSerializer.Deserialize(ms);
+            }
+        }
 
 
         [TestMethod]
         [TestCategory("Benchmark")]
         public void ForOptimization()
         {
-            ParameterExpression outputStream = Expression.Parameter(typeof(Stream)), objTracking = Expression.Parameter(typeof(SerializerObjectTracker));
-            var notTrackedExpressions = new List<Expression>();
-            var variables = new List<ParameterExpression>();
+            //ParameterExpression outputStream = Expression.Parameter(typeof(Stream)), objTracking = Expression.Parameter(typeof(SerializerObjectTracker));
+            //var notTrackedExpressions = new List<Expression>();
+            //var variables = new List<ParameterExpression>();
 
-            var b = Expression.Parameter(typeof(byte));
+            //var b = Expression.Parameter(typeof(byte));
 
-            variables.Add(b);
+            //variables.Add(b);
 
-            notTrackedExpressions.Add(Expression.Assign(b, Expression.Constant((byte)0)));
-            //notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, b, objTracking));
+            //notTrackedExpressions.Add(Expression.Assign(b, Expression.Constant((byte)0)));
+            ////notTrackedExpressions.Add(PrimitiveHelpers.WriteByte(outputStream, b, objTracking));
 
-            notTrackedExpressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), b ));
+            //notTrackedExpressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), b ));
 
 
-            var block = Expression.Block(variables, notTrackedExpressions);
+            //var block = Expression.Block(variables, notTrackedExpressions);
 
-            new IntArraySerializationBenchmark();
+            //new IntArraySerializationBenchmark();
 
         }
 
@@ -356,6 +372,42 @@ namespace DesertOctopus.Benchmark
 
         [TestMethod]
         [TestCategory("Benchmark")]
+        public void LargeStructSerializationBenchmark()
+        {
+            var ii = new LargeStructSerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<LargeStructSerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
+        public void WireSmallObjectSerializationBenchmark()
+        {
+            var summary = BenchmarkRunner.Run<WireSmallObjectSerializationBenchmark>();
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
+            Console.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                Console.WriteLine(validationError.Message);
+            }
+
+            Assert.Fail(k.First());
+        }
+
+        [TestMethod]
+        [TestCategory("Benchmark")]
         public void TwoDimIntArraySerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<TwoDimIntArraySerializationBenchmark>();
@@ -608,6 +660,58 @@ namespace DesertOctopus.Benchmark
         public static ObjectWrapper<string> Str = new ObjectWrapper<string>() { Value = new string('c', 1000) };
     }
 
+    public class LargeStructSerializationBenchmark : SerializationBenchmarkBase<ObjectWrapper<LargeStruct>>
+    {
+        public LargeStructSerializationBenchmark()
+            : base(LargeStructSerializationBenchmark.Str)
+        {
+            
+        }
+        
+        public static ObjectWrapper<LargeStruct> Str = new ObjectWrapper<LargeStruct> { Value = LargeStruct.Create() };
+    }
+
+    public class WireSmallObjectSerializationBenchmark : SerializationBenchmarkBase<WireSmallObject>
+    {
+        public WireSmallObjectSerializationBenchmark()
+            : base(WireSmallObjectSerializationBenchmark.Str)
+        {
+            
+        }
+        
+        public static WireSmallObject Str = new WireSmallObject { StringProp = "hello", IntProp = 123, GuidProp = Guid.NewGuid(), DateProp = DateTime.Now };
+    }
+
+    [Serializable]
+    public class WireSmallObject
+    {
+        public string StringProp { get; set; }      //using the text "hello"
+        public int IntProp { get; set; }            //123
+        public Guid GuidProp { get; set; }          //Guid.NewGuid()
+        public DateTime DateProp { get; set; }      //DateTime.Now
+    }
+
+
+    [Serializable]
+    public struct LargeStruct
+    {
+
+        ulong m_val1;
+        ulong m_val2;
+        ulong m_val3;
+        ulong m_val4;
+
+        public static LargeStruct Create()
+        {
+            var ls = new LargeStruct();
+            ls.m_val1 = ulong.MaxValue;
+            ls.m_val2 = ulong.MaxValue;
+            ls.m_val3 = ulong.MaxValue;
+            ls.m_val4 = ulong.MaxValue;
+            return ls;
+        }
+    }
+
     public class TwoDimIntArraySerializationBenchmark : SerializationBenchmarkBase<int[,]>
     {
         public TwoDimIntArraySerializationBenchmark()
@@ -675,8 +779,10 @@ namespace DesertOctopus.Benchmark
         private byte[] krakenBytes;
         private byte[] bfBytes;
         private byte[] omniBytes;
+        private byte[] wireBytes;
         protected object obj;
         private string Json = String.Empty;
+        private Wire.Serializer wireSerializer = new Wire.Serializer();
 
         public SerializationBenchmarkBase(object objectToTest, bool benchmarkOmni = true, bool benchmarkSS = true)
         {
@@ -710,6 +816,14 @@ namespace DesertOctopus.Benchmark
             {
                 ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
             }
+
+            //using (var ms = new MemoryStream())
+            //{
+            //    wireSerializer.Serialize(obj, ms);
+            //    wireBytes = ms.ToArray();
+            //    ms.Position = 0;
+            //    wireSerializer.Deserialize<T>(ms);
+            //}
         }
 
         public bool BenchmarkOmni { get; set; }
@@ -801,6 +915,25 @@ namespace DesertOctopus.Benchmark
                 return bf.Deserialize(ms) as T;
             }
         }
+
+        //[Benchmark]
+        //public byte[] WireSerialization()
+        //{
+        //    using (var ms = new MemoryStream())
+        //    {
+        //        wireSerializer.Serialize(obj, ms);
+        //        return ms.ToArray();
+        //    }
+        //}
+
+        //[Benchmark]
+        //public T WireDeserialization()
+        //{
+        //    using (var ms = new MemoryStream(wireBytes))
+        //    {
+        //        return wireSerializer.Deserialize<T>(ms);
+        //    }
+        //}
     }
 
     [Config(typeof(Config))]
@@ -811,8 +944,10 @@ namespace DesertOctopus.Benchmark
         private byte[] krakenBytes;
         private byte[] bfBytes;
         private byte[] omniBytes;
+        private byte[] wireBytes;
         private Product product;
         public static string JsonProduct = @"{""CatalogId"":""Global"",""DefinitionName"":""MyDefinitionName"",""DisplayName"":{""Values"":{""en-US"":""Some red wine for testingt""}},""ListPrice"":666.6600,""Id"":""5465456"",""Created"":""\/Date(1355220564000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""Description"":{""Values"":{""en-US"":""“Sirloin chuck spare ribs alcatra venison beef ribs turkey fatback hamburger. Ball tip alcatra shoulder biltong flank. Tail leberkas bresaola kielbasa venison jerky prosciutto chicken meatball ham hock brisket chuck swine. Pig venison chicken tri-tip doner, prosciutto tenderloin jowl ribeye bresaola alcatra kielbasa picanha. Meatball ham hock rump ham jerky pastrami pork ribeye porchetta. Ribeye salami pig strip steak rump flank. Meatloaf turkey porchetta turducken beef shoulder biltong chuck ham hock strip steak pork belly tri-tip meatball. Prosciutto ground round jowl ham hock. Kielbasa bacon sausage tail meatball jerky doner strip steak shoulder alcatra. Corned beef flank meatball capicola, meatloaf andouille kevin pancetta alcatra. Tail boudin frankfurter leberkas. Jowl prosciutto fatback filet mignon pancetta.""}},""ParentCategories"":[{""Id"":""BrutRos"",""ChildCategories"":[],""IsSearchable"":true,""DisplayName"":{""Values"":{""en-US"":""Brut Ros""}},""DefinitionName"":""WineType"",""Created"":""\/Date(1432216913000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""RelatedCategories"":[],""RelatedProducts"":[],""CatalogId"":""Global"",""PrimaryParentCategoryId"":""Sparkling"",""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Category, DesertOctopus.Benchmark"",""TypeName"":""Category"",""PropertyBag"":{""ItemId"":16,""ItemType"":""Catty!"",""ParentItem_Id"":9},""SequenceNumber"":0,""HiddenInScope"":false,""Active"":true,""IncludeInSearch"":true,""Relationships"":[]},{""Id"":""Red"",""ChildCategories"":[],""IsSearchable"":true,""DisplayName"":{""Values"":{""en-US"":""Red""}},""DefinitionName"":""WineType"",""Created"":""\/Date(1432216913000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""RelatedCategories"":[],""RelatedProducts"":[],""CatalogId"":""Global"",""PrimaryParentCategoryId"":""PopCellar"",""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Category, DesertOctopus.Benchmark"",""TypeName"":""Category"",""PropertyBag"":{""Item_Id"":1,""ItemDiscriminator"":""CATEGORY"",""ParentItem_Id"":52138},""SequenceNumber"":1,""HiddenInScope"":false,""Active"":true,""IncludeInSearch"":true,""Relationships"":[]}],""PrimaryParentCategory"":{""Id"":""BrutRos"",""ChildCategories"":[],""IsSearchable"":true,""DisplayName"":{""Values"":{""en-US"":""Brut Ros""}},""DefinitionName"":""WineType"",""Created"":""\/Date(1432216913000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""RelatedCategories"":[],""RelatedProducts"":[],""CatalogId"":""Global"",""PrimaryParentCategoryId"":""Sparkling"",""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Category, DesertOctopus.Benchmark"",""TypeName"":""Category"",""PropertyBag"":{""Item_Id"":16,""ItemDiscriminator"":""CATEGORY"",""ParentItem_Id"":9},""SequenceNumber"":0,""HiddenInScope"":false,""Active"":true,""IncludeInSearch"":true,""Relationships"":[]},""PrimaryParentCategoryId"":""BrutRos"",""RelatedCategories"":[],""RelatedProducts"":[],""Variants"":[{""CatalogId"":""Global"",""DefinitionName"":""WineBottleVariant"",""ListPrice"":199.9800,""Id"":""34699Standard"",""Created"":""\/Date(1355220564000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""ProductId"":""34699"",""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Variant, DesertOctopus.Benchmark"",""TypeName"":""Variant"",""PropertyBag"":{""Item_Id"":27235,""ItemDiscriminator"":""VARIANT"",""ParentItemName"":""34699"",""ParentItem_Id"":4140,""IsOverridden"":false,""IncludeInSearch"":true,""Volume"":""Standard""},""Active"":true,""HiddenInScope"":false,""Prices"":[{""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.ProductPriceEntry, DesertOctopus.Benchmark"",""TypeName"":""ProductPriceEntry"",""PropertyBag"":{},""PriceListId"":""DEFAULT"",""Price"":199.9800,""SequenceNumber"":0,""IsInherited"":false}],""Sku"":""34699Standard""},{""CatalogId"":""Global"",""DefinitionName"":""WineBottleVariant"",""ListPrice"":266.6400,""Id"":""34699Magnum"",""Created"":""\/Date(1355220564000)\/"",""LastModified"":""\/Date(1432231952000)\/"",""LastModifiedBy"":""Import Process"",""ProductId"":""34699"",""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Variant, DesertOctopus.Benchmark"",""TypeName"":""Variant"",""PropertyBag"":{""Item_Id"":27236,""ItemDiscriminator"":""VARIANT"",""ParentItemName"":""34699"",""ParentItem_Id"":4140,""IsOverridden"":false,""IncludeInSearch"":true,""Volume"":""Magnum""},""Active"":true,""HiddenInScope"":false,""Prices"":[{""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.ProductPriceEntry, DesertOctopus.Benchmark"",""TypeName"":""ProductPriceEntry"",""PropertyBag"":{},""PriceListId"":""DEFAULT"",""Price"":266.6400,""SequenceNumber"":0,""IsInherited"":false}],""Sku"":""34699Magnum""}],""Sku"":""4140"",""Active"":true,""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.Product, DesertOctopus.Benchmark"",""TypeName"":""Product"",""PropertyBag"":{""Item_Id"":4140,""ItemDiscriminator"":""PRODUCT"",""MSRP"":18.00000,""DateReviewed"":""\/Date(809827200000)\/"",""Region"":""Sonoma"",""Score"":5,""URLString"":""LYETH Cabernet Blend Alexander Valley A Red Blend 1992 Cabernet Blend Red"",""Wine"":""A Red Blend Alexander Valley"",""WineID"":34699,""Winery"":""Lyeth"",""Year"":1992,""PublicationState"":""Published"",""Alcohol"":22.50000,""SommelierScore"":""Decanter Magazine 9.7 | Wine Advocate 9.3 | Wine Spectator Magazine 9.9"",""CustomerScore"":87.10000,""Pairing"":""Lasagna | MeatballsSpaghetti"",""Caracteristics"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""<p>\n\t&quot;Supple and p<strong>olished cedar, coffee, cherry and berry flav</strong>ors. This i<u>s elegant, finishing with firm tannins and good length. Drinkable now.&quot; -- test</u></p>\n""}},""Appellations"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""Alexander Valley|Sonoma""}},""Body"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""Elegant|Firm|Firm Tannins|Polished|Supple|Tannins""}},""Country"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""United States""}},""Designation"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""Best Buy""}},""Flavors"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""Berry|Cedar|Cherry|Coffee""}},""WineType"":{""__type"":""DesertOctopus.Benchmark.Models.Localizable`1[[System.String, mscorlib]], DesertOctopus.Benchmark"",""Values"":{""en-US"":""Cabernet Blend""}}},""Prices"":[{""FullTypeName"":""DesertOctopus.Benchmark.Models.Products.ProductPriceEntry, DesertOctopus.Benchmark"",""TypeName"":""ProductPriceEntry"",""PropertyBag"":{},""PriceListId"":""DEFAULT"",""Price"":66.6600,""SequenceNumber"":0,""IsInherited"":false,""PriceListType"":""Regular"",""PriceListCategory"":""Regular""}],""Relationships"":[],""SequenceNumber"":0,""HiddenInScope"":false,""IncludeInSearch"":true,""IsOverridden"":false,""TaxCategory"":""Taxable""}";
+        //private Wire.Serializer wireSerializer = new Wire.Serializer();
 
         public ProductSerializationBenchMark()
         {
@@ -834,6 +969,14 @@ namespace DesertOctopus.Benchmark
             DesertOctopus.KrakenSerializer.Deserialize<Product>(krakenBytes);
 
             ServiceStack.Text.JsonSerializer.DeserializeFromString<Product>(JsonProduct);
+
+            //using (var ms = new MemoryStream())
+            //{
+            //    wireSerializer.Serialize(product, ms);
+            //    wireBytes = ms.ToArray();
+            //    ms.Position = 0;
+            //    wireSerializer.Deserialize<Product>(ms);
+            //}
         }
 
 
@@ -902,5 +1045,24 @@ namespace DesertOctopus.Benchmark
                 return bf.Deserialize(ms) as Product;
             }
         }
+
+        //[Benchmark]
+        //public byte[] WireSerialization()
+        //{
+        //    using (var ms = new MemoryStream())
+        //    {
+        //        wireSerializer.Serialize(product, ms);
+        //        return ms.ToArray();
+        //    }
+        //}
+
+        //[Benchmark]
+        //public Product WireDeserialization()
+        //{
+        //    using (var ms = new MemoryStream(wireBytes))
+        //    {
+        //        return wireSerializer.Deserialize<Product>(ms);
+        //    }
+        //}
     }
 }

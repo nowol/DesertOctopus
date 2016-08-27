@@ -255,6 +255,7 @@ namespace DesertOctopus.Tests
             DuplicateArray<T>(values);
             DuplicateList<T>(values);
             DuplicateReadOnly<T>(values.First());
+            DuplicateCSharp6StyleReadOnly<T>(values.First());
             DuplicateWrappedPrimitive<T>(values.First());
         }
 
@@ -273,6 +274,17 @@ namespace DesertOctopus.Tests
         private void DuplicateReadOnly<T>(T value)
         {
             var instance = new ClassWithReadOnlyProperty<T>(value);
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Value,
+                            duplicatedValue.Value,
+                            string.Format("Type {0} does not have the same value after being deserialized.",
+                                            typeof(T)));
+        }
+
+        private void DuplicateCSharp6StyleReadOnly<T>(T value)
+        {
+            var instance = new ClassWithCSharp6StyleReadOnlyProperty<T>(value);
             var duplicatedValue = Duplicate(instance);
 
             Assert.AreEqual(instance.Value,
