@@ -20,7 +20,7 @@ namespace DesertOctopus.Utilities
         /// <summary>
         /// Version of the serialization engine
         /// </summary>
-        public const short Version = 1;
+        public const short Version = 2;
 
         public static readonly ConcurrentDictionary<Type, FieldInfo[]> FieldsForType = new ConcurrentDictionary<Type, FieldInfo[]>();
 
