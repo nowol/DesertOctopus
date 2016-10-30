@@ -10,7 +10,6 @@ namespace DesertOctopus.Utilities
     internal class SerializerObjectTracker
     {
         private readonly Dictionary<object, int> _trackedObjects;
-        //private readonly List<object> _trackedObjects2;
         private int _numberOfTrackedObject = 0;
 
         public const byte Value0 = 0;
@@ -23,7 +22,6 @@ namespace DesertOctopus.Utilities
         public SerializerObjectTracker()
         {
             _trackedObjects = new Dictionary<object, int>();
-            //_trackedObjects2 = new List<object>();
         }
 
         /// <summary>
@@ -37,7 +35,6 @@ namespace DesertOctopus.Utilities
                 return;
             }
 
-            //_trackedObjects2.Add(obj);
             _numberOfTrackedObject++;
 
             if (obj.GetType().IsClass
