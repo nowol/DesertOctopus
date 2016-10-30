@@ -55,7 +55,7 @@ namespace DesertOctopus.Serialization
                                                                ParameterExpression newInstance,
                                                                List<ParameterExpression> variables,
                                                                ParameterExpression inputStream,
-                                                               ParameterExpression objTracking)
+                                                               ParameterExpression objTracker)
         {
             var i = Expression.Parameter(typeof(int), "i");
             var length = Expression.Parameter(typeof(int), "length");
@@ -76,16 +76,16 @@ namespace DesertOctopus.Serialization
             variables.Add(deserializer);
 
             var expressions = new List<Expression>();
-            expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
+            expressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream, objTracker)));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.New(type.GetConstructor(new[] { typeof(int) }), length), type)));
             if (type.IsClass)
             {
-                expressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+                expressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
             }
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType));
+            loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracker, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType));
             loopExpressions.Add(Expression.Call(newInstance, ArrayMih.SetValue(), Expression.Convert(tmpValue, typeof(object)), i));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
