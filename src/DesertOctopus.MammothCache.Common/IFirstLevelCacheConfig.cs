@@ -11,7 +11,7 @@ namespace DesertOctopus.MammothCache.Common
         /// <summary>
         /// Gets or sets the interval of the cleanup timer
         /// </summary>
-        int TimerInterval { get; set; }
+        TimeSpan TimerInterval { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum memory in bytes

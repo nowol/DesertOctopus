@@ -22,6 +22,8 @@ using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+// ReSharper disable PossibleMultipleEnumeration
+// ReSharper disable UnusedVariable
 
 namespace DesertOctopus.Benchmark
 {
@@ -473,7 +475,7 @@ namespace DesertOctopus.Benchmark
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             _config.MaximumMemorySize = 1000;
-            _config.TimerInterval = 1;
+            _config.TimerInterval = TimeSpan.FromSeconds(1);
 
             _redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
             _connection = new RedisConnection(_redisConnectionString, _redisRetryPolicy);

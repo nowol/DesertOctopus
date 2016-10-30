@@ -55,7 +55,7 @@ namespace DesertOctopus.MammothCache.WebSiteSimulator.Controllers
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             _config.MaximumMemorySize = 1000;
-            _config.TimerInterval = 1;
+            _config.TimerInterval = TimeSpan.FromSeconds(1);
 
             IRedisRetryPolicy redisRetryPolicy = new RedisRetryPolicy(50, 100, 150);
             var connection = new RedisConnection(_redisConnectionString, redisRetryPolicy);

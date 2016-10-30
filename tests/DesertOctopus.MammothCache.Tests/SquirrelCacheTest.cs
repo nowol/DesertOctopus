@@ -26,7 +26,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             _config.MaximumMemorySize = 1000;
-            _config.TimerInterval = 1;
+            _config.TimerInterval = TimeSpan.FromSeconds(1);
 
             _cacheRepository = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             _testObject = new CachingTestClass();
@@ -47,7 +47,7 @@ namespace DesertOctopus.MammothCache.Tests
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             config.MaximumMemorySize = 1000;
-            config.TimerInterval = 0;
+            config.TimerInterval = TimeSpan.FromSeconds(0);
             var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
         }
 
@@ -59,7 +59,7 @@ namespace DesertOctopus.MammothCache.Tests
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(0);
             config.MaximumMemorySize = 1000;
-            config.TimerInterval = 1;
+            config.TimerInterval = TimeSpan.FromSeconds(1);
             var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
         }
 
@@ -71,7 +71,7 @@ namespace DesertOctopus.MammothCache.Tests
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             config.MaximumMemorySize = 0;
-            config.TimerInterval = 1;
+            config.TimerInterval = TimeSpan.FromSeconds(1);
             var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
         }
 
@@ -187,7 +187,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
 
-            WaitFor(_config.TimerInterval * 2);
+            WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
             Assert.AreEqual(0, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(0, _cacheRepository.NumberOfObjects);
@@ -207,7 +207,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
 
-            WaitFor(_config.TimerInterval * 2);
+            WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
             Assert.AreEqual(968, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
@@ -231,7 +231,7 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(numberOfItemsToAdd, _cacheRepository.NumberOfObjects);
             Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
 
-            WaitFor(_config.TimerInterval * 2);
+            WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
             Assert.AreEqual(numberOfItemsToAdd - 5, _cacheRepository.NumberOfObjects);
             Assert.AreEqual(840, _cacheRepository.EstimatedMemorySize);
