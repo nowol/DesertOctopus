@@ -275,6 +275,9 @@ namespace DesertOctopus.Benchmark
         [TestCategory("Benchmark")]
         public void DoubleArraySerializationBenchmark()
         {
+            var ii = new DoubleArraySerializationBenchmark();
+
+
             var summary = BenchmarkRunner.Run<DoubleArraySerializationBenchmark>();
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);

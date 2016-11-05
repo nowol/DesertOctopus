@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -10,6 +11,7 @@ using DesertOctopus.Cloning;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
 using DesertOctopus.Tests.TestObjects;
+using DesertOctopus.Utilities;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
@@ -23,10 +25,196 @@ namespace DesertOctopus.Tests
 
 
 
+        static uint EncodeZigZag32(int n)
+        {
+            return (uint)((n << 1) ^ (n >> 31));
+        }
+        static ulong EncodeZigZag64(long n)
+        {
+            return (ulong)((n << 1) ^ (n >> 63));
+        }
+        static ulong ReadVarint64(Stream stream)
+        {
+            long result = 0;
+            int offset = 0;
+
+            for (; offset < 64; offset += 7)
+            {
+                int b = stream.ReadByte();
+                if (b == -1)
+                    throw new EndOfStreamException();
+
+                result |= ((long)(b & 0x7f)) << offset;
+
+                if ((b & 0x80) == 0)
+                    return (ulong)result;
+            }
+
+            throw new InvalidDataException();
+        }
+
+
+        [TestMethod]
+        public unsafe void TestPrimitiveeeeee()
+        {
+            //using (var ms = new MemoryStream())
+            //{
+            //    uint value = EncodeZigZag32(int.MinValue);
+
+            //    for (; value >= 0x80u; value >>= 7)
+            //        ms.WriteByte((byte)(value | 0x80u));
+
+            //    ms.WriteByte((byte)value);
+
+            //    ms.Position = 0;
+
+            //    ReadVarint32(ms);
+            //}
+
+
+            //var outputStream = Expression.Parameter(typeof(Stream), "outputStream");
+            //var objToSerialize = Expression.Parameter(typeof(int), "objToSerialize");
+            //var objTracking = Expression.Parameter(typeof(SerializerObjectTracker), "objTracking");
+
+            //var expr = PrimitiveHelpers.WriteInt32(outputStream, objToSerialize, objTracking);
+            //var write = Expression.Lambda<Action<Stream, int, SerializerObjectTracker>>(expr, outputStream, objToSerialize, objTracking).Compile();
+
+
+            //var inputStream = Expression.Parameter(typeof(Stream), "inputStream");
+            //var objTracker = Expression.Parameter(typeof(DeserializerObjectTracker), "objTracker");
+            //var exprRead = PrimitiveHelpers.ReadInt32(inputStream, objTracker);
+            //var read = Expression.Lambda<Func<Stream, DeserializerObjectTracker, int>>(exprRead, inputStream, objTracker).Compile();
+
+
+            ////
+
+            //var inputObj = Expression.Parameter(typeof(int));
+            //var zigEnc = PrimitiveHelpers.EncodeZigZag32(inputObj);
+            //var zigE = Expression.Lambda<Func<int, uint>>(zigEnc, inputObj).Compile();
+
+            //var inputObj2 = Expression.Parameter(typeof(uint));
+            //var zigDec = PrimitiveHelpers.DecodeZigZag32(inputObj2);
+            //var zigD = Expression.Lambda<Func<uint, int>>(zigDec, inputObj2).Compile();
+
+
+            //for (int i = int.MinValue; i < int.MaxValue; i++)
+            //{
+            //    //uint z = zigE(i);
+            //    //int zz = zigD(z);
+
+
+            //    using (var ms = new MemoryStream())
+            //    {
+            //        write(ms, i, new SerializerObjectTracker());
+            //        ms.Position = 0;
+
+            //        int d = read(ms, new DeserializerObjectTracker());
+
+            //        Assert.AreEqual(i, d);
+            //    }
+            //}
+
+            var d = 5456465.564D;
+            long longValue = *(long*)&d;
+
+
+            using (var ms = new MemoryStream())
+            {
+                ulong value = EncodeZigZag64(longValue);
+
+                for (; value >= 0x80u; value >>= 7)
+                    ms.WriteByte((byte)(value | 0x80u));
+
+                ms.WriteByte((byte)value);
+
+                ms.Position = 0;
+
+                var lll = ReadVarint64(ms);
+            }
+
+
+            var outputStream = Expression.Parameter(typeof(Stream), "outputStream");
+            var objToSerialize = Expression.Parameter(typeof(long), "objToSerialize");
+            var objTracking = Expression.Parameter(typeof(SerializerObjectTracker), "objTracking");
+
+            var expr = PrimitiveHelpers.WriteInt64(outputStream, objToSerialize, objTracking);
+            var write = Expression.Lambda<Action<Stream, long, SerializerObjectTracker>>(expr, outputStream, objToSerialize, objTracking).Compile();
+
+
+            var inputStream = Expression.Parameter(typeof(Stream), "inputStream");
+            var objTracker = Expression.Parameter(typeof(DeserializerObjectTracker), "objTracker");
+            var exprRead = PrimitiveHelpers.ReadInt64(inputStream, objTracker);
+            var read = Expression.Lambda<Func<Stream, DeserializerObjectTracker, long>>(exprRead, inputStream, objTracker).Compile();
+
+
+            //
+
+            var inputObj = Expression.Parameter(typeof(long));
+            var zigEnc = PrimitiveHelpers.EncodeZigZag64(inputObj);
+            var zigE = Expression.Lambda<Func<long, ulong>>(zigEnc, inputObj).Compile();
+
+            var inputObj2 = Expression.Parameter(typeof(ulong));
+            var zigDec = PrimitiveHelpers.DecodeZigZag64(inputObj2);
+            var zigD = Expression.Lambda<Func<ulong, long>>(zigDec, inputObj2).Compile();
+
+
+            for (long i = long.MinValue; i < long.MaxValue; i++)
+            {
+                ulong z = zigE(i);
+                long zz = zigD(z);
+
+                i = longValue;
+
+                using (var ms = new MemoryStream())
+                {
+                    write(ms, i, new SerializerObjectTracker());
+                    ms.Position = 0;
+
+                    long dd = read(ms, new DeserializerObjectTracker());
+
+                    Assert.AreEqual(i, dd);
+                }
+            }
+
+            //9218868437227405311
+
+        }
+
+        static uint ReadVarint32(Stream stream)
+        {
+            int result = 0;
+            int offset = 0;
+
+            for (; offset < 32; offset += 7)
+            {
+                int b = stream.ReadByte();
+                if (b == -1)
+                    throw new EndOfStreamException();
+
+                result |= (b & 0x7f) << offset;
+
+                if ((b & 0x80) == 0)
+                    return (uint)result;
+            }
+
+            throw new InvalidDataException();
+        }
+
+
+        static void WriteVarint32(System.IO.Stream stream, uint value)
+        {
+           
+        }
+
         [TestMethod]
         [TestCategory("Unit")]
         public void TestPrimitives()
         {
+            PrimitiveTestSuite<double>(double.MaxValue, double.MinValue, 1.1D, -1.1D, 0);
+            PrimitiveTestSuite<UInt64>(ulong.MaxValue, ulong.MinValue, 65000, 0);
+            PrimitiveTestSuite<Int64>(long.MaxValue, long.MinValue, -32767, 32767, 0);
+
+
             PrimitiveTestSuite<string>("S", "s", null);
 
             PrimitiveTestSuite<bool>(true, false);

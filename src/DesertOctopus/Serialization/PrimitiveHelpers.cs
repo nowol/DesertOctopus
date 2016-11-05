@@ -64,19 +64,39 @@ namespace DesertOctopus.Serialization
                                     arr);
         }
 
-#if VARINT
+#if VARINT || true
+
+
         private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
+            return WriteVarint(outputStream,
+                               obj,
+                               Expression.Constant((uint)0x80u, typeof(uint)),
+                               typeof(uint));
+        }
+
+        private static Expression WriteVarint64(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        {
+            return WriteVarint(outputStream,
+                               obj,
+                               Expression.Constant((ulong)0x80u, typeof(ulong)),
+                               typeof(ulong));
+        }
+
+        private static Expression WriteVarint(ParameterExpression outputStream, Expression obj, Expression marker, Type tmpType)
+        {
             var expressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
             var breakLabel = Expression.Label("breakLabel");
-            var tmp = Expression.Property(objTracker, nameof(SerializerObjectTracker.Uint32Value));
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))));
+            var tmp = Expression.Parameter(tmpType, "tmp");
 
-            //var loopCondition = Expression.IfThen();
+            variables.Add(tmp);
+//expressions.Add(InternalSerializationStuff.TraceWriteLineToString(obj));
+//expressions.Add(InternalSerializationStuff.TraceWriteLineToString(tmp));
+            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, tmpType)));
 
-            var cond = Expression.GreaterThanOrEqual(tmp, Expression.Constant(0x80u));
-            var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, Expression.Constant(0x80u)), typeof(byte))),
-                                            //Expression.Assign(tmp, Expression.RightShiftAssign())
+            var cond = Expression.GreaterThanOrEqual(tmp, marker);
+            var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, marker), typeof(byte))),
                                             Expression.RightShiftAssign(tmp, Expression.Constant(7))
                                             );
 
@@ -86,95 +106,254 @@ namespace DesertOctopus.Serialization
                                             breakLabel));
             expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(tmp, typeof(byte))));
 
-            return Expression.Block(expressions);
+            return Expression.Block(variables, expressions);
         }
 
+        private static Expression ReadVarint32(ParameterExpression inputStream,
+                                               ParameterExpression objTracker)
+        {
+            return ReadVarint(inputStream, objTracker, 4 * 8, typeof(int), Expression.Constant(0, typeof(int)));
+        }
 
-        private static Expression ReadVarint32(ParameterExpression inputStream, Type expectedType)
+        private static Expression ReadVarint64(ParameterExpression inputStream,
+                                               ParameterExpression objTracker)
+        {
+            return ReadVarint(inputStream, objTracker, 8 * 8, typeof(long), Expression.Constant((long)0, typeof(long)));
+        }
+
+        private static Expression ReadVarint(ParameterExpression inputStream, ParameterExpression objTracker, int max, Type tmpType, Expression defaultValue)
         {
             var variables = new List<ParameterExpression>();
 
-            var result = Expression.Parameter(typeof(int), "result");
+            var result = Expression.Parameter(tmpType, "result");
             var offset = Expression.Parameter(typeof(int), "offset");
             var b = Expression.Parameter(typeof(int), "b");
-            var returnLabel = Expression.Label("returnLabel");
-            var breakLabel = Expression.Label("breakLabel");
+            //var returnLabel = Expression.Label(typeof(int), "returnLabel_x_" + Guid.NewGuid().ToString("N"));
+            var breakLabel = Expression.Label("breakLabel" + Guid.NewGuid().ToString("N"));
 
             variables.Add(result);
             variables.Add(offset);
             variables.Add(b);
 
-            var cond = Expression.LessThan(offset, Expression.Constant(32));
-            var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream)),
-                                            Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
-                                                              Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
+            var cond = Expression.LessThan(offset, Expression.Constant(max));
+            var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream, objTracker)),
+                                           Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
+                                                             Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
 
-                                            Expression.OrAssign(result,
-                                                                Expression.LeftShift(Expression.And(b, Expression.Constant(0x7f)),
-                                                                                                    offset)),
+                                           Expression.OrAssign(result,
+                                                               Expression.LeftShift(Expression.Convert(Expression.And(b, Expression.Constant(0x7f)),
+                                                                                                       tmpType),
+                                                                                    offset)),
 
-                                            Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
-                                                              Expression.Goto(returnLabel)),
-                                            Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
+                                           Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
+                                                             Expression.Break(breakLabel)),
+                                           Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
 
 
             return Expression.Block(variables,
-                                    Expression.Assign(result, Expression.Constant(0)),
+                                    Expression.Assign(result, defaultValue),
                                     Expression.Assign(offset, Expression.Constant(0)),
                                     Expression.Loop(Expression.IfThenElse(cond,
                                                                           loopBody,
                                                                           Expression.Break(breakLabel)),
                                                     breakLabel),
 
-                                    Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
+                                    //Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
 
-                                    Expression.Label(returnLabel),
-                                    Expression.Convert(result, expectedType)
-                );
+                                    //Expression.Label(returnLabel, Expression.Constant(0)),
+                                    result);
+
+            //var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream, objTracker)),
+            //                                Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
+            //                                                  Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
+
+            //                                Expression.OrAssign(result,
+            //                                                    Expression.Convert(Expression.LeftShift(Expression.And(b, Expression.Constant(0x7f)),
+            //                                                                                        offset), tmpType)),
+
+            //                                Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
+            //                                                  Expression.Goto(returnLabel, Expression.Constant(0))),
+            //                                Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
+
+
+            //return Expression.Block(variables,
+            //                        Expression.Assign(result, defaultValue),
+            //                        Expression.Assign(offset, Expression.Constant(0)),
+            //                        Expression.Loop(Expression.IfThenElse(cond,
+            //                                                              loopBody,
+            //                                                              Expression.Break(breakLabel)),
+            //                                        breakLabel),
+
+            //                        Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
+
+            //                        Expression.Label(returnLabel, Expression.Constant(0)),
+            //                        result);
         }
+
+        internal static Expression EncodeZigZag32(Expression obj)
+        {
+            //var variables = new List<ParameterExpression>();
+            //var tmp = Expression.Parameter(typeof(int), "tmp");
+            //variables.Add(tmp);
+
+            //return Expression.Convert(Expression.Block(variables,
+            //                                           Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))),
+            //                               Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
+            //                                                      Expression.RightShift(tmp, Expression.Constant(31)))),
+            //                          typeof(uint));
+
+
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(int), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Block(variables,
+                                    Expression.Assign(tmp, Expression.Convert(obj, typeof(int))),
+                                    Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
+                                                                              Expression.RightShift(tmp, Expression.Constant(63))),
+                                                       typeof(uint)));
+
+            // (uint)((n << 1) ^ (n >> 31));
+        }
+
+        internal static Expression EncodeZigZag64(Expression obj)
+        {
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(long), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Block(variables,
+                                    Expression.Assign(tmp, Expression.Convert(obj, typeof(long))),
+                                    Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
+                                                                              Expression.RightShift(tmp, Expression.Constant(63))),
+                                                       typeof(ulong)));
+            //return (ulong)((n << 1) ^ (n >> 63));
+        }
+
+        internal static Expression DecodeZigZag32(Expression obj)
+        {
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(uint), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Convert(Expression.Block(variables,
+                                                       Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))),
+                                           Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(int)),
+                                                                  Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((uint)1, typeof(uint))), typeof(int))))),
+                                      typeof(int));
+
+            //return (int)(n >> 1) ^ -(int)(n & 1);
+        }
+
+        internal static Expression DecodeZigZag64(Expression obj)
+        {
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(ulong), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Convert(Expression.Block(variables,
+                                                       Expression.Assign(tmp, Expression.Convert(obj, typeof(ulong))),
+                                           Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(long)),
+                                                                  Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((ulong)1, typeof(ulong))), typeof(long))))),
+                                      typeof(long));
+            //return (long)(n >> 1) ^ -(long)(n & 1);
+        }
+
 #endif
 
         private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
-            var tmp = Expression.Parameter(expectedType, "tmp");
-            var expressions = new List<Expression>();
-
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, expectedType)));
-
-            for (int bits = (numberOfBytes * 8) - 8; bits >= 8; bits -= 8)
+            if (expectedType == typeof(byte)
+                || expectedType == typeof(sbyte)
+                || expectedType == typeof(short)
+                || expectedType == typeof(ushort))
             {
-                expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
-            }
+                var tmp = Expression.Parameter(expectedType, "tmp");
+                var expressions = new List<Expression>();
 
-            expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
-            return Expression.Block(new[] { tmp }, expressions);
+                expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, expectedType)));
+
+                for (int bits = (numberOfBytes * 8) - 8; bits >= 8; bits -= 8)
+                {
+                    expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+                }
+
+                expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+                return Expression.Block(new[] { tmp }, expressions);
+            }
+            else if (expectedType == typeof(int))
+            {
+                return WriteVarint32(outputStream, EncodeZigZag32(obj), objTracker);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                return WriteVarint32(outputStream, obj, objTracker);
+            }
+            else if (expectedType == typeof(long))
+            {
+                return WriteVarint64(outputStream, EncodeZigZag64(obj), objTracker);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                return WriteVarint64(outputStream, obj, objTracker);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
         }
 
         private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, ParameterExpression objTracker, int numberOfBytes, Type expectedType)
         {
-            var expressions = new List<Expression>();
-            var tmp = Expression.Parameter(expectedType, "tmp");
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(Expression.Constant(0), expectedType)));
-
-            for (int i = 0; i < numberOfBytes; i++)
+            if (expectedType == typeof(byte)
+                   || expectedType == typeof(sbyte)
+                   || expectedType == typeof(short)
+                   || expectedType == typeof(ushort))
             {
-                expressions.Add(Expression.Assign(tmp, Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)), Expression.Convert(ReadByte(inputStream, objTracker), expectedType))));
+                var expressions = new List<Expression>();
+                var tmp = Expression.Parameter(expectedType, "tmp");
+                expressions.Add(Expression.Assign(tmp, Expression.Convert(Expression.Constant(0), expectedType)));
+
+                for (int i = 0; i < numberOfBytes; i++)
+                {
+                    expressions.Add(Expression.Assign(tmp, Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)), Expression.Convert(ReadByte(inputStream, objTracker), expectedType))));
+                }
+
+                expressions.Add(tmp);
+
+                return Expression.Block(new[] { tmp }, expressions);
             }
-
-            expressions.Add(tmp);
-
-            return Expression.Block(new[] { tmp }, expressions);
+            else if (expectedType == typeof(int))
+            {
+                return Expression.Convert(DecodeZigZag32(ReadVarint32(inputStream, objTracker)), expectedType);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                return Expression.Convert(ReadVarint32(inputStream, objTracker), expectedType);
+            }
+            else if (expectedType == typeof(long))
+            {
+                return Expression.Convert(DecodeZigZag64(ReadVarint64(inputStream, objTracker)), expectedType);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                return Expression.Convert(ReadVarint64(inputStream, objTracker), expectedType);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
         }
 
         [System.Security.SecuritySafeCritical]
-        internal static unsafe long GetLongFromDouble(double value)
+        internal static unsafe ulong GetLongFromDouble(double value)
         {
-            long longValue = *(long*)&value;
+            ulong longValue = *(ulong*)&value;
             return longValue;
         }
 
         [System.Security.SecuritySafeCritical]
-        internal static unsafe double GetDoubleFromLong(long value)
+        internal static unsafe double GetDoubleFromLong(ulong value)
         {
             double doubleValue = *(double*)&value;
             return doubleValue;
@@ -770,7 +949,7 @@ namespace DesertOctopus.Serialization
         {
             var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetLongFromDouble(), obj);
 
-            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(ulong), typeof(ulong));
         }
 
         /// <summary>
@@ -781,7 +960,7 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression to handle double deserialization</returns>
         public static Expression ReadDouble(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            var longValue = ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(long), typeof(long));
+            var longValue = ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(ulong), typeof(ulong));
             return Expression.Call(PrimitiveHelpersMih.GetDoubleFromLong(), longValue);
         }
 
