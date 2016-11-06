@@ -61,6 +61,7 @@
     <Compile Include="CachedObject.cs" />
     <Compile Include="CachedObjectQueue.cs" />
     <Compile Include="FirstLevelCacheConfig.cs" />
+    <Compile Include="LongCounter.cs" />
     <Compile Include="LocksManager.cs" />
     <Compile Include="MammothCache.cs" />
     <Compile Include="MammothCacheSerializationProvider.cs" />

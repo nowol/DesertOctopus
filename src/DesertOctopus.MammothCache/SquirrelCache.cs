@@ -19,6 +19,8 @@ namespace DesertOctopus.MammothCache
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
         private readonly System.Threading.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
+        private bool _isDisposed = false;
+        private LongCounter _estimatedMemorySize = new LongCounter();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SquirrelCache"/> class.
@@ -82,7 +84,10 @@ namespace DesertOctopus.MammothCache
         /// <summary>
         /// Gets the estimated memory consumed by this instance of <see cref="SquirrelCache"/>
         /// </summary>
-        public int EstimatedMemorySize { get; private set; }
+        public long EstimatedMemorySize
+        {
+            get { return _estimatedMemorySize.Get(); }
+        }
 
         /// <inheritdoc/>
         public ConditionalResult<T> Get<T>(string key)
@@ -154,7 +159,7 @@ namespace DesertOctopus.MammothCache
             _cache.Set(cacheItem, policy);
             _cachedObjectsByAge.Add(co);
 
-            EstimatedMemorySize += co.ObjectSize;
+            _estimatedMemorySize.Add(co.ObjectSize);
         }
 
         private void RemovedCallback(CacheEntryRemovedArguments arguments)
@@ -162,7 +167,7 @@ namespace DesertOctopus.MammothCache
             var value = arguments.CacheItem.Value as CachedObject;
             if (value != null)
             {
-                EstimatedMemorySize -= value.ObjectSize;
+                _estimatedMemorySize.Substract(value.ObjectSize);
                 _cachedObjectsByAge.Remove(value);
             }
         }
@@ -176,8 +181,6 @@ namespace DesertOctopus.MammothCache
 
             return co;
         }
-
-        private bool _isDisposed = false;
 
         /// <summary>
         /// Dispose the object

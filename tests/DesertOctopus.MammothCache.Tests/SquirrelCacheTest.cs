@@ -209,7 +209,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
-            Assert.AreEqual(968, _cacheRepository.EstimatedMemorySize);
+            Assert.AreEqual(967, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
             Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
             Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
@@ -221,7 +221,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             var keys = new List<string>();
             int numberOfItemsToAdd = (_config.MaximumMemorySize / _serializedTestObject.Length) + 5;
-            for(int i = 0 ; i < numberOfItemsToAdd ; i++)
+            for (int i = 0 ; i < numberOfItemsToAdd ; i++)
             {
                 var key = Guid.NewGuid().ToString();
                 _cacheRepository.Set(key, _serializedTestObject);
@@ -234,7 +234,7 @@ namespace DesertOctopus.MammothCache.Tests
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
             Assert.AreEqual(numberOfItemsToAdd - 5, _cacheRepository.NumberOfObjects);
-            Assert.AreEqual(840, _cacheRepository.EstimatedMemorySize);
+            Assert.AreEqual(_serializedTestObject.Length * (numberOfItemsToAdd - 5), _cacheRepository.EstimatedMemorySize);
 
             foreach (var key in keys.Skip(5))
             {
@@ -370,6 +370,56 @@ namespace DesertOctopus.MammothCache.Tests
         public void NoCloningProviderShouldThrowWhenCloning()
         {
             _noCloningProvider.Clone(new object());
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void SquirrelCacheShouldBeThreadSafe()
+        {
+            var config = new FirstLevelCacheConfig();
+            config.AbsoluteExpiration = TimeSpan.FromSeconds(3600);
+            config.MaximumMemorySize = 100000000;
+            config.TimerInterval = TimeSpan.FromSeconds(5);
+            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+
+            // seed cache
+            var seededItems = 100000;
+            int numberOfMod3Items = Enumerable.Range(0, seededItems) .Count(x => x % 3 == 0);
+
+            Parallel.For(0,
+                         seededItems,
+                         i =>
+                         {
+                             cacheRepository.Set("cache_" + i,
+                                                  _serializedTestObject);
+                         });
+
+            Assert.AreEqual(seededItems,
+                            cacheRepository.NumberOfObjects);
+            Assert.AreEqual(seededItems * _serializedTestObject.Length,
+                            cacheRepository.EstimatedMemorySize);
+
+            Parallel.For(0,
+                         seededItems,
+                         i =>
+                         {
+                             if (i % 3 == 0)
+                             {
+                                 cacheRepository.Remove("cache_" + i);
+                             }
+                             else
+                             {
+                                 cacheRepository.Set("cache_" + i,
+                                                      _serializedTestObject);
+                             }
+                         });
+
+            WaitFor(10);
+
+            Assert.AreEqual(seededItems - numberOfMod3Items,
+                            cacheRepository.NumberOfObjects);
+            Assert.AreEqual((seededItems - numberOfMod3Items) * _serializedTestObject.Length,
+                            cacheRepository.EstimatedMemorySize);
         }
     }
 }
