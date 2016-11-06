@@ -64,8 +64,7 @@ namespace DesertOctopus.Serialization
                                     arr);
         }
 
-#if VARINT || true
-
+#region VARINT
 
         private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
@@ -91,14 +90,11 @@ namespace DesertOctopus.Serialization
             var tmp = Expression.Parameter(tmpType, "tmp");
 
             variables.Add(tmp);
-//expressions.Add(InternalSerializationStuff.TraceWriteLineToString(obj));
-//expressions.Add(InternalSerializationStuff.TraceWriteLineToString(tmp));
             expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, tmpType)));
 
             var cond = Expression.GreaterThanOrEqual(tmp, marker);
             var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, marker), typeof(byte))),
-                                            Expression.RightShiftAssign(tmp, Expression.Constant(7))
-                                            );
+                                            Expression.RightShiftAssign(tmp, Expression.Constant(7)));
 
             expressions.Add(Expression.Loop(Expression.IfThenElse(cond,
                                                                   loopBody,
@@ -128,7 +124,6 @@ namespace DesertOctopus.Serialization
             var result = Expression.Parameter(tmpType, "result");
             var offset = Expression.Parameter(typeof(int), "offset");
             var b = Expression.Parameter(typeof(int), "b");
-            //var returnLabel = Expression.Label(typeof(int), "returnLabel_x_" + Guid.NewGuid().ToString("N"));
             var breakLabel = Expression.Label("breakLabel" + Guid.NewGuid().ToString("N"));
 
             variables.Add(result);
@@ -157,52 +152,12 @@ namespace DesertOctopus.Serialization
                                                                           loopBody,
                                                                           Expression.Break(breakLabel)),
                                                     breakLabel),
-
-                                    //Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
-
-                                    //Expression.Label(returnLabel, Expression.Constant(0)),
                                     result);
-
-            //var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream, objTracker)),
-            //                                Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
-            //                                                  Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
-
-            //                                Expression.OrAssign(result,
-            //                                                    Expression.Convert(Expression.LeftShift(Expression.And(b, Expression.Constant(0x7f)),
-            //                                                                                        offset), tmpType)),
-
-            //                                Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
-            //                                                  Expression.Goto(returnLabel, Expression.Constant(0))),
-            //                                Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
-
-
-            //return Expression.Block(variables,
-            //                        Expression.Assign(result, defaultValue),
-            //                        Expression.Assign(offset, Expression.Constant(0)),
-            //                        Expression.Loop(Expression.IfThenElse(cond,
-            //                                                              loopBody,
-            //                                                              Expression.Break(breakLabel)),
-            //                                        breakLabel),
-
-            //                        Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
-
-            //                        Expression.Label(returnLabel, Expression.Constant(0)),
-            //                        result);
         }
 
         internal static Expression EncodeZigZag32(Expression obj)
         {
-            //var variables = new List<ParameterExpression>();
-            //var tmp = Expression.Parameter(typeof(int), "tmp");
-            //variables.Add(tmp);
-
-            //return Expression.Convert(Expression.Block(variables,
-            //                                           Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))),
-            //                               Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
-            //                                                      Expression.RightShift(tmp, Expression.Constant(31)))),
-            //                          typeof(uint));
-
-
+            // (uint)((n << 1) ^ (n >> 31));
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(int), "tmp");
             variables.Add(tmp);
@@ -212,12 +167,11 @@ namespace DesertOctopus.Serialization
                                     Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
                                                                               Expression.RightShift(tmp, Expression.Constant(63))),
                                                        typeof(uint)));
-
-            // (uint)((n << 1) ^ (n >> 31));
         }
 
         internal static Expression EncodeZigZag64(Expression obj)
         {
+            //return (ulong)((n << 1) ^ (n >> 63));
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(long), "tmp");
             variables.Add(tmp);
@@ -227,11 +181,11 @@ namespace DesertOctopus.Serialization
                                     Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
                                                                               Expression.RightShift(tmp, Expression.Constant(63))),
                                                        typeof(ulong)));
-            //return (ulong)((n << 1) ^ (n >> 63));
         }
 
         internal static Expression DecodeZigZag32(Expression obj)
         {
+            //return (int)(n >> 1) ^ -(int)(n & 1);
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(uint), "tmp");
             variables.Add(tmp);
@@ -241,12 +195,11 @@ namespace DesertOctopus.Serialization
                                            Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(int)),
                                                                   Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((uint)1, typeof(uint))), typeof(int))))),
                                       typeof(int));
-
-            //return (int)(n >> 1) ^ -(int)(n & 1);
         }
 
         internal static Expression DecodeZigZag64(Expression obj)
         {
+            //return (long)(n >> 1) ^ -(long)(n & 1);
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(ulong), "tmp");
             variables.Add(tmp);
@@ -256,10 +209,9 @@ namespace DesertOctopus.Serialization
                                            Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(long)),
                                                                   Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((ulong)1, typeof(ulong))), typeof(long))))),
                                       typeof(long));
-            //return (long)(n >> 1) ^ -(long)(n & 1);
         }
 
-#endif
+#endregion
 
         private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
@@ -913,7 +865,7 @@ namespace DesertOctopus.Serialization
 
         #endregion
 
-        #region double
+#region double
 
         /// <summary>
         /// Generates an expression to handle nullable double serialization
