@@ -209,7 +209,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
-            Assert.AreEqual(967, _cacheRepository.EstimatedMemorySize);
+            Assert.AreEqual(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
             Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
             Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
             Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
