@@ -22,6 +22,9 @@ using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NetSerializer;
+using Serializer = NetSerializer.Serializer;
+
 // ReSharper disable PossibleMultipleEnumeration
 // ReSharper disable UnusedVariable
 
@@ -824,9 +827,11 @@ namespace DesertOctopus.Benchmark
         public byte[] bfBytes;
         public byte[] omniBytes;
         public byte[] wireBytes;
+        public byte[] netBytes;
         protected object obj;
         private string Json = String.Empty;
         private Wire.Serializer wireSerializer = new Wire.Serializer();
+        private NetSerializer.Serializer netSerializer;
 
         public SerializationBenchmarkBase(object objectToTest, bool benchmarkOmni = true, bool benchmarkSS = true)
         {
@@ -862,9 +867,21 @@ namespace DesertOctopus.Benchmark
                 ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
             }
 
+            netSerializer = CreateNetSerializer();
+
+            using (var ms = new MemoryStream())
+            {
+                netSerializer.Serialize(ms, objectToTest);
+                netBytes = ms.ToArray();
+                ms.Position = 0;
+                object o;
+                netSerializer.Deserialize(ms, out o);
+            }
+
             System.IO.File.WriteAllText("KrakenSerialization", krakenBytes.Length.ToString());
             System.IO.File.WriteAllText("BinaryFormatterSerialization", bfBytes.Length.ToString());
             System.IO.File.WriteAllText("OmniSerialization", omniBytes.Length.ToString());
+            System.IO.File.WriteAllText("NetSerializerSerialization", netBytes.Length.ToString());
 
             //using (var ms = new MemoryStream())
             //{
@@ -873,6 +890,51 @@ namespace DesertOctopus.Benchmark
             //    ms.Position = 0;
             //    wireSerializer.Deserialize<T>(ms);
             //}
+        }
+
+        private Serializer CreateNetSerializer()
+        {
+            var types = new HashSet<Type>();
+            types.Add(typeof(Dictionary<string, string>));
+
+            BuildTypeList(types, typeof(T));
+
+            foreach (var t in types.ToList())
+            {
+                BuildTypeList(types,
+                              typeof(List<>).MakeGenericType(t));
+            }
+
+            return new NetSerializer.Serializer(types);
+        }
+
+        private void BuildTypeList(HashSet<Type> types, Type type)
+        {
+            if (types.Contains(type))
+            {
+                return;
+            }
+
+            types.Add(type);
+
+            if (type.IsGenericType)
+            {
+                foreach (var arg in type.GetGenericArguments())
+                {
+                    BuildTypeList(types, arg);
+                }
+            }
+
+            if (type.IsArray)
+            {
+                BuildTypeList(types, type.GetElementType());
+            }
+
+            foreach (var prop in type.GetProperties())
+            {
+                BuildTypeList(types,
+                              prop.PropertyType);
+            }
         }
 
         public bool BenchmarkOmni { get; set; }
@@ -962,6 +1024,25 @@ namespace DesertOctopus.Benchmark
             using (var ms = new MemoryStream(bfBytes))
             {
                 return bf.Deserialize(ms) as T;
+            }
+        }
+
+        [Benchmark]
+        public byte[] NetSerializerSerialization()
+        {
+            using (var ms = new MemoryStream())
+            {
+                netSerializer.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public T NetSerializerDeserialization()
+        {
+            using (var ms = new MemoryStream(netBytes))
+            {
+                return netSerializer.Deserialize(ms) as T;
             }
         }
 
