@@ -824,6 +824,7 @@ namespace DesertOctopus.Benchmark
         private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         private BinaryFormatter bf = new BinaryFormatter();
         public byte[] krakenBytes;
+        public byte[] krakenBytesWithOmittedRootType;
         public byte[] bfBytes;
         public byte[] omniBytes;
         public byte[] wireBytes;
@@ -832,6 +833,7 @@ namespace DesertOctopus.Benchmark
         private string Json = String.Empty;
         private Wire.Serializer wireSerializer = new Wire.Serializer();
         private NetSerializer.Serializer netSerializer;
+        private SerializationOptions _serializationOptions;
 
         public SerializationBenchmarkBase(object objectToTest, bool benchmarkOmni = true, bool benchmarkSS = true)
         {
@@ -843,7 +845,6 @@ namespace DesertOctopus.Benchmark
                 Json = ServiceStack.Text.JsonSerializer.SerializeToString(obj);
                 System.IO.File.WriteAllText("JsonSerialization", Json.Length.ToString());
             }
-            krakenBytes = DesertOctopus.KrakenSerializer.Serialize(obj);
 
             using (var ms = new MemoryStream())
             {
@@ -860,7 +861,12 @@ namespace DesertOctopus.Benchmark
                 }
             }
 
+            krakenBytes = DesertOctopus.KrakenSerializer.Serialize(obj);
             DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
+
+            _serializationOptions = new SerializationOptions { OmitRootTypeName = true };
+            krakenBytesWithOmittedRootType = DesertOctopus.KrakenSerializer.Serialize(obj, _serializationOptions);
+            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytesWithOmittedRootType, _serializationOptions);
 
             if (benchmarkSS)
             {
@@ -879,6 +885,7 @@ namespace DesertOctopus.Benchmark
             }
 
             System.IO.File.WriteAllText("KrakenSerialization", krakenBytes.Length.ToString());
+            System.IO.File.WriteAllText("KrakenSerializationWithOmittedRootType", krakenBytesWithOmittedRootType.Length.ToString());
             System.IO.File.WriteAllText("BinaryFormatterSerialization", bfBytes.Length.ToString());
             System.IO.File.WriteAllText("OmniSerialization", omniBytes.Length.ToString());
             System.IO.File.WriteAllText("NetSerializerSerialization", netBytes.Length.ToString());
@@ -1006,6 +1013,18 @@ namespace DesertOctopus.Benchmark
         public T KrakenDeserialization()
         {
             return DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
+        }
+
+        [Benchmark]
+        public byte[] KrakenSerializationWithOmittedRootType()
+        {
+            return DesertOctopus.KrakenSerializer.Serialize(obj, _serializationOptions);
+        }
+
+        [Benchmark]
+        public T KrakenDeserializationWithOmittedRootType()
+        {
+            return DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytesWithOmittedRootType, _serializationOptions);
         }
 
         [Benchmark]

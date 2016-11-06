@@ -21,6 +21,7 @@ namespace DesertOctopus.Serialization
         private static readonly ConcurrentDictionary<Type, System.Delegate> TypeSerializers = new ConcurrentDictionary<Type, System.Delegate>();
         private static readonly ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>> TypeToObjectSerializers = new ConcurrentDictionary<Type, Action<Stream, object, SerializerObjectTracker>>();
         private static readonly Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression, Expression>>> LazyPrimitiveMap = new Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression, Expression, Expression>>>(BuildPrimitiveMap);
+        internal static readonly SerializationOptions DefaultOptions = new SerializationOptions();
 
         /// <summary>
         /// Serialize an object
@@ -29,6 +30,19 @@ namespace DesertOctopus.Serialization
         /// <param name="obj">Object to serialize</param>
         /// <returns>Byte array containing the serialized object</returns>
         public static byte[] Serialize<T>(T obj)
+        {
+            return Serialize(obj,
+                             DefaultOptions);
+        }
+
+        /// <summary>
+        /// Serialize an object
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="obj">Object to serialize</param>
+        /// <param name="options">Serialization options</param>
+        /// <returns>Byte array containing the serialized object</returns>
+        public static byte[] Serialize<T>(T obj, SerializationOptions options)
         {
             using (var ms = new MemoryStream())
             {
@@ -45,8 +59,13 @@ namespace DesertOctopus.Serialization
                 var stringSerializerMethod = (Action<Stream, string, SerializerObjectTracker>)GetTypeSerializer(typeof(string));
                 var intSerializerMethod = (Action<Stream, int, SerializerObjectTracker>)GetTypeSerializer(typeof(int));
 
-                WriteHeader(ms, cargo);
-                stringSerializerMethod(ms, SerializedTypeResolver.GetShortNameFromType(obj.GetType()), cargo);
+                WriteHeader(ms, cargo, options);
+
+                if (!options.OmitRootTypeName)
+                {
+                    stringSerializerMethod(ms, SerializedTypeResolver.GetShortNameFromType(obj.GetType()), cargo);
+                }
+
                 intSerializerMethod(ms, SerializedTypeResolver.GetHashCodeFromType(obj.GetType()), cargo);
                 serializerMethod(ms, objToSerialize, cargo);
 
@@ -55,10 +74,13 @@ namespace DesertOctopus.Serialization
         }
 
         private static void WriteHeader(MemoryStream ms,
-                                        SerializerObjectTracker objectTracker)
+                                        SerializerObjectTracker objectTracker,
+                                        SerializationOptions options)
         {
             var shortSerializerMethod = (Action<Stream, short, SerializerObjectTracker>)GetTypeSerializer(typeof(short));
+            var byteSerializerMethod = (Action<Stream, byte, SerializerObjectTracker>)GetTypeSerializer(typeof(byte));
             shortSerializerMethod(ms, InternalSerializationStuff.Version, objectTracker);
+            byteSerializerMethod(ms, options.OmitRootTypeName ? (byte)1 : (byte)0, objectTracker);
         }
 
         /// <summary>

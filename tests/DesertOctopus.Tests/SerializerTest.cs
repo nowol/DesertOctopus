@@ -246,6 +246,24 @@ namespace DesertOctopus.Tests
             Assert.AreEqual(1, tracker.NumberOfTrackedObjects);
         }
 
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void OmittedRootTypeCanBeDeserialized()
+        {
+            var instance = new ClassWithAllPrimitiveTypes();
+
+            var bytesWithType = KrakenSerializer.Serialize(instance);
+            var bytesWithOmittedType = KrakenSerializer.Serialize(instance, new SerializationOptions() { OmitRootTypeName = true });
+
+            Assert.IsTrue(bytesWithOmittedType.Length < bytesWithType.Length);
+
+            var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithType);
+            var deserializedValueFromOmitted = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithOmittedType, new SerializationOptions() { OmitRootTypeName = true });
+
+            instance.ShouldBeEquivalentTo(deserializedValue);
+            deserializedValueFromOmitted.ShouldBeEquivalentTo(deserializedValue);
+        }
+
 
 
 

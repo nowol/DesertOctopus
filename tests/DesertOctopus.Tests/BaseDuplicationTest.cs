@@ -24,7 +24,7 @@ namespace DesertOctopus.Tests
         public abstract T Duplicate<T>(T obj);
 
 
-
+#if FALSE
         static uint EncodeZigZag32(int n)
         {
             return (uint)((n << 1) ^ (n >> 31));
@@ -205,6 +205,7 @@ namespace DesertOctopus.Tests
         {
            
         }
+#endif
 
         [TestMethod]
         [TestCategory("Unit")]

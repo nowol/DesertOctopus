@@ -30,7 +30,22 @@ namespace DesertOctopus.Serialization
         /// <returns>The deserialized object</returns>
         public static T Deserialize<T>(byte[] bytes)
         {
-            var obj = Deserialize(bytes);
+            return Deserialize<T>(bytes,
+                                  Serializer.DefaultOptions);
+        }
+
+        /// <summary>
+        /// Deserialize a byte array to create an object
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="bytes">Byte array that contains the object to be deserialized</param>
+        /// <param name="options">Serialization options</param>
+        /// <returns>The deserialized object</returns>
+        public static T Deserialize<T>(byte[] bytes, SerializationOptions options)
+        {
+            var obj = Deserialize(bytes,
+                                  options,
+                                  typeof(T));
             if (obj == null)
             {
                 return default(T);
@@ -46,28 +61,50 @@ namespace DesertOctopus.Serialization
         /// <returns>The deserialized object</returns>
         public static object Deserialize(byte[] bytes)
         {
+            return Deserialize(bytes,
+                               Serializer.DefaultOptions,
+                               null);
+        }
+
+        private static object Deserialize(byte[] bytes, SerializationOptions options, Type omittedRootType)
+        {
             if (bytes == null || bytes.Length == 0)
             {
                 return null;
+            }
+
+            if (options.OmitRootTypeName
+                && omittedRootType == null)
+            {
+                throw new InvalidOmitRootTypeException("Omit root type name was set to true while its type was not provided for deserialization.");
             }
 
             using (var ms = new MemoryStream(bytes))
             {
                 var tracker = new DeserializerObjectTracker();
 
-                ValidateHeader(ms, tracker);
+                ValidateHeader(ms, tracker, options);
 
-                var stringDeserializerMethod = (Func<Stream, DeserializerObjectTracker, string>)GetTypeDeserializer(typeof(string));
-                var intDeserializerMethod = (Func<Stream, DeserializerObjectTracker, int>)GetTypeDeserializer(typeof(int));
-
-                var typeName = (string)stringDeserializerMethod(ms, tracker);
-                var type = SerializedTypeResolver.GetTypeFromFullName(typeName);
-
-                if (type == null || type.Type == null)
+                TypeWithHashCode type;
+                if (options.OmitRootTypeName)
                 {
-                    throw new TypeNotFoundException("Unknown type: " + typeName);
+                    type = SerializedTypeResolver.GetTypeFromFullName(omittedRootType);
+                }
+                else
+                {
+                    var stringDeserializerMethod = (Func<Stream, DeserializerObjectTracker, string>)GetTypeDeserializer(typeof(string));
+
+                    var typeName = (string)stringDeserializerMethod(ms, tracker);
+                    type = SerializedTypeResolver.GetTypeFromFullName(typeName);
+
+                    if (type == null
+                        || type.Type == null)
+                    {
+                        throw new TypeNotFoundException("Unknown type: " + typeName);
+                    }
                 }
 
+                var intDeserializerMethod = (Func<Stream, DeserializerObjectTracker, int>)GetTypeDeserializer(typeof(int));
                 int hashCode = intDeserializerMethod(ms, tracker);
                 if (hashCode != type.HashCode)
                 {
@@ -85,10 +122,13 @@ namespace DesertOctopus.Serialization
         }
 
         private static void ValidateHeader(MemoryStream ms,
-                                           DeserializerObjectTracker objTracker)
+                                           DeserializerObjectTracker objTracker,
+                                           SerializationOptions options)
         {
             var int16Reader = (Func<Stream, DeserializerObjectTracker, short>)GetTypeDeserializer(typeof(short));
+            var byteReader = (Func<Stream, DeserializerObjectTracker, byte>)GetTypeDeserializer(typeof(byte));
             short version = int16Reader(ms, objTracker);
+            byte ort = byteReader(ms, objTracker);
 
             if (version != InternalSerializationStuff.Version)
             {
@@ -96,6 +136,13 @@ namespace DesertOctopus.Serialization
                                                                              version,
                                                                              InternalSerializationStuff.Version));
             }
+
+            if (options.OmitRootTypeName && ort != 1)
+            {
+                throw new InvalidOmitRootTypeException("Omit root type name was set to true while the deserialization header has it set to false");
+            }
+
+
         }
 
         /// <summary>
