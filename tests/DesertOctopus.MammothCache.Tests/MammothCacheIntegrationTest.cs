@@ -39,7 +39,7 @@ namespace DesertOctopus.MammothCache.Tests
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(10);
             _config.MaximumMemorySize = 1000;
-            _config.TimerInterval = 60;
+            _config.TimerInterval = TimeSpan.FromSeconds(60);
 
             _firstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
             _testObject = new CachingTestClass();

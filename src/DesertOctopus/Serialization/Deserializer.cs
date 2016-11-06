@@ -18,8 +18,9 @@ namespace DesertOctopus.Serialization
     /// </summary>
     internal static class Deserializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<Stream, DeserializerObjectTracker, object>> TypeDeserializers = new ConcurrentDictionary<Type, Func<Stream, DeserializerObjectTracker, object>>();
-        private static readonly Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression>>> LazyPrimitiveMap = new Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, Expression>>>(BuildPrimitiveMap);
+        private static readonly ConcurrentDictionary<Type, Delegate> TypeDeserializers = new ConcurrentDictionary<Type, Delegate>();
+        private static readonly ConcurrentDictionary<Type, Func<Stream, DeserializerObjectTracker, object>> TypeToObjectDeserializers = new ConcurrentDictionary<Type, Func<Stream, DeserializerObjectTracker, object>>();
+        private static readonly Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, ParameterExpression, Expression>>> LazyPrimitiveMap = new Lazy<ConcurrentDictionary<Type, Func<ParameterExpression, ParameterExpression, Expression>>>(BuildPrimitiveMap);
 
         /// <summary>
         /// Deserialize a byte array to create an object
@@ -28,15 +29,29 @@ namespace DesertOctopus.Serialization
         /// <param name="bytes">Byte array that contains the object to be deserialized</param>
         /// <returns>The deserialized object</returns>
         public static T Deserialize<T>(byte[] bytes)
-            where T : class
         {
-            var obj = Deserialize(bytes);
+            return Deserialize<T>(bytes,
+                                  Serializer.DefaultOptions);
+        }
+
+        /// <summary>
+        /// Deserialize a byte array to create an object
+        /// </summary>
+        /// <typeparam name="T">Any reference type</typeparam>
+        /// <param name="bytes">Byte array that contains the object to be deserialized</param>
+        /// <param name="options">Serialization options</param>
+        /// <returns>The deserialized object</returns>
+        public static T Deserialize<T>(byte[] bytes, SerializationOptions options)
+        {
+            var obj = Deserialize(bytes,
+                                  options,
+                                  typeof(T));
             if (obj == null)
             {
                 return default(T);
             }
 
-            return obj as T;
+            return (T)obj;
         }
 
         /// <summary>
@@ -46,35 +61,57 @@ namespace DesertOctopus.Serialization
         /// <returns>The deserialized object</returns>
         public static object Deserialize(byte[] bytes)
         {
+            return Deserialize(bytes,
+                               Serializer.DefaultOptions,
+                               null);
+        }
+
+        private static object Deserialize(byte[] bytes, SerializationOptions options, Type omittedRootType)
+        {
             if (bytes == null || bytes.Length == 0)
             {
                 return null;
+            }
+
+            if (options.OmitRootTypeName
+                && omittedRootType == null)
+            {
+                throw new InvalidOmitRootTypeException("Omit root type name was set to true while its type was not provided for deserialization.");
             }
 
             using (var ms = new MemoryStream(bytes))
             {
                 var tracker = new DeserializerObjectTracker();
 
-                ValidateHeader(ms, tracker);
+                ValidateHeader(ms, tracker, options);
 
-                Func<Stream, DeserializerObjectTracker, object> stringDeserializerMethod = GetTypeDeserializer(typeof(string));
-                Func<Stream, DeserializerObjectTracker, object> intDeserializerMethod = GetTypeDeserializer(typeof(int));
-
-                var typeName = (string)stringDeserializerMethod(ms, tracker);
-                var type = SerializedTypeResolver.GetTypeFromFullName(typeName);
-
-                if (type == null || type.Type == null)
+                TypeWithHashCode type;
+                if (options.OmitRootTypeName)
                 {
-                    throw new TypeNotFoundException("Unknown type: " + typeName);
+                    type = SerializedTypeResolver.GetTypeFromFullName(omittedRootType);
+                }
+                else
+                {
+                    var stringDeserializerMethod = (Func<Stream, DeserializerObjectTracker, string>)GetTypeDeserializer(typeof(string));
+
+                    var typeName = (string)stringDeserializerMethod(ms, tracker);
+                    type = SerializedTypeResolver.GetTypeFromFullName(typeName);
+
+                    if (type == null
+                        || type.Type == null)
+                    {
+                        throw new TypeNotFoundException("Unknown type: " + typeName);
+                    }
                 }
 
-                int hashCode = (int)intDeserializerMethod(ms, tracker);
+                var intDeserializerMethod = (Func<Stream, DeserializerObjectTracker, int>)GetTypeDeserializer(typeof(int));
+                int hashCode = intDeserializerMethod(ms, tracker);
                 if (hashCode != type.HashCode)
                 {
                     throw new TypeWasModifiedSinceSerializationException(type);
                 }
 
-                Func<Stream, DeserializerObjectTracker, object> deserializerMethod = GetTypeDeserializer(type.Type);
+                Func<Stream, DeserializerObjectTracker, object> deserializerMethod = GetTypeToObjectDeserializer(type.Type);
                 object value = deserializerMethod(ms, tracker);
 
                 Debug.Assert(ms.Position == ms.Length, "Byte array was not read completely." + ms.Position + " / " + ms.Length);
@@ -85,10 +122,13 @@ namespace DesertOctopus.Serialization
         }
 
         private static void ValidateHeader(MemoryStream ms,
-                                           DeserializerObjectTracker objTracker)
+                                           DeserializerObjectTracker objTracker,
+                                           SerializationOptions options)
         {
-            var int16Reader = GetTypeDeserializer(typeof(short));
-            short version = (short)int16Reader(ms, objTracker);
+            var int16Reader = (Func<Stream, DeserializerObjectTracker, short>)GetTypeDeserializer(typeof(short));
+            var byteReader = (Func<Stream, DeserializerObjectTracker, byte>)GetTypeDeserializer(typeof(byte));
+            short version = int16Reader(ms, objTracker);
+            byte ort = byteReader(ms, objTracker);
 
             if (version != InternalSerializationStuff.Version)
             {
@@ -96,6 +136,13 @@ namespace DesertOctopus.Serialization
                                                                              version,
                                                                              InternalSerializationStuff.Version));
             }
+
+            if (options.OmitRootTypeName && ort != 1)
+            {
+                throw new InvalidOmitRootTypeException("Omit root type name was set to true while the deserialization header has it set to false");
+            }
+
+
         }
 
         /// <summary>
@@ -111,14 +158,29 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="type">Type to deserialize</param>
         /// <returns>The deserializer related to the type parameter</returns>
-        internal static Func<Stream, DeserializerObjectTracker, object> GetTypeDeserializer(Type type)
+        internal static Func<Stream, DeserializerObjectTracker, object> GetTypeToObjectDeserializer(Type type)
+        {
+            return TypeToObjectDeserializers.GetOrAdd(type,
+                                                      t =>
+                                                      {
+                                                          var del = GetTypeDeserializer(t);
+
+                                                          var inputStream = Expression.Parameter(typeof(Stream), "inputStream");
+                                                          var objTracking = Expression.Parameter(typeof(DeserializerObjectTracker), "objTracking");
+                                                          var block = Expression.Block(Expression.Convert(Expression.Invoke(Expression.Constant(del), inputStream, objTracking), typeof(object)));
+
+                                                          return Expression.Lambda<Func<Stream, DeserializerObjectTracker, object>>(block, inputStream, objTracking).Compile();
+                                                      });
+        }
+
+        internal static System.Delegate GetTypeDeserializer(Type type)
         {
             return TypeDeserializers.GetOrAdd(type, CreateTypeDeserializer);
         }
 
-        private static ConcurrentDictionary<Type, Func<ParameterExpression, Expression>> BuildPrimitiveMap()
+        private static ConcurrentDictionary<Type, Func<ParameterExpression, ParameterExpression, Expression>> BuildPrimitiveMap()
         {
-            var map = new ConcurrentDictionary<Type, Func<ParameterExpression, Expression>>();
+            var map = new ConcurrentDictionary<Type, Func<ParameterExpression, ParameterExpression, Expression>>();
 
             map.TryAdd(typeof(char), PrimitiveHelpers.ReadChar);
             map.TryAdd(typeof(char?), PrimitiveHelpers.ReadNullableChar);
@@ -162,9 +224,9 @@ namespace DesertOctopus.Serialization
             return map;
         }
 
-        internal static Func<ParameterExpression, Expression> GetPrimitiveReader(Type type)
+        internal static Func<ParameterExpression, ParameterExpression, Expression> GetPrimitiveReader(Type type)
         {
-            Func<ParameterExpression, Expression> reader;
+            Func<ParameterExpression, ParameterExpression, Expression> reader;
             if (LazyPrimitiveMap.Value.TryGetValue(type, out reader))
             {
                 return reader;
@@ -191,50 +253,47 @@ namespace DesertOctopus.Serialization
             return null;
         }
 
-        private static Func<Stream, DeserializerObjectTracker, object> CreateTypeDeserializer(Type type)
+        private static System.Delegate CreateTypeDeserializer(Type type)
         {
             var expressions = new List<Expression>();
             var variables = new List<ParameterExpression>();
             var inputStream = Expression.Parameter(typeof(Stream), "inputStream");
-            var objTracking = Expression.Parameter(typeof(DeserializerObjectTracker), "objTracking");
-            var returnValue = Expression.Parameter(typeof(object), "retVal");
+            var objTracker = Expression.Parameter(typeof(DeserializerObjectTracker), "objTracker");
+            var returnValue = Expression.Parameter(type, "retVal");
 
             variables.Add(returnValue);
 
             var primitiveReader = GetPrimitiveReader(type);
             if (primitiveReader != null)
             {
-                expressions.Add(Expression.Assign(returnValue, Expression.Convert(Expression.Convert(primitiveReader(inputStream), type), typeof(object))));
+                expressions.Add(Expression.Assign(returnValue, Expression.Convert(primitiveReader(inputStream, objTracker), type)));
             }
             else if (type == typeof(string))
             {
-                expressions.Add(Expression.Assign(returnValue, GenerateStringExpression(inputStream, objTracking)));
+                expressions.Add(Expression.Assign(returnValue, GenerateStringExpression(inputStream, objTracker)));
             }
             else if (typeof(ISerializable).IsAssignableFrom(type))
             {
-                expressions.Add(Expression.Assign(returnValue, ISerializableDeserializer.GenerateISerializableExpression(type, variables, inputStream, objTracking)));
+                expressions.Add(Expression.Assign(returnValue, ISerializableDeserializer.GenerateISerializableExpression(type, variables, inputStream, objTracker)));
             }
             else if (type.IsArray)
             {
-                expressions.Add(Expression.Assign(returnValue, GenerateArrayExpression(type, inputStream, objTracking)));
+                expressions.Add(Expression.Assign(returnValue, GenerateArrayExpression(type, inputStream, objTracker)));
             }
             else if (type == typeof(ExpandoObject))
             {
-                expressions.Add(Expression.Assign(returnValue, ExpandoDeserializer.GenerateExpandoObjectExpression(variables, inputStream, objTracking)));
-            }
-            else if (type.IsValueType && !type.IsEnum && !type.IsPrimitive)
-            {
-                expressions.Add(Expression.Assign(returnValue, Expression.Convert(GenerateClassExpression(type, inputStream, objTracking), typeof(object))));
+                expressions.Add(Expression.Assign(returnValue, ExpandoDeserializer.GenerateExpandoObjectExpression(variables, inputStream, objTracker)));
             }
             else
             {
-                expressions.Add(Expression.Assign(returnValue, Expression.Convert(GenerateClassExpression(type, inputStream, objTracking), typeof(object))));
+                expressions.Add(Expression.Assign(returnValue, GenerateClassExpression(type, inputStream, objTracker)));
             }
 
             expressions.Add(returnValue);
 
             var block = Expression.Block(variables, expressions);
-            return Expression.Lambda<Func<Stream, DeserializerObjectTracker, object>>(block, inputStream, objTracking).Compile();
+            var f = typeof(Func<,,>).MakeGenericType(typeof(Stream), typeof(DeserializerObjectTracker), type);
+            return Expression.Lambda(f, block, inputStream, objTracker).Compile();
         }
 
         private static Expression GenerateArrayExpression(Type type,
@@ -261,7 +320,7 @@ namespace DesertOctopus.Serialization
         /// Generate an expression tree to deserialize a class
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
-        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="objTracker">Reference tracker</param>
         /// <param name="leftSide">Left side of the assignment</param>
         /// <param name="typeExpr">Type of the class as an expression</param>
         /// <param name="typeName">Type of the class as a string</param>
@@ -270,7 +329,7 @@ namespace DesertOctopus.Serialization
         /// <param name="itemType">Type of the class</param>
         /// <returns>An expression tree to deserialize a class</returns>
         internal static Expression GetReadClassExpression(ParameterExpression inputStream,
-                                                          ParameterExpression objTracking,
+                                                          ParameterExpression objTracker,
                                                           Expression leftSide,
                                                           ParameterExpression typeExpr,
                                                           ParameterExpression typeName,
@@ -278,22 +337,22 @@ namespace DesertOctopus.Serialization
                                                           ParameterExpression deserializer,
                                                           Type itemType)
         {
-            var readType = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
+            var readType = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream, objTracker), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                                                Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMih.GetTypeFromFullName_Type(), Expression.Constant(itemType))),
-                                                               Expression.Block(Expression.Assign(typeName, Deserializer.GenerateStringExpression(inputStream, objTracking)),
-                                                                                Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream)),
+                                                               Expression.Block(Expression.Assign(typeName, Deserializer.GenerateStringExpression(inputStream, objTracker)),
+                                                                                Expression.Assign(typeHashCode, PrimitiveHelpers.ReadInt32(inputStream, objTracker)),
                                                                                 Expression.Assign(typeExpr, Expression.Call(SerializedTypeResolverMih.GetTypeFromFullName_String(), typeName)),
                                                                                 Expression.IfThen(Expression.NotEqual(typeHashCode, Expression.Property(typeExpr, "HashCode")),
                                                                                                   Expression.Throw(Expression.New(TypeWasModifiedSinceSerializationException.GetConstructor(), typeExpr)))));
 
-            var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracking);
+            var invokeDeserializer = Expression.Invoke(deserializer, inputStream, objTracker);
             Expression convertExpression = Expression.Convert(Expression.Call(SerializerMih.ConvertObjectToExpectedType(), invokeDeserializer, Expression.Constant(itemType)), itemType);
 
-            return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
+            return Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream, objTracker), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                                           Expression.Assign(leftSide, Expression.Constant(null, itemType)),
                                                           Expression.Block(
                                                                             readType,
-                                                                            Expression.Assign(deserializer, Expression.Call(DeserializerMih.GetTypeDeserializer(), Expression.Property(typeExpr, "Type"))),
+                                                                            Expression.Assign(deserializer, Expression.Call(DeserializerMih.GetTypeToObjectDeserializer(), Expression.Property(typeExpr, "Type"))),
                                                                             Expression.Assign(leftSide, convertExpression)));
 
         }
@@ -322,7 +381,7 @@ namespace DesertOctopus.Serialization
 
         private static Expression GenerateClassExpression(Type type,
                                                           ParameterExpression inputStream,
-                                                          ParameterExpression objTracking)
+                                                          ParameterExpression objTracker)
         {
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
@@ -346,11 +405,7 @@ namespace DesertOctopus.Serialization
 
             if (type.IsClass)
             {
-                notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
-            }
-            else
-            {
-                notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), Expression.Convert(newInstance, typeof(object))));
+                notTrackedExpressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
             }
 
             Func<Type, ParameterExpression> getTempVar = t =>
@@ -376,7 +431,7 @@ namespace DesertOctopus.Serialization
                     if (fieldInfo.IsInitOnly)
                     {
                         var tmpVar = getTempVar(fieldInfo.FieldType);
-                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracking)));
+                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracker)));
                         notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
                                                                   Expression.Constant(fieldInfo),
                                                                   Expression.Convert(tmpVar, typeof(object)),
@@ -385,7 +440,7 @@ namespace DesertOctopus.Serialization
                     else
                     {
                         var tmpVar = getTempVar(fieldInfo.FieldType);
-                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracking)));
+                        notTrackedExpressions.Add(Expression.Assign(tmpVar, GenerateStringExpression(inputStream, objTracker)));
                         notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
                     }
                 }
@@ -396,12 +451,12 @@ namespace DesertOctopus.Serialization
 
                     if (primitiveReader == null)
                     {
-                        Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = GetTypeDeserializer(fieldInfo.FieldType);
-                        newValue = Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), fieldInfo.FieldType);
+                        var primitiveDeserializer = GetTypeDeserializer(fieldInfo.FieldType);
+                        newValue = Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracker), fieldInfo.FieldType);
                     }
                     else
                     {
-                        newValue = primitiveReader(inputStream);
+                        newValue = primitiveReader(inputStream, objTracker);
 
                         if (fieldInfo.FieldType == typeof(byte)
                             || fieldInfo.FieldType == typeof(sbyte)
@@ -433,7 +488,7 @@ namespace DesertOctopus.Serialization
                     if (fieldInfo.IsInitOnly)
                     {
                         var tmpVar = getTempVar(typeof(object));
-                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, tmpVar, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
+                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracker, tmpVar, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
                         notTrackedExpressions.Add(Expression.Call(CopyReadOnlyFieldMethodInfo.GetMethodInfo(),
                                                                   Expression.Constant(fieldInfo),
                                                                   tmpVar,
@@ -441,7 +496,7 @@ namespace DesertOctopus.Serialization
                     }
                     else
                     {
-                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracking, fieldValueExpr, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
+                        notTrackedExpressions.Add(GetReadClassExpression(inputStream, objTracker, fieldValueExpr, typeExpr, typeName, typeHashCode, deserializer, fieldInfo.FieldType));
                     }
                 }
             }
@@ -451,7 +506,7 @@ namespace DesertOctopus.Serialization
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
                                                                          inputStream,
-                                                                         objTracking,
+                                                                         objTracker,
                                                                          newInstance,
                                                                          notTrackedExpressions,
                                                                          trackType,
@@ -516,7 +571,7 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="type">Type of the object</param>
         /// <param name="inputStream">Stream to read from</param>
-        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="objTracker">Reference tracker</param>
         /// <param name="newInstance">New deserialized object</param>
         /// <param name="notTrackedExpressions">Expressions to execute if the object is not tracked</param>
         /// <param name="trackType">Type of the tracked object</param>
@@ -524,21 +579,21 @@ namespace DesertOctopus.Serialization
         /// <returns>An expression tree to handle the 'is the object null' case</returns>
         internal static Expression GenerateNullTrackedOrUntrackedExpression(Type type,
                                                                             ParameterExpression inputStream,
-                                                                            ParameterExpression objTracking,
+                                                                            ParameterExpression objTracker,
                                                                             ParameterExpression newInstance,
                                                                             List<Expression> notTrackedExpressions,
                                                                             ParameterExpression trackType,
                                                                             List<ParameterExpression> variables)
         {
-            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(objTracking, DeserializerObjectTrackerMih.GetTrackedObject(), PrimitiveHelpers.ReadInt32(inputStream)), type));
+            var alreadyTrackedExpr = Expression.Assign(newInstance, Expression.Convert(Expression.Call(objTracker, DeserializerObjectTrackerMih.GetTrackedObject(), PrimitiveHelpers.ReadInt32(inputStream, objTracker)), type));
 
             var notAlreadyTrackedExpr = Expression.Block(notTrackedExpressions);
-            var isNotNullExpr = Expression.Block(Expression.Assign(trackType, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte))),
+            var isNotNullExpr = Expression.Block(Expression.Assign(trackType, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream, objTracker), typeof(byte))),
                                                  Expression.IfThenElse(Expression.Equal(trackType, Expression.Constant(SerializerObjectTracker.Value0)),
                                                                        alreadyTrackedExpr,
                                                                        notAlreadyTrackedExpr));
 
-            var expr = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
+            var expr = Expression.IfThenElse(Expression.Equal(Expression.Convert(PrimitiveHelpers.ReadByte(inputStream, objTracker), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                              Expression.Assign(newInstance, Expression.Convert(Expression.Constant(null), type)),
                                              isNotNullExpr);
 

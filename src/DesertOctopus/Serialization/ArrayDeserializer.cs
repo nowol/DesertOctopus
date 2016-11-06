@@ -18,11 +18,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="type">Type of the array</param>
         /// <param name="inputStream">Stream that is read from</param>
-        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="objTracker">Reference tracker</param>
         /// <returns>An expression tree to handle array deserialization</returns>
         internal static Expression GenerateArrayOfKnownDimension(Type type,
                                                                  ParameterExpression inputStream,
-                                                                 ParameterExpression objTracking)
+                                                                 ParameterExpression objTracker)
         {
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
@@ -43,12 +43,12 @@ namespace DesertOctopus.Serialization
 
             var rank = type.GetArrayRank();
             List<Expression> notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.AddRange(ReadDimensionalArrayLength(inputStream, lengths, i, numberOfDimensions));
-            notTrackedExpressions.AddRange(ReadDimensionalArray(type, elementType, newInstance, variables, inputStream, lengths, objTracking, rank));
+            notTrackedExpressions.AddRange(ReadDimensionalArrayLength(inputStream, objTracker, lengths, i, numberOfDimensions));
+            notTrackedExpressions.AddRange(ReadDimensionalArray(type, elementType, newInstance, variables, inputStream, lengths, objTracker, rank));
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(type,
                                                                          inputStream,
-                                                                         objTracking,
+                                                                         objTracker,
                                                                          newInstance,
                                                                          notTrackedExpressions,
                                                                          trackType,
@@ -61,7 +61,7 @@ namespace DesertOctopus.Serialization
                                                                     List<ParameterExpression> variables,
                                                                     ParameterExpression inputStream,
                                                                     ParameterExpression lengths,
-                                                                    ParameterExpression objTracking,
+                                                                    ParameterExpression objTracker,
                                                                     int rank)
         {
             var typeName = Expression.Parameter(typeof(string), "typeName");
@@ -79,7 +79,10 @@ namespace DesertOctopus.Serialization
 
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(ArrayMih.CreateInstance(), Expression.Constant(elementType), lengths), type)));
-            expressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            if (type.IsClass)
+            {
+                expressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            }
 
             if (rank > 1)
             {
@@ -91,15 +94,15 @@ namespace DesertOctopus.Serialization
 
             if (elementType == typeof(string))
             {
-                innerExpression = Expression.Assign(tmpValue, Deserializer.GenerateStringExpression(inputStream, objTracking));
+                innerExpression = Expression.Assign(tmpValue, Deserializer.GenerateStringExpression(inputStream, objTracker));
             }
             else if (elementType.IsPrimitive || elementType.IsValueType)
             {
                 var primitiveReader = Deserializer.GetPrimitiveReader(elementType);
                 if (primitiveReader == null)
                 {
-                    Func<Stream, DeserializerObjectTracker, object> primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
-                    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracking), elementType));
+                    var primitiveDeserializer = Deserializer.GetTypeDeserializer(elementType);
+                    innerExpression = Expression.Assign(tmpValue, Expression.Convert(Expression.Invoke(Expression.Constant(primitiveDeserializer), inputStream, objTracker), elementType));
                 }
                 else
                 {
@@ -109,17 +112,17 @@ namespace DesertOctopus.Serialization
                         || elementType == typeof(sbyte?)
                         || Deserializer.IsEnumOrNullableEnum(elementType))
                     {
-                        innerExpression = Expression.Assign(tmpValue, Expression.Convert(primitiveReader(inputStream), elementType));
+                        innerExpression = Expression.Assign(tmpValue, Expression.Convert(primitiveReader(inputStream, objTracker), elementType));
                     }
                     else
                     {
-                        innerExpression = Expression.Assign(tmpValue, primitiveReader(inputStream));
+                        innerExpression = Expression.Assign(tmpValue, primitiveReader(inputStream, objTracker));
                     }
                 }
             }
             else
             {
-                innerExpression = Deserializer.GetReadClassExpression(inputStream, objTracking, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType);
+                innerExpression = Deserializer.GetReadClassExpression(inputStream, objTracker, tmpValue, typeExpr, typeName, typeHashCode, deserializer, elementType);
             }
 
             Func<int, Expression, Expression> readArrayLoop = (loopRank,
@@ -169,6 +172,7 @@ namespace DesertOctopus.Serialization
         }
 
         private static IEnumerable<Expression> ReadDimensionalArrayLength(ParameterExpression inputStream,
+                                                                          ParameterExpression objTracker,
                                                                           Expression lengths,
                                                                           Expression i,
                                                                           Expression numberOfDimensions)
@@ -176,10 +180,10 @@ namespace DesertOctopus.Serialization
             var loopExpressions = new List<Expression>();
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
-            expressions.Add(Expression.Assign(numberOfDimensions, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream), typeof(int))));
+            expressions.Add(Expression.Assign(numberOfDimensions, Expression.Convert(PrimitiveHelpers.ReadByte(inputStream, objTracker), typeof(int))));
             expressions.Add(Expression.Assign(lengths, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), numberOfDimensions)));
 
-            loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), PrimitiveHelpers.ReadInt32(inputStream)));
+            loopExpressions.Add(Expression.Assign(Expression.ArrayAccess(lengths, i), PrimitiveHelpers.ReadInt32(inputStream, objTracker)));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
             var loopBody = Expression.Block(loopExpressions);

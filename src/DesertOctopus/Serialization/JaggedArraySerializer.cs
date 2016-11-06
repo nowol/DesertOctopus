@@ -41,11 +41,12 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(arr, Expression.Convert(objToSerialize, type)));
             notTrackedExpressions.AddRange(WriteJaggedArray(elementType, variables, outputStream, arr, objTracking));
 
-            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
-                                                                        objToSerialize,
-                                                                        objTracking,
-                                                                        notTrackedExpressions,
-                                                                        variables);
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                       outputStream,
+                                                                       objToSerialize,
+                                                                       objTracking,
+                                                                       notTrackedExpressions,
+                                                                       variables);
         }
 
         private static IEnumerable<Expression> WriteJaggedArray(Type elementType,

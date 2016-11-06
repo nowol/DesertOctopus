@@ -28,7 +28,6 @@ namespace DesertOctopus
         /// <param name="obj">Object to clone</param>
         /// <returns>The cloned object</returns>
         public static T Clone<T>(T obj)
-            where T : class
         {
             if (obj == null)
             {

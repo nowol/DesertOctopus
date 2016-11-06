@@ -45,8 +45,8 @@ var config = new FirstLevelCacheConfig();
 config.AbsoluteExpiration = TimeSpan.FromSeconds(20);
 // The maximum memory allowed for the cache (in bytes)
 config.MaximumMemorySize = 1000;
-// Timer that cleanups the cache and remove object and the memory usage is greater than the maximum allowed
-config.TimerInterval = 60;
+// Timer that cleanups the cache and remove object and the memory usage is greater than the maximum allowed.  This value should be a few minutes a most cases.
+config.TimerInterval = TimeSpan.FromSeconds(60);
 // This cloning provider always cloned objects from the first level cache
 // Other providers available are NoCloningProvider and NamespacesBasedCloningProvider
 var cloningProvider = new AlwaysCloningProvider()

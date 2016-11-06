@@ -20,4 +20,14 @@ namespace DesertOctopus.Tests.TestObjects
             _value = value;
         }
     }
+
+    public class ClassWithCSharp6StyleReadOnlyProperty<T>
+    {
+        public T Value { get; }
+
+        public ClassWithCSharp6StyleReadOnlyProperty(T value)
+        {
+            Value = value;
+        }
+    }
 }

@@ -10,6 +10,7 @@ namespace DesertOctopus.Utilities
     internal class DeserializerObjectTracker
     {
         private readonly List<object> _trackedObjects;
+        private int[] _decimalArray = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DeserializerObjectTracker"/> class.
@@ -66,6 +67,14 @@ namespace DesertOctopus.Utilities
             {
                 Buffer = new byte[size];
             }
+        }
+
+        /// <summary>
+        /// Gets an array used to store decimal array
+        /// </summary>
+        public int[] DecimalArray
+        {
+            get { return _decimalArray ?? (_decimalArray = new int[4]); }
         }
     }
 }

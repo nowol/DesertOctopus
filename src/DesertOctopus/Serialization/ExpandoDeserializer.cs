@@ -18,11 +18,11 @@ namespace DesertOctopus.Serialization
         /// </summary>
         /// <param name="variables">Global variables for the expression tree</param>
         /// <param name="inputStream">Stream to read from</param>
-        /// <param name="objTracking">Reference tracker</param>
+        /// <param name="objTracker">Reference tracker</param>
         /// <returns>An expression tree to deserialize an ExpandoObject</returns>
         internal static Expression GenerateExpandoObjectExpression(List<ParameterExpression> variables,
                                                                    ParameterExpression inputStream,
-                                                                   ParameterExpression objTracking)
+                                                                   ParameterExpression objTracker)
         {
             var dictType = typeof(IDictionary<string, object>);
             var length = Expression.Parameter(typeof(int), "length");
@@ -50,8 +50,8 @@ namespace DesertOctopus.Serialization
             variables.Add(trackType);
 
             var loopExpressions = new List<Expression>();
-            loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracking)));
-            loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracking, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
+            loopExpressions.Add(Expression.Assign(key, Deserializer.GenerateStringExpression(inputStream, objTracker)));
+            loopExpressions.Add(Deserializer.GetReadClassExpression(inputStream, objTracker, value, typeExpr, typeName, typeHashCode, deserializer, typeof(object)));
             loopExpressions.Add(Expression.Call(destDict, DictionaryMih.Add<string, object>(), key, value));
             loopExpressions.Add(Expression.Assign(i, Expression.Add(i, Expression.Constant(1))));
 
@@ -64,17 +64,17 @@ namespace DesertOctopus.Serialization
                                        breakLabel);
 
             var notTrackedExpressions = new List<Expression>();
-            notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream)));
+            notTrackedExpressions.Add(Expression.Assign(length, PrimitiveHelpers.ReadInt32(inputStream, objTracker)));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.New(typeof(ExpandoObject))));
             notTrackedExpressions.Add(Expression.Assign(destDict, Expression.Convert(newInstance, dictType)));
-            notTrackedExpressions.Add(Expression.Call(objTracking, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
+            notTrackedExpressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
 
             notTrackedExpressions.Add(loop);
 
             return Deserializer.GenerateNullTrackedOrUntrackedExpression(typeof(ExpandoObject),
                                                                          inputStream,
-                                                                         objTracking,
+                                                                         objTracker,
                                                                          newInstance,
                                                                          notTrackedExpressions,
                                                                          trackType,

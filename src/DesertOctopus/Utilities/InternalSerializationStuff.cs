@@ -20,7 +20,7 @@ namespace DesertOctopus.Utilities
         /// <summary>
         /// Version of the serialization engine
         /// </summary>
-        public const short Version = 1;
+        public const short Version = 3;
 
         public static readonly ConcurrentDictionary<Type, FieldInfo[]> FieldsForType = new ConcurrentDictionary<Type, FieldInfo[]>();
 
@@ -123,6 +123,11 @@ namespace DesertOctopus.Utilities
         internal static Expression TraceWriteLine(Expression value)
         {
             return Expression.Call(typeof(System.Diagnostics.Trace).GetMethod("WriteLine", BindingFlags.Public | BindingFlags.Static, null, CallingConventions.Any, new[] { typeof(string) }, new ParameterModifier[0]), value);
+        }
+
+        internal static Expression TraceWriteLineToString(Expression value)
+        {
+            return TraceWriteLine(Expression.Call(value, typeof(object).GetMethod(nameof(object.ToString))));
         }
     }
 }

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Caching;
+using System.Threading;
 using System.Timers;
 using DesertOctopus.MammothCache.Common;
-using Timer = System.Timers.Timer;
 
 namespace DesertOctopus.MammothCache
 {
@@ -17,8 +17,10 @@ namespace DesertOctopus.MammothCache
         private readonly IFirstLevelCacheCloningProvider _cloningProvider;
         private readonly IMammothCacheSerializationProvider _serializationProvider;
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
-        private readonly System.Timers.Timer _cleanUpTimer;
+        private readonly System.Threading.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
+        private bool _isDisposed = false;
+        private LongCounter _estimatedMemorySize = new LongCounter();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SquirrelCache"/> class.
@@ -42,20 +44,17 @@ namespace DesertOctopus.MammothCache
                 throw new ArgumentException("MaximumMemorySize must be greater than 0");
             }
 
-            if (_config.TimerInterval <= 0)
+            if (_config.TimerInterval.TotalMilliseconds <= 0)
             {
                 throw new ArgumentException("TimerInterval must be greater than 0");
             }
 
-            _cleanUpTimer = new Timer(_config.TimerInterval);
-            _cleanUpTimer.Elapsed += CleanUpTimerOnElapsed;
-            _cleanUpTimer.AutoReset = true;
-            _cleanUpTimer.Start();
+            _cleanUpTimer = new System.Threading.Timer(CleanUpTimerOnElapsed, null, Convert.ToInt32(_config.TimerInterval.TotalMilliseconds), Timeout.Infinite);
         }
 
-        private void CleanUpTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        private void CleanUpTimerOnElapsed(object state)
         {
-            _cleanUpTimer.Stop();
+            _cleanUpTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
             while (EstimatedMemorySize >= _config.MaximumMemorySize
                     && _cachedObjectsByAge.Count > 0)
@@ -67,7 +66,7 @@ namespace DesertOctopus.MammothCache
                 }
             }
 
-            _cleanUpTimer.Start();
+            _cleanUpTimer.Change(Convert.ToInt32(_config.TimerInterval.TotalMilliseconds), Timeout.Infinite);
         }
 
         /// <summary>
@@ -85,7 +84,10 @@ namespace DesertOctopus.MammothCache
         /// <summary>
         /// Gets the estimated memory consumed by this instance of <see cref="SquirrelCache"/>
         /// </summary>
-        public int EstimatedMemorySize { get; private set; }
+        public long EstimatedMemorySize
+        {
+            get { return _estimatedMemorySize.Get(); }
+        }
 
         /// <inheritdoc/>
         public ConditionalResult<T> Get<T>(string key)
@@ -157,7 +159,7 @@ namespace DesertOctopus.MammothCache
             _cache.Set(cacheItem, policy);
             _cachedObjectsByAge.Add(co);
 
-            EstimatedMemorySize += co.ObjectSize;
+            _estimatedMemorySize.Add(co.ObjectSize);
         }
 
         private void RemovedCallback(CacheEntryRemovedArguments arguments)
@@ -165,7 +167,7 @@ namespace DesertOctopus.MammothCache
             var value = arguments.CacheItem.Value as CachedObject;
             if (value != null)
             {
-                EstimatedMemorySize -= value.ObjectSize;
+                _estimatedMemorySize.Substract(value.ObjectSize);
                 _cachedObjectsByAge.Remove(value);
             }
         }
@@ -180,8 +182,6 @@ namespace DesertOctopus.MammothCache
             return co;
         }
 
-        private bool _isDisposed = false;
-
         /// <summary>
         /// Dispose the object
         /// </summary>
@@ -192,7 +192,6 @@ namespace DesertOctopus.MammothCache
                 return;
             }
 
-            _cleanUpTimer.Stop();
             _cleanUpTimer.Dispose();
             _cache.Dispose();
             _cachedObjectsByAge.Dispose();

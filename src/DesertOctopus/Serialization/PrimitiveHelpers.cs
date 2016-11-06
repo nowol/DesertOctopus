@@ -37,7 +37,7 @@ namespace DesertOctopus.Serialization
                                                     breakLabel));
         }
 
-        private static Expression ReadByteArray(ParameterExpression inputStream)
+        private static Expression ReadByteArray(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             var variables = new List<ParameterExpression>();
             var arr = Expression.Parameter(typeof(byte[]), "arr");
@@ -50,11 +50,11 @@ namespace DesertOctopus.Serialization
 
             var breakLabel = Expression.Label("breakLabel");
             var cond = Expression.LessThan(i, length);
-            var loopBody = Expression.Block(Expression.Assign(Expression.ArrayAccess(arr, i), Expression.Convert(ReadByte(inputStream), typeof(byte))),
+            var loopBody = Expression.Block(Expression.Assign(Expression.ArrayAccess(arr, i), Expression.Convert(ReadByte(inputStream, objTracker), typeof(byte))),
                                             Expression.Assign(i, Expression.Increment(i)));
 
             return Expression.Block(variables,
-                                    Expression.Assign(length, ReadInt32(inputStream)),
+                                    Expression.Assign(length, ReadInt32(inputStream, objTracker)),
                                     Expression.Assign(i, Expression.Constant(0, typeof(int))),
                                     Expression.Assign(arr, Expression.NewArrayBounds(typeof(byte), length)),
                                     Expression.Loop(Expression.IfThenElse(cond,
@@ -64,21 +64,37 @@ namespace DesertOctopus.Serialization
                                     arr);
         }
 
-#if VARINT
+#region VARINT
+
         private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj, Expression objTracker)
         {
+            return WriteVarint(outputStream,
+                               obj,
+                               Expression.Constant((uint)0x80u, typeof(uint)),
+                               typeof(uint));
+        }
+
+        private static Expression WriteVarint64(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        {
+            return WriteVarint(outputStream,
+                               obj,
+                               Expression.Constant((ulong)0x80u, typeof(ulong)),
+                               typeof(ulong));
+        }
+
+        private static Expression WriteVarint(ParameterExpression outputStream, Expression obj, Expression marker, Type tmpType)
+        {
             var expressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
             var breakLabel = Expression.Label("breakLabel");
-            var tmp = Expression.Property(objTracker, nameof(SerializerObjectTracker.Uint32Value));
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))));
+            var tmp = Expression.Parameter(tmpType, "tmp");
 
-            //var loopCondition = Expression.IfThen();
+            variables.Add(tmp);
+            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, tmpType)));
 
-            var cond = Expression.GreaterThanOrEqual(tmp, Expression.Constant(0x80u));
-            var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, Expression.Constant(0x80u)), typeof(byte))),
-                                            //Expression.Assign(tmp, Expression.RightShiftAssign())
-                                            Expression.RightShiftAssign(tmp, Expression.Constant(7))
-                                            );
+            var cond = Expression.GreaterThanOrEqual(tmp, marker);
+            var loopBody = Expression.Block(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.Or(tmp, marker), typeof(byte))),
+                                            Expression.RightShiftAssign(tmp, Expression.Constant(7)));
 
             expressions.Add(Expression.Loop(Expression.IfThenElse(cond,
                                                                   loopBody,
@@ -86,95 +102,210 @@ namespace DesertOctopus.Serialization
                                             breakLabel));
             expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(tmp, typeof(byte))));
 
-            return Expression.Block(expressions);
+            return Expression.Block(variables, expressions);
         }
 
+        private static Expression ReadVarint32(ParameterExpression inputStream,
+                                               ParameterExpression objTracker)
+        {
+            return ReadVarint(inputStream, objTracker, 4 * 8, typeof(int), Expression.Constant(0, typeof(int)));
+        }
 
-        private static Expression ReadVarint32(ParameterExpression inputStream, Type expectedType)
+        private static Expression ReadVarint64(ParameterExpression inputStream,
+                                               ParameterExpression objTracker)
+        {
+            return ReadVarint(inputStream, objTracker, 8 * 8, typeof(long), Expression.Constant((long)0, typeof(long)));
+        }
+
+        private static Expression ReadVarint(ParameterExpression inputStream, ParameterExpression objTracker, int max, Type tmpType, Expression defaultValue)
         {
             var variables = new List<ParameterExpression>();
 
-            var result = Expression.Parameter(typeof(int), "result");
+            var result = Expression.Parameter(tmpType, "result");
             var offset = Expression.Parameter(typeof(int), "offset");
             var b = Expression.Parameter(typeof(int), "b");
-            var returnLabel = Expression.Label("returnLabel");
-            var breakLabel = Expression.Label("breakLabel");
+            var breakLabel = Expression.Label("breakLabel" + Guid.NewGuid().ToString("N"));
 
             variables.Add(result);
             variables.Add(offset);
             variables.Add(b);
 
-            var cond = Expression.LessThan(offset, Expression.Constant(32));
-            var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream)),
-                                            Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
-                                                              Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
+            var cond = Expression.LessThan(offset, Expression.Constant(max));
+            var loopBody = Expression.Block(Expression.Assign(b, ReadByte(inputStream, objTracker)),
+                                           Expression.IfThen(Expression.Equal(b, Expression.Constant(-1)),
+                                                             Expression.Throw(Expression.New(EndOfStreamExceptionMih.Constructor()))),
 
-                                            Expression.OrAssign(result,
-                                                                Expression.LeftShift(Expression.And(b, Expression.Constant(0x7f)),
-                                                                                                    offset)),
+                                           Expression.OrAssign(result,
+                                                               Expression.LeftShift(Expression.Convert(Expression.And(b, Expression.Constant(0x7f)),
+                                                                                                       tmpType),
+                                                                                    offset)),
 
-                                            Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
-                                                              Expression.Goto(returnLabel)),
-                                            Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
+                                           Expression.IfThen(Expression.Equal(Expression.And(b, Expression.Constant(0x80)), Expression.Constant(0)),
+                                                             Expression.Break(breakLabel)),
+                                           Expression.Assign(offset, Expression.Add(offset, Expression.Constant(7))));
 
 
             return Expression.Block(variables,
-                                    Expression.Assign(result, Expression.Constant(0)),
+                                    Expression.Assign(result, defaultValue),
                                     Expression.Assign(offset, Expression.Constant(0)),
                                     Expression.Loop(Expression.IfThenElse(cond,
                                                                           loopBody,
                                                                           Expression.Break(breakLabel)),
                                                     breakLabel),
-
-                                    Expression.Throw(Expression.New(InvalidOperationExceptionMih.Constructor(), Expression.Constant("Read unexpected varint data."))),
-
-                                    Expression.Label(returnLabel),
-                                    Expression.Convert(result, expectedType)
-                );
+                                    result);
         }
-#endif
+
+        internal static Expression EncodeZigZag32(Expression obj)
+        {
+            // (uint)((n << 1) ^ (n >> 31));
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(int), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Block(variables,
+                                    Expression.Assign(tmp, Expression.Convert(obj, typeof(int))),
+                                    Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
+                                                                              Expression.RightShift(tmp, Expression.Constant(63))),
+                                                       typeof(uint)));
+        }
+
+        internal static Expression EncodeZigZag64(Expression obj)
+        {
+            //return (ulong)((n << 1) ^ (n >> 63));
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(long), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Block(variables,
+                                    Expression.Assign(tmp, Expression.Convert(obj, typeof(long))),
+                                    Expression.Convert(Expression.ExclusiveOr(Expression.LeftShift(tmp, Expression.Constant(1)),
+                                                                              Expression.RightShift(tmp, Expression.Constant(63))),
+                                                       typeof(ulong)));
+        }
+
+        internal static Expression DecodeZigZag32(Expression obj)
+        {
+            //return (int)(n >> 1) ^ -(int)(n & 1);
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(uint), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Convert(Expression.Block(variables,
+                                                       Expression.Assign(tmp, Expression.Convert(obj, typeof(uint))),
+                                           Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(int)),
+                                                                  Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((uint)1, typeof(uint))), typeof(int))))),
+                                      typeof(int));
+        }
+
+        internal static Expression DecodeZigZag64(Expression obj)
+        {
+            //return (long)(n >> 1) ^ -(long)(n & 1);
+            var variables = new List<ParameterExpression>();
+            var tmp = Expression.Parameter(typeof(ulong), "tmp");
+            variables.Add(tmp);
+
+            return Expression.Convert(Expression.Block(variables,
+                                                       Expression.Assign(tmp, Expression.Convert(obj, typeof(ulong))),
+                                           Expression.ExclusiveOr(Expression.Convert(Expression.RightShift(tmp, Expression.Constant(1)), typeof(long)),
+                                                                  Expression.Negate(Expression.Convert(Expression.And(tmp, Expression.Constant((ulong)1, typeof(ulong))), typeof(long))))),
+                                      typeof(long));
+        }
+
+#endregion
 
         private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
-            var tmp = Expression.Parameter(expectedType, "tmp");
-            var expressions = new List<Expression>();
-
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, expectedType)));
-
-            for (int bits = (numberOfBytes * 8) - 8; bits >= 8; bits -= 8)
+            if (expectedType == typeof(byte)
+                || expectedType == typeof(sbyte)
+                || expectedType == typeof(short)
+                || expectedType == typeof(ushort))
             {
-                expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
-            }
+                var tmp = Expression.Parameter(expectedType, "tmp");
+                var expressions = new List<Expression>();
 
-            expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
-            return Expression.Block(new[] { tmp }, expressions);
+                expressions.Add(Expression.Assign(tmp, Expression.Convert(obj, expectedType)));
+
+                for (int bits = (numberOfBytes * 8) - 8; bits >= 8; bits -= 8)
+                {
+                    expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(Expression.RightShift(tmp, Expression.Constant(bits)), Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+                }
+
+                expressions.Add(Expression.Call(outputStream, StreamMih.WriteByte(), Expression.Convert(Expression.And(tmp, Expression.Convert(Expression.Constant(0xFFu), expectedType)), typeof(byte))));
+                return Expression.Block(new[] { tmp }, expressions);
+            }
+            else if (expectedType == typeof(int))
+            {
+                return WriteVarint32(outputStream, EncodeZigZag32(obj), objTracker);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                return WriteVarint32(outputStream, obj, objTracker);
+            }
+            else if (expectedType == typeof(long))
+            {
+                return WriteVarint64(outputStream, EncodeZigZag64(obj), objTracker);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                return WriteVarint64(outputStream, obj, objTracker);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
         }
 
-        private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, int numberOfBytes, Type expectedType)
+        private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, ParameterExpression objTracker, int numberOfBytes, Type expectedType)
         {
-            var expressions = new List<Expression>();
-            var tmp = Expression.Parameter(expectedType, "tmp");
-            expressions.Add(Expression.Assign(tmp, Expression.Convert(Expression.Constant(0), expectedType)));
-
-            for (int i = 0; i < numberOfBytes; i++)
+            if (expectedType == typeof(byte)
+                   || expectedType == typeof(sbyte)
+                   || expectedType == typeof(short)
+                   || expectedType == typeof(ushort))
             {
-                expressions.Add(Expression.Assign(tmp, Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)), Expression.Convert(ReadByte(inputStream), expectedType))));
+                var expressions = new List<Expression>();
+                var tmp = Expression.Parameter(expectedType, "tmp");
+                expressions.Add(Expression.Assign(tmp, Expression.Convert(Expression.Constant(0), expectedType)));
+
+                for (int i = 0; i < numberOfBytes; i++)
+                {
+                    expressions.Add(Expression.Assign(tmp, Expression.Or(Expression.LeftShift(tmp, Expression.Constant(8)), Expression.Convert(ReadByte(inputStream, objTracker), expectedType))));
+                }
+
+                expressions.Add(tmp);
+
+                return Expression.Block(new[] { tmp }, expressions);
             }
-
-            expressions.Add(tmp);
-
-            return Expression.Block(new[] { tmp }, expressions);
+            else if (expectedType == typeof(int))
+            {
+                return Expression.Convert(DecodeZigZag32(ReadVarint32(inputStream, objTracker)), expectedType);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                return Expression.Convert(ReadVarint32(inputStream, objTracker), expectedType);
+            }
+            else if (expectedType == typeof(long))
+            {
+                return Expression.Convert(DecodeZigZag64(ReadVarint64(inputStream, objTracker)), expectedType);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                return Expression.Convert(ReadVarint64(inputStream, objTracker), expectedType);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
         }
 
         [System.Security.SecuritySafeCritical]
-        internal static unsafe long GetLongFromDouble(double value)
+        internal static unsafe ulong GetLongFromDouble(double value)
         {
-            long longValue = *(long*)&value;
+            ulong longValue = *(ulong*)&value;
             return longValue;
         }
 
         [System.Security.SecuritySafeCritical]
-        internal static unsafe double GetDoubleFromLong(long value)
+        internal static unsafe double GetDoubleFromLong(ulong value)
         {
             double doubleValue = *(double*)&value;
             return doubleValue;
@@ -212,10 +343,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable boolean deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable boolean deserialization</returns>
-        public static Expression ReadNullableBool(ParameterExpression inputStream)
+        public static Expression ReadNullableBool(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(bool?), ReadBool);
+            return ReadNullable(inputStream, objTracker, typeof(bool?), ReadBool);
         }
 
         /// <summary>
@@ -234,10 +366,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle boolean deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle boolean deserialization</returns>
-        public static Expression ReadBool(ParameterExpression inputStream)
+        public static Expression ReadBool(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return Expression.Condition(Expression.Equal(ReadByte(inputStream), Expression.Constant(1)), Expression.Constant(true), Expression.Constant(false));
+            return Expression.Condition(Expression.Equal(ReadByte(inputStream, objTracker), Expression.Constant(1)), Expression.Constant(true), Expression.Constant(false));
         }
 
 #endregion
@@ -260,10 +393,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable byte deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable byte deserialization</returns>
-        public static Expression ReadNullableByte(ParameterExpression inputStream)
+        public static Expression ReadNullableByte(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(byte?), ReadByte);
+            return ReadNullable(inputStream, objTracker, typeof(byte?), ReadByte);
         }
 
         /// <summary>
@@ -282,8 +416,9 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle byte deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle byte deserialization</returns>
-        public static Expression ReadByte(ParameterExpression inputStream)
+        public static Expression ReadByte(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             return Expression.Call(inputStream, StreamMih.ReadByte());
         }
@@ -304,10 +439,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable sbyte deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable sbyte deserialization</returns>
-        public static Expression ReadNullableSByte(ParameterExpression inputStream)
+        public static Expression ReadNullableSByte(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(sbyte?), ReadSByte);
+            return ReadNullable(inputStream, objTracker, typeof(sbyte?), ReadSByte);
         }
 
         /// <summary>
@@ -326,8 +462,9 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle sbyte deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle sbyte deserialization</returns>
-        public static Expression ReadSByte(ParameterExpression inputStream)
+        public static Expression ReadSByte(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             return Expression.Convert(Expression.Call(inputStream, StreamMih.ReadByte()), typeof(sbyte));
         }
@@ -352,10 +489,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable int16 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int16 deserialization</returns>
-        public static Expression ReadNullableInt16(ParameterExpression inputStream)
+        public static Expression ReadNullableInt16(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(short?), ReadInt16);
+            return ReadNullable(inputStream, objTracker, typeof(short?), ReadInt16);
         }
 
         /// <summary>
@@ -374,10 +512,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle int16 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle int16 deserialization</returns>
-        public static Expression ReadInt16(ParameterExpression inputStream)
+        public static Expression ReadInt16(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(short), typeof(short));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(short), typeof(short));
         }
 
         /// <summary>
@@ -396,10 +535,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable uint16 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint16 deserialization</returns>
-        public static Expression ReadNullableUInt16(ParameterExpression inputStream)
+        public static Expression ReadNullableUInt16(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(ushort?), ReadUInt16);
+            return ReadNullable(inputStream, objTracker, typeof(ushort?), ReadUInt16);
         }
 
         /// <summary>
@@ -418,10 +558,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle uint16 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint16 deserialization</returns>
-        public static Expression ReadUInt16(ParameterExpression inputStream)
+        public static Expression ReadUInt16(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(ushort), typeof(ushort));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(ushort), typeof(ushort));
         }
 
 #endregion
@@ -444,10 +585,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable int32 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int32 deserialization</returns>
-        public static Expression ReadNullableInt32(ParameterExpression inputStream)
+        public static Expression ReadNullableInt32(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(int?), ReadInt32);
+            return ReadNullable(inputStream, objTracker, typeof(int?), ReadInt32);
         }
 
         /// <summary>
@@ -466,10 +608,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle int32 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle int32 deserialization</returns>
-        public static Expression ReadInt32(ParameterExpression inputStream)
+        public static Expression ReadInt32(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(int), typeof(int));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(int), typeof(int));
         }
 
         /// <summary>
@@ -488,10 +631,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable uint32 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint32 deserialization</returns>
-        public static Expression ReadNullableUInt32(ParameterExpression inputStream)
+        public static Expression ReadNullableUInt32(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(uint?), ReadUInt32);
+            return ReadNullable(inputStream, objTracker, typeof(uint?), ReadUInt32);
         }
 
         /// <summary>
@@ -510,10 +654,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle uint32 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint32 deserialization</returns>
-        public static Expression ReadUInt32(ParameterExpression inputStream)
+        public static Expression ReadUInt32(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(uint), typeof(uint));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(uint), typeof(uint));
         }
 
 #endregion
@@ -536,10 +681,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable int64 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable int64 deserialization</returns>
-        public static Expression ReadNullableInt64(ParameterExpression inputStream)
+        public static Expression ReadNullableInt64(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(long?), ReadInt64);
+            return ReadNullable(inputStream, objTracker, typeof(long?), ReadInt64);
         }
 
         /// <summary>
@@ -558,10 +704,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle int64 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle int64 deserialization</returns>
-        public static Expression ReadInt64(ParameterExpression inputStream)
+        public static Expression ReadInt64(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(long), typeof(long));
         }
 
         /// <summary>
@@ -580,10 +727,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable uint64 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable uint64 deserialization</returns>
-        public static Expression ReadNullableUInt64(ParameterExpression inputStream)
+        public static Expression ReadNullableUInt64(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(ulong?), ReadUInt64);
+            return ReadNullable(inputStream, objTracker, typeof(ulong?), ReadUInt64);
         }
 
         /// <summary>
@@ -602,10 +750,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle uint64 deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle uint64 deserialization</returns>
-        public static Expression ReadUInt64(ParameterExpression inputStream)
+        public static Expression ReadUInt64(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadIntegerNumberPrimitive(inputStream, sizeof(ulong), typeof(ulong));
+            return ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(ulong), typeof(ulong));
         }
 
 #endregion
@@ -628,10 +777,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable decimal deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable decimal deserialization</returns>
-        public static Expression ReadNullableDecimal(ParameterExpression inputStream)
+        public static Expression ReadNullableDecimal(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(decimal?), ReadDecimal);
+            return ReadNullable(inputStream, objTracker, typeof(decimal?), ReadDecimal);
         }
 
         /// <summary>
@@ -680,8 +830,9 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle decimal deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object trakcer</param>
         /// <returns>An expression to handle decimal deserialization</returns>
-        public static Expression ReadDecimal(ParameterExpression inputStream)
+        public static Expression ReadDecimal(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             var variables = new List<ParameterExpression>();
 
@@ -690,30 +841,29 @@ namespace DesertOctopus.Serialization
             var scaleSign = Expression.Parameter(typeof(uint), "scaleSign");
             var scale = Expression.Parameter(typeof(int), "scale");
             var sign = Expression.Parameter(typeof(int), "sign");
-            var arr = Expression.Parameter(typeof(int[]), "arr"); // todo: we could improve performance by initializing the array once per serialization
 
             variables.Add(lowmid);
             variables.Add(high);
             variables.Add(scaleSign);
             variables.Add(scale);
             variables.Add(sign);
-            variables.Add(arr);
+
+            var tempArray = Expression.Property(objTracker, DeserializerObjectTrackerMih.DecimalArray());
 
             return Expression.Block(variables,
-                                    Expression.Assign(lowmid, ReadUInt64(inputStream)),
-                                    Expression.Assign(high, ReadUInt32(inputStream)),
-                                    Expression.Assign(scaleSign, ReadUInt32(inputStream)),
+                                    Expression.Assign(lowmid, ReadUInt64(inputStream, objTracker)),
+                                    Expression.Assign(high, ReadUInt32(inputStream, objTracker)),
+                                    Expression.Assign(scaleSign, ReadUInt32(inputStream, objTracker)),
                                     Expression.Assign(scale, Expression.Convert(Expression.LeftShift(Expression.And(scaleSign, Expression.Convert(Expression.Constant(~1), typeof(uint))), Expression.Constant(15)), typeof(int))),
                                     Expression.Assign(sign, Expression.Convert(Expression.LeftShift(Expression.And(scaleSign, Expression.Convert(Expression.Constant(1), typeof(uint))), Expression.Constant(31)), typeof(int))),
-                                    Expression.Assign(arr, Expression.NewArrayBounds(typeof(int), Expression.Constant(4))),
-                                    Expression.Assign(Expression.ArrayAccess(arr, Expression.Constant(0)), Expression.Convert(lowmid, typeof(int))),
-                                    Expression.Assign(Expression.ArrayAccess(arr, Expression.Constant(1)), Expression.Convert(Expression.RightShift(lowmid, Expression.Constant(32)), typeof(int))),
-                                    Expression.Assign(Expression.ArrayAccess(arr, Expression.Constant(2)), Expression.Convert(high, typeof(int))),
-                                    Expression.Assign(Expression.ArrayAccess(arr, Expression.Constant(3)), Expression.Or(scale, sign)),
-                                    Expression.New(typeof(decimal).GetConstructor(new Type[] { typeof(int[]) }), arr));
+                                    Expression.Assign(Expression.ArrayAccess(tempArray, Expression.Constant(0)), Expression.Convert(lowmid, typeof(int))),
+                                    Expression.Assign(Expression.ArrayAccess(tempArray, Expression.Constant(1)), Expression.Convert(Expression.RightShift(lowmid, Expression.Constant(32)), typeof(int))),
+                                    Expression.Assign(Expression.ArrayAccess(tempArray, Expression.Constant(2)), Expression.Convert(high, typeof(int))),
+                                    Expression.Assign(Expression.ArrayAccess(tempArray, Expression.Constant(3)), Expression.Or(scale, sign)),
+                                    Expression.New(typeof(decimal).GetConstructor(new Type[] { typeof(int[]) }), tempArray));
         }
 
-#endregion
+        #endregion
 
 #region double
 
@@ -733,10 +883,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable double deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable double deserialization</returns>
-        public static Expression ReadNullableDouble(ParameterExpression inputStream)
+        public static Expression ReadNullableDouble(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(double?), ReadDouble);
+            return ReadNullable(inputStream, objTracker, typeof(double?), ReadDouble);
         }
 
         /// <summary>
@@ -750,17 +901,18 @@ namespace DesertOctopus.Serialization
         {
             var convertedExpr = Expression.Call(PrimitiveHelpersMih.GetLongFromDouble(), obj);
 
-            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(long), typeof(long));
+            return WriteIntegerNumberPrimitive(outputStream, convertedExpr, objTracker, sizeof(ulong), typeof(ulong));
         }
 
         /// <summary>
         /// Generates an expression to handle double deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle double deserialization</returns>
-        public static Expression ReadDouble(ParameterExpression inputStream)
+        public static Expression ReadDouble(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            var longValue = ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long));
+            var longValue = ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(ulong), typeof(ulong));
             return Expression.Call(PrimitiveHelpersMih.GetDoubleFromLong(), longValue);
         }
 
@@ -784,10 +936,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable single deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable single deserialization</returns>
-        public static Expression ReadNullableSingle(ParameterExpression inputStream)
+        public static Expression ReadNullableSingle(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(float?), ReadSingle);
+            return ReadNullable(inputStream, objTracker, typeof(float?), ReadSingle);
         }
 
         /// <summary>
@@ -808,10 +961,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle single deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle single deserialization</returns>
-        public static Expression ReadSingle(ParameterExpression inputStream)
+        public static Expression ReadSingle(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            var unitValue = ReadIntegerNumberPrimitive(inputStream, sizeof(uint), typeof(uint));
+            var unitValue = ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(uint), typeof(uint));
             return Expression.Call(PrimitiveHelpersMih.GetSingleFromUint(), unitValue);
         }
 
@@ -835,10 +989,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable char deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable char deserialization</returns>
-        public static Expression ReadNullableChar(ParameterExpression inputStream)
+        public static Expression ReadNullableChar(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(char?), ReadChar);
+            return ReadNullable(inputStream, objTracker, typeof(char?), ReadChar);
         }
 
         /// <summary>
@@ -857,10 +1012,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle char deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle char deserialization</returns>
-        public static Expression ReadChar(ParameterExpression inputStream)
+        public static Expression ReadChar(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, sizeof(short), typeof(short)), typeof(char));
+            return Expression.Convert(ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(short), typeof(short)), typeof(char));
         }
 
 #endregion
@@ -883,10 +1039,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable DateTime deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable DateTime deserialization</returns>
-        public static Expression ReadNullableDateTime(ParameterExpression inputStream)
+        public static Expression ReadNullableDateTime(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(DateTime?), ReadDateTime);
+            return ReadNullable(inputStream, objTracker, typeof(DateTime?), ReadDateTime);
         }
 
         /// <summary>
@@ -905,11 +1062,12 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle DateTime deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle DateTime deserialization</returns>
-        public static Expression ReadDateTime(ParameterExpression inputStream)
+        public static Expression ReadDateTime(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             return Expression.Call(DateTimeMih.FromBinary(),
-                                   ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long)));
+                                   ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(long), typeof(long)));
         }
 
 #endregion
@@ -932,10 +1090,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable TimeSpan deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable TimeSpan deserialization</returns>
-        public static Expression ReadNullableTimeSpan(ParameterExpression inputStream)
+        public static Expression ReadNullableTimeSpan(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(TimeSpan?), ReadTimeSpan);
+            return ReadNullable(inputStream, objTracker, typeof(TimeSpan?), ReadTimeSpan);
         }
 
         /// <summary>
@@ -954,11 +1113,12 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle TimeSpan deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle TimeSpan deserialization</returns>
-        public static Expression ReadTimeSpan(ParameterExpression inputStream)
+        public static Expression ReadTimeSpan(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             return Expression.Call(TimeSpanMih.FromTicks(),
-                                   ReadIntegerNumberPrimitive(inputStream, sizeof(long), typeof(long)));
+                                   ReadIntegerNumberPrimitive(inputStream, objTracker, sizeof(long), typeof(long)));
         }
 
 #endregion
@@ -981,10 +1141,11 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle nullable BigInteger deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle nullable BigInteger deserialization</returns>
-        public static Expression ReadNullableBigInteger(ParameterExpression inputStream)
+        public static Expression ReadNullableBigInteger(ParameterExpression inputStream, ParameterExpression objTracker)
         {
-            return ReadNullable(inputStream, typeof(BigInteger?), ReadBigInteger);
+            return ReadNullable(inputStream, objTracker, typeof(BigInteger?), ReadBigInteger);
         }
 
         /// <summary>
@@ -1003,11 +1164,12 @@ namespace DesertOctopus.Serialization
         /// Generates an expression to handle BigInteger deserialization
         /// </summary>
         /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle BigInteger deserialization</returns>
-        public static Expression ReadBigInteger(ParameterExpression inputStream)
+        public static Expression ReadBigInteger(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             return Expression.New(BigIntegerMih.Constructor(),
-                                  ReadByteArray(inputStream));
+                                  ReadByteArray(inputStream, objTracker));
         }
 
 #endregion
@@ -1024,13 +1186,13 @@ namespace DesertOctopus.Serialization
                                                           primitiveWriter(outputStream, Expression.Convert(obj, underlyingType), objTracker)));
         }
 
-        private static Expression ReadNullable(ParameterExpression inputStream, Type nullableType, Func<ParameterExpression, Expression> primitiveReader)
+        private static Expression ReadNullable(ParameterExpression inputStream, ParameterExpression objTracker, Type nullableType, Func<ParameterExpression, ParameterExpression, Expression> primitiveReader)
         {
             var tmp = Expression.Parameter(nullableType, "tmp");
             return Expression.Block(new List<ParameterExpression> { tmp },
-                                    Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
+                                    Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream, objTracker), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                          Expression.Assign(tmp, Expression.Constant(null, nullableType)),
-                                         Expression.Assign(tmp, Expression.Convert(primitiveReader(inputStream), nullableType))),
+                                         Expression.Assign(tmp, Expression.Convert(primitiveReader(inputStream, objTracker), nullableType))),
                                     tmp);
         }
 
@@ -1044,7 +1206,7 @@ namespace DesertOctopus.Serialization
         /// <param name="inputStream">Stream to read from</param>
         /// <param name="objTracker">Object tracker</param>
         /// <returns>An expression to handle string deserialization</returns>
-        public static Expression ReadString(ParameterExpression inputStream, Expression objTracker)
+        public static Expression ReadString(ParameterExpression inputStream, ParameterExpression objTracker)
         {
             var expressions = new List<Expression>();
             var variables = new List<ParameterExpression>();
@@ -1065,7 +1227,7 @@ namespace DesertOctopus.Serialization
 
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
             expressions.Add(Expression.Assign(r, Expression.Constant(0)));
-            expressions.Add(Expression.Assign(length, Expression.Convert(ReadInt32(inputStream), typeof(int))));
+            expressions.Add(Expression.Assign(length, Expression.Convert(ReadInt32(inputStream, objTracker), typeof(int))));
             expressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.EnsureBufferSize(), length));
             expressions.Add(Expression.Assign(encoding, Expression.New(typeof(UTF8Encoding).GetConstructor(new[] { typeof(bool), typeof(bool) }), Expression.Constant(false), Expression.Constant(true))));
 
@@ -1084,7 +1246,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(encoding, Utf8EncodingMih.GetStringResuableBuffer(), buffer, Expression.Constant(0), length), typeof(string))));
 
             return Expression.Block(variables,
-                                    Expression.Block(Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
+                                    Expression.Block(Expression.IfThenElse(Expression.Equal(Expression.Convert(ReadByte(inputStream, objTracker), typeof(byte)), Expression.Constant(SerializerObjectTracker.Value0)),
                                                                            Expression.Assign(newInstance, Expression.Constant(null, typeof(string))),
                                                                            Expression.Block(expressions)),
                                                      newInstance));

@@ -10,7 +10,7 @@ namespace DesertOctopus.MammothCache
     public sealed class FirstLevelCacheConfig : IFirstLevelCacheConfig
     {
         /// <inheritdoc/>
-        public int TimerInterval { get; set; }
+        public TimeSpan TimerInterval { get; set; }
 
         /// <inheritdoc/>
         public int MaximumMemorySize { get; set; }

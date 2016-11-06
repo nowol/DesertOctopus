@@ -65,6 +65,7 @@
     <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
     <Compile Include="ConditionalResult.cs" />
+    <Compile Include="Exceptions\InvalidOmitRootTypeException.cs" />
     <Compile Include="Exceptions\InvalidSerializationVersionException.cs" />
     <Compile Include="KrakenSerializer.cs" />
     <Compile Include="ObjectCloner.cs" />
@@ -72,8 +73,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ArrayDeserializer.cs" />
     <Compile Include="Serialization\ArraySerializer.cs" />
+    <Compile Include="Serialization\SerializationOptions.cs" />
     <Compile Include="Utilities\DictionaryHelper.cs" />
     <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
+    <Compile Include="Utilities\ExtensionMethods.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
     <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />

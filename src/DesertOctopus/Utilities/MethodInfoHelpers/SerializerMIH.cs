@@ -43,9 +43,9 @@ namespace DesertOctopus.Utilities
         /// Calls Serializer.GetTypeSerializer
         /// </summary>
         /// <returns>The method info for Serializer.GetTypeSerializer</returns>
-        public static MethodInfo GetTypeSerializer()
+        public static MethodInfo GetTypeToObjectSerializer()
         {
-            return typeof(Serializer).GetMethod(nameof(Serializer.GetTypeSerializer), BindingFlags.Static | BindingFlags.NonPublic);
+            return typeof(Serializer).GetMethod(nameof(Serializer.GetTypeToObjectSerializer), BindingFlags.Static | BindingFlags.NonPublic);
         }
     }
 }

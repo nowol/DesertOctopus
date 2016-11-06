@@ -36,5 +36,14 @@ namespace DesertOctopus.Utilities
         {
             return typeof(DeserializerObjectTracker).GetMethod(nameof(DeserializerObjectTracker.EnsureBufferSize));
         }
+
+        /// <summary>
+        /// Calls DeserializerObjectTracker.DecimalArray
+        /// </summary>
+        /// <returns>The method info for DeserializerObjectTracker.DecimalArray</returns>
+        public static PropertyInfo DecimalArray()
+        {
+            return typeof(DeserializerObjectTracker).GetProperty(nameof(DeserializerObjectTracker.DecimalArray));
+        }
     }
 }

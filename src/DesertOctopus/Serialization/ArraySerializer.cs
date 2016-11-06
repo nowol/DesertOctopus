@@ -50,7 +50,8 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.AddRange(WriteDimensionalArrayLength(outputStream, objTracking, i, arr, lengths, rank));
             notTrackedExpressions.AddRange(WriteDimensionalArray(elementType, variables, outputStream, arr, rank, lengths, objTracking));
 
-            return Serializer.GenerateNullTrackedOrUntrackedExpression(outputStream,
+            return Serializer.GenerateNullTrackedOrUntrackedExpression(type,
+                                                                       outputStream,
                                                                        objToSerialize,
                                                                        objTracking,
                                                                        notTrackedExpressions,
@@ -94,8 +95,8 @@ namespace DesertOctopus.Serialization
 
                 if (primitiveWriter == null)
                 {
-                    Action<Stream, object, SerializerObjectTracker> primitiveSerializer = Serializer.GetTypeSerializer(elementType);
-                    innerExpression = Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, Expression.Convert(item, typeof(object)), objTracking);
+                    var primitiveSerializer = Serializer.GetTypeSerializer(elementType);
+                    innerExpression = Expression.Invoke(Expression.Constant(primitiveSerializer), outputStream, item, objTracking);
                 }
                 else
                 {
