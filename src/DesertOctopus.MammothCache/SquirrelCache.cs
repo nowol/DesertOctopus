@@ -19,8 +19,8 @@ namespace DesertOctopus.MammothCache
         private readonly MemoryCache _cache = new MemoryCache("SquirrelCache");
         private readonly System.Threading.Timer _cleanUpTimer;
         private readonly CachedObjectQueue _cachedObjectsByAge = new CachedObjectQueue();
+        private readonly LongCounter _estimatedMemorySize = new LongCounter();
         private bool _isDisposed = false;
-        private LongCounter _estimatedMemorySize = new LongCounter();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SquirrelCache"/> class.
@@ -56,13 +56,12 @@ namespace DesertOctopus.MammothCache
         {
             _cleanUpTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
-            while (EstimatedMemorySize >= _config.MaximumMemorySize
-                    && _cachedObjectsByAge.Count > 0)
+            if (EstimatedMemorySize > _config.MaximumMemorySize
+                && _cachedObjectsByAge.Count > 0)
             {
-                var firstItem = _cachedObjectsByAge.Pop();
-                if (firstItem != null)
+                foreach (var key in _cachedObjectsByAge.GetKeysToEvictDueToMemory(EstimatedMemorySize - _config.MaximumMemorySize))
                 {
-                    Remove(firstItem.Key);
+                    Remove(key);
                 }
             }
 

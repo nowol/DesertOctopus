@@ -94,7 +94,7 @@ namespace DesertOctopus.Serialization
                 {
                     var stringDeserializerMethod = (Func<Stream, DeserializerObjectTracker, string>)GetTypeDeserializer(typeof(string));
 
-                    var typeName = (string)stringDeserializerMethod(ms, tracker);
+                    var typeName = stringDeserializerMethod(ms, tracker);
                     type = SerializedTypeResolver.GetTypeFromFullName(typeName);
 
                     if (type == null

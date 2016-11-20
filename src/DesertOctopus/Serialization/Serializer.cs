@@ -55,7 +55,7 @@ namespace DesertOctopus.Serialization
                 var cargo = new SerializerObjectTracker();
 
 
-                var serializerMethod = (Action<Stream, object, SerializerObjectTracker>)GetTypeToObjectSerializer(obj.GetType());
+                var serializerMethod = GetTypeToObjectSerializer(obj.GetType());
                 var stringSerializerMethod = (Action<Stream, string, SerializerObjectTracker>)GetTypeSerializer(typeof(string));
                 var intSerializerMethod = (Action<Stream, int, SerializerObjectTracker>)GetTypeSerializer(typeof(int));
 

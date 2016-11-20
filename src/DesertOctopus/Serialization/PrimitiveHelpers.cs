@@ -66,15 +66,15 @@ namespace DesertOctopus.Serialization
 
 #region VARINT
 
-        private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj)
         {
             return WriteVarint(outputStream,
                                obj,
-                               Expression.Constant((uint)0x80u, typeof(uint)),
+                               Expression.Constant(0x80u, typeof(uint)),
                                typeof(uint));
         }
 
-        private static Expression WriteVarint64(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        private static Expression WriteVarint64(ParameterExpression outputStream, Expression obj)
         {
             return WriteVarint(outputStream,
                                obj,
@@ -157,7 +157,7 @@ namespace DesertOctopus.Serialization
 
         internal static Expression EncodeZigZag32(Expression obj)
         {
-            // (uint)((n << 1) ^ (n >> 31));
+            // original algorithm: (uint)((n << 1) ^ (n >> 31));
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(int), "tmp");
             variables.Add(tmp);
@@ -171,7 +171,7 @@ namespace DesertOctopus.Serialization
 
         internal static Expression EncodeZigZag64(Expression obj)
         {
-            //return (ulong)((n << 1) ^ (n >> 63));
+            // original algorithm: (ulong)((n << 1) ^ (n >> 63));
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(long), "tmp");
             variables.Add(tmp);
@@ -185,7 +185,7 @@ namespace DesertOctopus.Serialization
 
         internal static Expression DecodeZigZag32(Expression obj)
         {
-            //return (int)(n >> 1) ^ -(int)(n & 1);
+            // original algorithm: (int)(n >> 1) ^ -(int)(n & 1);
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(uint), "tmp");
             variables.Add(tmp);
@@ -199,7 +199,7 @@ namespace DesertOctopus.Serialization
 
         internal static Expression DecodeZigZag64(Expression obj)
         {
-            //return (long)(n >> 1) ^ -(long)(n & 1);
+            // original algorithm: (long)(n >> 1) ^ -(long)(n & 1);
             var variables = new List<ParameterExpression>();
             var tmp = Expression.Parameter(typeof(ulong), "tmp");
             variables.Add(tmp);
@@ -235,19 +235,19 @@ namespace DesertOctopus.Serialization
             }
             else if (expectedType == typeof(int))
             {
-                return WriteVarint32(outputStream, EncodeZigZag32(obj), objTracker);
+                return WriteVarint32(outputStream, EncodeZigZag32(obj));
             }
             else if (expectedType == typeof(uint))
             {
-                return WriteVarint32(outputStream, obj, objTracker);
+                return WriteVarint32(outputStream, obj);
             }
             else if (expectedType == typeof(long))
             {
-                return WriteVarint64(outputStream, EncodeZigZag64(obj), objTracker);
+                return WriteVarint64(outputStream, EncodeZigZag64(obj));
             }
             else if (expectedType == typeof(ulong))
             {
-                return WriteVarint64(outputStream, obj, objTracker);
+                return WriteVarint64(outputStream, obj);
             }
             else
             {

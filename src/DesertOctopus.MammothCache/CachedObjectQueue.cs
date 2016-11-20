@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -96,6 +97,35 @@ namespace DesertOctopus.MammothCache
             try
             {
                 _cachedObjects.Remove(value); // todo: can we remove this to be better than O(N) ?
+            }
+            finally
+            {
+                _lockRoot.Release();
+            }
+        }
+
+        /// <summary>
+        /// Get keys to remove
+        /// </summary>
+        /// <param name="memoryToFreeInBytes">Memory to free in bytes</param>
+        /// <returns>A list of keys to remove</returns>
+        public List<string> GetKeysToEvictDueToMemory(long memoryToFreeInBytes)
+        {
+            _lockRoot.WaitOne();
+            try
+            {
+                var keys = new List<string>();
+                var node = _cachedObjects.First;
+
+                while (memoryToFreeInBytes > 0
+                       && node != null)
+                {
+                    keys.Add(node.Value.Key);
+                    memoryToFreeInBytes -= node.Value.ObjectSize;
+                    node = node.Next;
+                }
+
+                return keys;
             }
             finally
             {
