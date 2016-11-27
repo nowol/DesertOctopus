@@ -54,6 +54,10 @@ namespace DesertOctopus.MammothCache.Tests
             _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _nonSerializableCache, _mammothCacheSerializationProvider);
 
             RemoveAllAndWait();
+
+#if !DEBUG
+            WaitFor(0.5);
+#endif
         }
 
         private void RemoveAllAndWait()
