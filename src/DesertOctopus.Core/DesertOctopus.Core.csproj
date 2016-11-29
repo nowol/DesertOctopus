@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F2BD38DE-3283-4509-96EF-85367993FEA8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DesertOctopus</RootNamespace>
+    <AssemblyName>DesertOctopus</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>bin\Debug\DesertOctopus.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>bin\Release\DesertOctopus.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="project.json" />
+    <!-- A reference to the entire .NET Framework is automatically included -->
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Cloning\ArrayCloner.cs" />
+    <Compile Include="Cloning\ClassCloner.cs" />
+    <Compile Include="Cloning\ExpandoCloner.cs" />
+    <Compile Include="Cloning\IQueryableCloner.cs" />
+    <Compile Include="Cloning\ISerializableCloner.cs" />
+    <Compile Include="Cloning\ObjectClonerReferenceTracker.cs" />
+    <Compile Include="ConditionalResult.cs" />
+    <Compile Include="Exceptions\InvalidOmitRootTypeException.cs" />
+    <Compile Include="Exceptions\InvalidSerializationVersionException.cs" />
+    <Compile Include="Exceptions\MissingConstructorException.cs" />
+    <Compile Include="Exceptions\TypeNotFoundException.cs" />
+    <Compile Include="Exceptions\TypeWasModifiedSinceSerializationException.cs" />
+    <Compile Include="KrakenSerializer.cs" />
+    <Compile Include="ObjectCloner.cs" />
+    <Compile Include="Polyfills\ReflectionHelper.cs" />
+    <Compile Include="Polyfills\SerializableAttribute.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\ArrayDeserializer.cs" />
+    <Compile Include="Serialization\ArraySerializer.cs" />
+    <Compile Include="Serialization\Deserializer.cs" />
+    <Compile Include="Serialization\ExpandoDeserializer.cs" />
+    <Compile Include="Serialization\ExpandoSerializer.cs" />
+    <Compile Include="Serialization\ISerializableDeserializer.cs" />
+    <Compile Include="Serialization\ISerializableSerializer.cs" />
+    <Compile Include="Serialization\JaggedArrayDeserializer.cs" />
+    <Compile Include="Serialization\JaggedArraySerializer.cs" />
+    <Compile Include="Serialization\PrimitiveHelpers.cs" />
+    <Compile Include="Serialization\SerializationOptions.cs" />
+    <Compile Include="Serialization\Serializer.cs" />
+    <Compile Include="Utilities\DeserializerObjectTracker.cs" />
+    <Compile Include="Utilities\DictionaryHelper.cs" />
+    <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
+    <Compile Include="Utilities\EnumerableLoopHelper.cs" />
+    <Compile Include="Utilities\ExtensionMethods.cs" />
+    <Compile Include="Utilities\InternalSerializationStuff.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ArrayMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\CollectionMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DateTimeMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DecimalMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DeserializerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DeserializerObjectTrackerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\DictionaryMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\EncodingMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\EndOfStreamExceptionMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\FormatterServicesMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\FuncMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IDisposableMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IEnumerableMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IEnumeratorMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\InvalidOperationExceptionMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\IQueryableMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ISerializableMih.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ListMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\NotSupportedExceptionMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ObjectClonerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ObjectClonerReferenceTrackerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\ObjectMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\PrimitiveHelpersMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\QueryableMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\SerializationInfoMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\SerializedTypeResolverMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\SerializerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\SerializerObjectTrackerMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\StreamingContextMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\StreamMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\TimeSpanMIH.cs" />
+    <Compile Include="Utilities\MethodInfoHelpers\UTF8EncodingMIH.cs" />
+    <Compile Include="Utilities\ObjectCleaner.cs" />
+    <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
+    <Compile Include="Utilities\SerializedTypeResolver.cs" />
+    <Compile Include="Utilities\SerializerObjectTracker.cs" />
+    <Compile Include="Utilities\TypeWithHashCode.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

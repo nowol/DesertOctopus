@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus", "src\DesertOctopus\DesertOctopus.csproj", "{7342E898-8AE6-4482-8A20-B54935DBECAB}"
 EndProject
@@ -42,6 +42,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{68948E3B-D
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctupos.MammothCache.Redis.Tests", "tests\DesertOctopus.MammothCache.Redis.Tests\DesertOctupos.MammothCache.Redis.Tests.csproj", "{465618C0-B665-4C9B-A224-F83938AF0BC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Core", "src\DesertOctopus.Core\DesertOctopus.Core.csproj", "{F2BD38DE-3283-4509-96EF-85367993FEA8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,10 @@ Global
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{465618C0-B665-4C9B-A224-F83938AF0BC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2BD38DE-3283-4509-96EF-85367993FEA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2BD38DE-3283-4509-96EF-85367993FEA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2BD38DE-3283-4509-96EF-85367993FEA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2BD38DE-3283-4509-96EF-85367993FEA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
