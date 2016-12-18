@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.Serialization;
 using DesertOctopus.Utilities;
 
@@ -55,7 +56,7 @@ namespace DesertOctopus.Serialization
                 var cargo = new SerializerObjectTracker();
 
 
-                var serializerMethod = (Action<Stream, object, SerializerObjectTracker>)GetTypeToObjectSerializer(obj.GetType());
+                var serializerMethod = GetTypeToObjectSerializer(obj.GetType());
                 var stringSerializerMethod = (Action<Stream, string, SerializerObjectTracker>)GetTypeSerializer(typeof(string));
                 var intSerializerMethod = (Action<Stream, int, SerializerObjectTracker>)GetTypeSerializer(typeof(int));
 
@@ -208,9 +209,13 @@ namespace DesertOctopus.Serialization
             {
                 expressions.Add(GenerateStringExpression(outputStream, objToSerialize, objTracking));
             }
-            else if (typeof(ISerializable).IsAssignableFrom(type))
+            else if (InternalSerializationStuff.ImplementsISerializableWithSerializationConstructor(type))
             {
                 expressions.Add(ISerializableSerializer.GenerateISerializableExpression(type, variables, outputStream, objToSerialize, objTracking));
+            }
+            else if (InternalSerializationStuff.ImplementsDictionaryGeneric(type))
+            {
+                expressions.Add(DictionarySerializer.GenerateDictionaryGenericExpression(type, variables, outputStream, objToSerialize, objTracking));
             }
             else if (type == typeof(ExpandoObject))
             {
@@ -320,6 +325,30 @@ namespace DesertOctopus.Serialization
             List<Expression> notTrackedExpressions = new List<Expression>();
             List<ParameterExpression> variables = new List<ParameterExpression>();
 
+            GenerateFieldsExpression(type,
+                                     InternalSerializationStuff.GetFields(type),
+                                     outputStream,
+                                     objToSerialize,
+                                     objTracking,
+                                     variables,
+                                     notTrackedExpressions);
+
+            return GenerateNullTrackedOrUntrackedExpression(type,
+                                                            outputStream,
+                                                            objToSerialize,
+                                                            objTracking,
+                                                            notTrackedExpressions,
+                                                            variables);
+        }
+
+        internal static void GenerateFieldsExpression(Type type,
+                                                      FieldInfo[] fields,
+                                                      ParameterExpression outputStream,
+                                                      Expression objToSerialize,
+                                                      ParameterExpression objTracking,
+                                                      List<ParameterExpression> variables,
+                                                      List<Expression> notTrackedExpressions)
+        {
             var serializer = Expression.Parameter(typeof(Action<Stream, object, SerializerObjectTracker>), "serializer");
             var typeExpr = Expression.Parameter(typeof(Type), "typeExpr");
             var itemAsObj = Expression.Parameter(typeof(object), "itemAsObj");
@@ -336,7 +365,7 @@ namespace DesertOctopus.Serialization
 
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializingAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
-            foreach (var fieldInfo in InternalSerializationStuff.GetFields(type))
+            foreach (var fieldInfo in fields)
             {
                 var fieldValueExpr = Expression.Field(Expression.Convert(objToSerialize, type), fieldInfo);
 
@@ -366,13 +395,6 @@ namespace DesertOctopus.Serialization
 
             notTrackedExpressions.AddRange(copyFieldsExpressions);
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnSerializedAttributeExpression(type, objToSerialize, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
-
-            return GenerateNullTrackedOrUntrackedExpression(type,
-                                                            outputStream,
-                                                            objToSerialize,
-                                                            objTracking,
-                                                            notTrackedExpressions,
-                                                            variables);
         }
 
         /// <summary>

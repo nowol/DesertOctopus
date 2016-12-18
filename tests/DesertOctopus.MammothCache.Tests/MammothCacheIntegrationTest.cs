@@ -54,6 +54,10 @@ namespace DesertOctopus.MammothCache.Tests
             _cache = new MammothCache(_firstLevelCache, _secondLevelCache, _nonSerializableCache, _mammothCacheSerializationProvider);
 
             RemoveAllAndWait();
+
+#if !DEBUG
+            WaitFor(0.5);
+#endif
         }
 
         private void RemoveAllAndWait()
@@ -204,7 +208,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -214,7 +218,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await otherCache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsTrue(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -237,7 +241,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -247,7 +251,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             otherCache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsTrue(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -287,7 +291,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.SetAsync(objects).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -301,7 +305,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await otherCache.SetAsync(objects).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsTrue(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -343,7 +347,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(objects);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -357,7 +361,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             otherCache.Set(objects);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsTrue(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -1147,7 +1151,7 @@ namespace DesertOctopus.MammothCache.Tests
             Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(1, otherFirstLevelCache.NumberOfObjects);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
@@ -1171,7 +1175,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
             Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
@@ -1519,7 +1523,7 @@ namespace DesertOctopus.MammothCache.Tests
             _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(5));
             Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
         }
@@ -1808,7 +1812,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -1818,7 +1822,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await otherCache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -1841,7 +1845,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -1851,7 +1855,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             otherCache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -1890,7 +1894,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.SetAsync(objects).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -1904,7 +1908,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             await otherCache.SetAsync(objects).ConfigureAwait(false);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -1947,7 +1951,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(objects);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsTrue(itemsWereRemovedFromOtherCache);
@@ -1961,7 +1965,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             otherCache.Set(objects);
 
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -2010,7 +2014,7 @@ namespace DesertOctopus.MammothCache.Tests
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
             await RemoveAllAndWaitAsync().ConfigureAwait(false);
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);
@@ -2059,7 +2063,7 @@ namespace DesertOctopus.MammothCache.Tests
             otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
 
             RemoveAllAndWait();
-            WaitFor(10);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
             Assert.IsFalse(itemsWereRemoved);
             Assert.IsFalse(itemsWereRemovedFromOtherCache);

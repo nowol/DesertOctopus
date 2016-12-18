@@ -61,6 +61,7 @@
     </Compile>
     <Compile Include="Cloning\ArrayCloner.cs" />
     <Compile Include="Cloning\ClassCloner.cs" />
+    <Compile Include="Cloning\DictionaryCloner.cs" />
     <Compile Include="Cloning\ExpandoCloner.cs" />
     <Compile Include="Cloning\IQueryableCloner.cs" />
     <Compile Include="Cloning\ISerializableCloner.cs" />
@@ -73,6 +74,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\ArrayDeserializer.cs" />
     <Compile Include="Serialization\ArraySerializer.cs" />
+    <Compile Include="Serialization\DictionaryDeserializer.cs" />
+    <Compile Include="Serialization\DictionarySerializer.cs" />
     <Compile Include="Serialization\SerializationOptions.cs" />
     <Compile Include="Utilities\DictionaryHelper.cs" />
     <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
@@ -123,6 +126,7 @@
     <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
     <Compile Include="Utilities\SerializedTypeResolver.cs" />
     <Compile Include="Utilities\DeserializerObjectTracker.cs" />
+    <Compile Include="Utilities\TwoTypesClass.cs" />
     <Compile Include="Utilities\TypeWithHashCode.cs" />
     <Compile Include="Utilities\InternalSerializationStuff.cs" />
     <Compile Include="Serialization\ISerializableDeserializer.cs" />

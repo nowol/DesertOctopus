@@ -30,4 +30,15 @@ namespace DesertOctopus.Tests.TestObjects
             Value = value;
         }
     }
+    public class ClassWith2Property<T>
+    {
+        public T Value1 { get; set; }
+        public T Value2 { get; set; }
+
+        public ClassWith2Property(T value1, T value2)
+        {
+            Value1 = value1;
+            Value2 = value2;
+        }
+    }
 }

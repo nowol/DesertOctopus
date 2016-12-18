@@ -27,14 +27,28 @@ namespace DesertOctopus.Utilities
             return dictionaryType.GetMethod("Add", new[] { keyType, valueType });
         }
 
-        public static MethodInfo IsObjectADictionaryWithDefaultComparer()
+        public static MethodInfo IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties()
         {
-            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparer),
+            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties),
                                                       BindingFlags.Static | BindingFlags.NonPublic,
                                                       null,
                                                       CallingConventions.Any,
                                                       new[]
                                                       {
+                                                          typeof(object)
+                                                      },
+                                                      new ParameterModifier[0]);
+        }
+
+        public static MethodInfo IsDefaultEqualityComparer()
+        {
+            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsDefaultEqualityComparer),
+                                                      BindingFlags.Static | BindingFlags.NonPublic,
+                                                      null,
+                                                      CallingConventions.Any,
+                                                      new[]
+                                                      {
+                                                          typeof(Type),
                                                           typeof(object)
                                                       },
                                                       new ParameterModifier[0]);
