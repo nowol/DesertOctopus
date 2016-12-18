@@ -136,18 +136,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Models\Category.cs" />
-    <Compile Include="Models\ILocalizable.cs" />
-    <Compile Include="Models\Localizable.cs" />
-    <Compile Include="Models\BaseEntity.cs" />
-    <Compile Include="Models\Product.cs" />
-    <Compile Include="Models\ProductEntityRelationship.cs" />
-    <Compile Include="Models\ProductEntityRelationshipComparer.cs" />
-    <Compile Include="Models\ProductEntityType.cs" />
-    <Compile Include="Models\ProductPriceEntry.cs" />
-    <Compile Include="Models\rel.cs" />
+    <Compile Include="Models\BenchmarkObject.cs" />
     <Compile Include="Models\ClassWithAllPrimitiveTypes.cs" />
-    <Compile Include="Models\Variant.cs" />
     <Compile Include="CloneSerializationBenchmark.cs" />
     <Compile Include="SerializationBenchmarkTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

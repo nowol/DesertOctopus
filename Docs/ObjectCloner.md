@@ -42,7 +42,7 @@ var clonedObject = ObjectCloner.Clone(objectToClone);
 ### Benchmark
 
 
-This benchmark clones a fairly large object containing array, lists and dictionaries.
+This benchmark clones a fairly large object containing array, lists and dictionaries.  Dictionaries are serialized using the ISerializable interface.
 
 ``` ini
 
@@ -58,12 +58,39 @@ Job Runtime(s):
 
 
 ```
-                    Method |        Mean |    StdDev |      Median | Size (bytes) |  Gen 0 | Bytes Allocated/Op |
--------------------------- |------------ |---------- |------------ |------------- |------- |------------------- |
- DesertOctopusObjectCloner |  93.6214 us | 1.0082 us |  93.5876 us |              |  50.88 |          43 218.29 |
-              GeorgeCloney | 876.5749 us | 6.1545 us | 877.0224 us |              | 543.00 |         486 399.68 |
-                    NClone |  76.9679 us | 0.4795 us |  77.0902 us |              |  64.88 |          60 841.30 |
-                DeepCloner |  29.9827 us | 0.3109 us |  29.8911 us |              |  25.81 |          23 009.48 |
+        Method |          Mean |     StdDev |        Median |  Gen 0 | Bytes Allocated/Op |
+-------------- |-------------- |----------- |-------------- |------- |------------------- |
+ DesertOctopus |   326.2451 us |  1.5497 us |   326.2468 us | 139.02 |         239 883.71 |
+  GeorgeCloney | 1,920.6397 us | 22.8559 us | 1,917.4020 us | 361.00 |       1 242 881.87 |
+        NClone |   235.1646 us |  1.8069 us |   235.5212 us | 102.88 |         191 471.96 |
+    DeepCloner |    76.8716 us |  0.4209 us |    76.8490 us |  50.94 |          93 623.84 |
+
+
+This benchmark clones a fairly large object containing array, lists and dictionaries.  Dictionaries are serialized as a normal class.
+
+``` ini
+
+BenchmarkDotNet=v0.10.0
+OS=Microsoft Windows NT 6.3.9600.0
+Processor=Intel(R) Core(TM) i5-4690 CPU 3.50GHz, ProcessorCount=4
+Frequency=14318180 Hz, Resolution=69.8413 ns, Timer=HPET
+Host Runtime=Clr 4.0.30319.42000, Arch=32-bit 
+GC=Concurrent Workstation
+JitModules=clrjit-v4.6.1055.0
+Job Runtime(s):
+	Clr 4.0.30319.42000, Arch=32-bit RELEASE
+
+
+```
+        Method |        Mean |    StdDev |      Median | Gen 0 | Bytes Allocated/Op |
+-------------- |------------ |---------- |------------ |------ |------------------- |
+ DesertOctopus | 327.9923 us | 2.3280 us | 327.1245 us |   NaN |            +Infini |
+  GeorgeCloney |          NA |        NA |          NA |   NaN |            +Infini |
+        NClone | 238.2210 us | 2.0623 us | 238.3448 us |  0.00 |         173 415.23 |
+    DeepCloner |  76.9366 us | 0.5420 us |  76.8971 us |  0.00 |          97 522.28 |
+
+Benchmarks with issues:
+  BenchmarkObjectNonISerializablerDictionaryCloningBenchMark.GeorgeCloney: DefaultJob
 
 
 This benchmark clone a normal sized object that contains all primitives types (30 properties).
@@ -82,10 +109,10 @@ Job Runtime(s):
 
 
 ```
-                    Method |           Mean |      StdDev |         Median | Size (bytes) |  Gen 0 | Bytes Allocated/Op |
--------------------------- |--------------- |------------ |--------------- |------------- |------- |------------------- |
- DesertOctopusObjectCloner |    359.6018 ns |   3.2497 ns |    359.2888 ns |              |  14.81 |             768.32 |
-              GeorgeCloney | 74,694.3078 ns | 458.5144 ns | 74,599.2204 ns |              | 776.00 |          42 084.49 |
-                    NClone |  8,011.2636 ns |  66.9791 ns |  8,012.1323 ns |              |  95.89 |           5 100.12 |
-                DeepCloner |    327.3792 ns |   2.6361 ns |    327.1587 ns |              |  13.02 |             679.56 |
+        Method |           Mean |      StdDev |         Median |  Gen 0 | Bytes Allocated/Op |
+-------------- |--------------- |------------ |--------------- |------- |------------------- |
+ DesertOctopus |    368.5086 ns |   5.8461 ns |    368.8217 ns |  13.13 |             790.39 |
+  GeorgeCloney | 75,324.8672 ns | 706.3032 ns | 75,179.5282 ns | 836.00 |          52 300.53 |
+        NClone |  7,982.6989 ns |  95.0663 ns |  7,946.9845 ns |  87.32 |           5 355.37 |
+    DeepCloner |    336.3211 ns |   4.0476 ns |    336.1630 ns |  11.28 |             679.56 |
 
