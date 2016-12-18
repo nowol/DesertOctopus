@@ -89,9 +89,13 @@ namespace DesertOctopus
             {
                 expressions.Add(Expression.Assign(clone, source));
             }
-            else if (typeof(ISerializable).IsAssignableFrom(sourceType))
+            else if (InternalSerializationStuff.ImplementsISerializableWithSerializationConstructor(sourceType))
             {
                 expressions.Add(ISerializableCloner.GenerateISerializableExpression(variables, source, clone, sourceType, refTrackerParam));
+            }
+            else if (InternalSerializationStuff.ImplementsDictionaryGeneric(sourceType))
+            {
+                expressions.Add(DictionaryCloner.GenerateDictionaryGenericExpression(variables, source, clone, sourceType, refTrackerParam));
             }
             else if (sourceType == typeof(ExpandoObject))
             {

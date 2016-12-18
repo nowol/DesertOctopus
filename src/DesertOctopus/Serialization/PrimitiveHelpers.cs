@@ -1,5 +1,8 @@
-﻿using System;
+﻿#define INLINE_PRIMITIVE_METHOD
+
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
@@ -64,7 +67,243 @@ namespace DesertOctopus.Serialization
                                     arr);
         }
 
-#region VARINT
+#if !INLINE_PRIMITIVE_METHOD
+
+        #region VARINT
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static uint EncodeZigZag32(int n)
+        {
+            return (uint)((n << 1) ^ (n >> 31));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static ulong EncodeZigZag64(long n)
+        {
+            return (ulong)((n << 1) ^ (n >> 63));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int DecodeZigZag32(uint n)
+        {
+            return (int)(n >> 1) ^ -(int)(n & 1);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static long DecodeZigZag64(ulong n)
+        {
+            return (long)(n >> 1) ^ -(long)(n & 1);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static ulong ReadVarint64(Stream stream)
+        {
+            long result = 0;
+            int offset = 0;
+
+            for (; offset < 64; offset += 7)
+            {
+                int b = stream.ReadByte();
+                if (b == -1)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                result |= ((long)(b & 0x7f)) << offset;
+
+                if ((b & 0x80) == 0)
+                {
+                    return (ulong)result;
+                }
+            }
+
+            throw new InvalidDataException();
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteVarint64(Stream stream, ulong value)
+        {
+            for (; value >= 0x80u; value >>= 7)
+            {
+                stream.WriteByte((byte)(value | 0x80u));
+            }
+
+            stream.WriteByte((byte)value);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static uint ReadVarint32(Stream stream)
+        {
+            int result = 0;
+            int offset = 0;
+
+            for (; offset < 32; offset += 7)
+            {
+                int b = stream.ReadByte();
+                if (b == -1)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                result |= (b & 0x7f) << offset;
+
+                if ((b & 0x80) == 0)
+                {
+                    return (uint)result;
+                }
+            }
+
+            throw new InvalidDataException();
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteVarint32(Stream stream,
+                                          uint value)
+        {
+            for (; value >= 0x80u; value >>= 7)
+            {
+                stream.WriteByte((byte)(value | 0x80u));
+            }
+
+            stream.WriteByte((byte)value);
+        }
+
+        #endregion
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteSignedInt64(Stream outputStream, long obj)
+        {
+            WriteVarint64(outputStream, EncodeZigZag64(obj));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static long ReadSignedInt64(Stream inputStream)
+        {
+            return DecodeZigZag64(ReadVarint64(inputStream));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteSignedInt32(Stream outputStream, int obj)
+        {
+            WriteVarint32(outputStream, EncodeZigZag32(obj));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int ReadSignedInt32(Stream inputStream)
+        {
+            return DecodeZigZag32(ReadVarint32(inputStream));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteUShortImpl(Stream outputStream, ushort obj)
+        {
+            outputStream.WriteByte((byte)obj);
+            outputStream.WriteByte((byte)(obj >> 8));
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static ushort ReadUShortImpl(Stream inputStream)
+        {
+            uint value = (uint)inputStream.ReadByte();
+            value |= (uint)inputStream.ReadByte() << 8;
+
+            return (ushort)value;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static void WriteByteImpl(Stream outputStream, byte obj)
+        {
+            outputStream.WriteByte((byte)obj);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static byte ReadByteImpl(Stream inputStream)
+        {
+            return (byte)inputStream.ReadByte();
+        }
+
+        private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
+        {
+            if (expectedType == typeof(byte)
+                || expectedType == typeof(sbyte))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteByteImpl), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, Expression.Convert(obj, typeof(byte)));
+            }
+            else if (expectedType == typeof(short)
+                     || expectedType == typeof(ushort))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteUShortImpl), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, Expression.Convert(obj, typeof(ushort)));
+            }
+            else if (expectedType == typeof(int))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteSignedInt32), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, obj);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteVarint32), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, obj);
+            }
+            else if (expectedType == typeof(long))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteSignedInt64), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, obj);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteVarint64), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, outputStream, obj);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
+        }
+
+        private static Expression ReadIntegerNumberPrimitive(ParameterExpression inputStream, ParameterExpression objTracker, int numberOfBytes, Type expectedType)
+        {
+            if (expectedType == typeof(byte)
+               || expectedType == typeof(sbyte))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadByteImpl), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Convert(Expression.Call(mi, inputStream), expectedType);
+            }
+            else if (expectedType == typeof(short)
+                     || expectedType == typeof(ushort))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadUShortImpl), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Convert(Expression.Call(mi, inputStream), expectedType);
+            }
+            else if (expectedType == typeof(int))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadSignedInt32), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, inputStream);
+            }
+            else if (expectedType == typeof(uint))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadVarint32), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, inputStream);
+            }
+            else if (expectedType == typeof(long))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadSignedInt64), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, inputStream);
+            }
+            else if (expectedType == typeof(ulong))
+            {
+                var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadVarint64), BindingFlags.NonPublic | BindingFlags.Static);
+                return Expression.Call(mi, inputStream);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled type: " + expectedType);
+            }
+        }
+#else
+
+        #region VARINT
 
         private static Expression WriteVarint32(ParameterExpression outputStream, Expression obj)
         {
@@ -211,7 +450,7 @@ namespace DesertOctopus.Serialization
                                       typeof(long));
         }
 
-#endregion
+        #endregion
 
         private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
@@ -296,6 +535,7 @@ namespace DesertOctopus.Serialization
                 throw new InvalidOperationException("Unhandled type: " + expectedType);
             }
         }
+#endif
 
         [System.Security.SecuritySafeCritical]
         internal static unsafe ulong GetLongFromDouble(double value)
@@ -863,7 +1103,7 @@ namespace DesertOctopus.Serialization
                                     Expression.New(typeof(decimal).GetConstructor(new Type[] { typeof(int[]) }), tempArray));
         }
 
-        #endregion
+#endregion
 
 #region double
 
@@ -1200,6 +1440,100 @@ namespace DesertOctopus.Serialization
 
 #region string
 
+#if !INLINE_PRIMITIVE_METHOD
+
+        /// <summary>
+        /// Generates an expression to handle string deserialization
+        /// </summary>
+        /// <param name="inputStream">Stream to read from</param>
+        /// <param name="objTracker">Object tracker</param>
+        /// <returns>An expression to handle string deserialization</returns>
+        public static Expression ReadString(ParameterExpression inputStream, ParameterExpression objTracker)
+        {
+            var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadStringImpl), BindingFlags.NonPublic | BindingFlags.Static);
+
+            return Expression.Call(mi,
+                                   inputStream,
+                                   objTracker);
+        }
+
+        private static string ReadStringImpl(Stream inputStream, DeserializerObjectTracker objTracker)
+        {
+            if (inputStream.ReadByte() == SerializerObjectTracker.Value0)
+            {
+                return null;
+            }
+
+            int length = ReadSignedInt32(inputStream);
+            int i = 0;
+            int r = 0;
+
+            objTracker.EnsureBufferSize(length);
+            var encoding = new UTF8Encoding(false, true);
+
+            while (i < length)
+            {
+                r = inputStream.Read(objTracker.Buffer, i, length - i);
+
+                if (r == 0)
+                {
+                    throw new EndOfStreamException();
+                }
+
+                i += r;
+            }
+
+            return encoding.GetString(objTracker.Buffer, 0, length);
+        }
+
+        /// <summary>
+        /// Generates an expression to handle string serialization
+        /// </summary>
+        /// <param name="outputStream">Stream to write to</param>
+        /// <param name="obj">Object to serialize</param>
+        /// <param name="objTracker">Object tracker</param>
+        /// <returns>An expression to handle string serialization</returns>
+        public static Expression WriteString(ParameterExpression outputStream, Expression obj, Expression objTracker)
+        {
+            var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteStringImpl), BindingFlags.NonPublic | BindingFlags.Static);
+
+            return Expression.Call(mi,
+                                   outputStream,
+                                   obj,
+                                   objTracker);
+        }
+
+        private static void WriteStringImpl(Stream outputStream,
+                                         string obj,
+                                         SerializerObjectTracker objTracker)
+        {
+            if (obj == null)
+            {
+                outputStream.WriteByte(SerializerObjectTracker.Value0);
+                return;
+            }
+
+            outputStream.WriteByte(SerializerObjectTracker.Value1);
+
+            var encoding = System.Text.Encoding.UTF8;
+            int length = encoding.GetByteCount(obj);
+            WriteSignedInt32(outputStream, length);
+
+            objTracker.EnsureBufferSize(length);
+
+            encoding.GetBytes(obj,
+                              0,
+                              obj.Length,
+                              objTracker.Buffer,
+                              0);
+
+            outputStream.Write(objTracker.Buffer,
+                               0,
+                               length);
+        }
+
+
+#else
         /// <summary>
         /// Generates an expression to handle string deserialization
         /// </summary>
@@ -1292,6 +1626,7 @@ namespace DesertOctopus.Serialization
 
             return Expression.Block(variables, expressions);
         }
+#endif
 
 #endregion
     }

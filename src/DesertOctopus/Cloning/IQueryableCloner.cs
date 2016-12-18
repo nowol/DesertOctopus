@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using DesertOctopus.Utilities;
 using DesertOctopus.Utilities.MethodInfoHelpers;
 
 namespace DesertOctopus.Cloning
@@ -13,6 +15,8 @@ namespace DesertOctopus.Cloning
     /// </summary>
     internal static class IQueryableCloner
     {
+        private static ConcurrentDictionary<TwoTypesClass, Type> _c = new ConcurrentDictionary<TwoTypesClass, Type>();
+
         /// <summary>
         /// Detect if the type implements the expected generic interface
         /// </summary>
@@ -21,22 +25,32 @@ namespace DesertOctopus.Cloning
         /// <returns>The expected generic type if found</returns>
         internal static Type GetInterfaceType(Type type, Type expectedInterface)
         {
-            Type enumerableInterface = null;
-            if (type.IsGenericType
-                && type.GetGenericTypeDefinition() == expectedInterface)
+            var key = new TwoTypesClass
             {
-                enumerableInterface = type;
-            }
-            else
-            {
-                enumerableInterface = type.GetInterfaces()
-                                                .FirstOrDefault(t => t.IsGenericType
-                                                                     && t.GetGenericTypeDefinition() == expectedInterface
-                                                                     && t.GetGenericArguments()
-                                                                         .Length == 1);
-            }
+                Type = type,
+                OtherType = expectedInterface
+            };
 
-            return enumerableInterface;
+            return _c.GetOrAdd(key,
+                               k =>
+                               {
+                                   Type enumerableInterface = null;
+                                   if (k.Type.IsGenericType
+                                       && k.Type.GetGenericTypeDefinition() == k.OtherType)
+                                   {
+                                       enumerableInterface = k.Type;
+                                   }
+                                   else
+                                   {
+                                       enumerableInterface = k.Type.GetInterfaces()
+                                                              .FirstOrDefault(t => t.IsGenericType
+                                                                                   && t.GetGenericTypeDefinition() == k.OtherType
+                                                                                   && t.GetGenericArguments()
+                                                                                       .Length == 1);
+                                   }
+
+                                   return enumerableInterface;
+                               });
         }
 
         /// <summary>

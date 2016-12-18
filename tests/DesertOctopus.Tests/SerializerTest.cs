@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
+using DesertOctopus.Tests.TestObjects;
 using DesertOctopus.Utilities;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -123,7 +124,7 @@ namespace DesertOctopus.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
-        public void StringShouldNotBeSerializedTwice()
+        public void StringShouldNotBeSerializedTwiceInsideAList()
         {
             var str = RandomString(1000);
             var instance = new List<string> { str };
@@ -134,6 +135,62 @@ namespace DesertOctopus.Tests
             instance = new List<string> { str, str };
             var bytesTwice = KrakenSerializer.Serialize(instance);
             deserializedValue = KrakenSerializer.Deserialize<List<string>>(bytesTwice);
+            CollectionAssert.AreEqual(instance, deserializedValue);
+
+            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void StringShouldNotBeSerializedTwice2Properties()
+        {
+            var str = RandomString(1000);
+            var instance1 = new ClassWith2Property<string>(str, null);
+            var instance2 = new ClassWith2Property<string>(str, str);
+            var bytes = KrakenSerializer.Serialize(instance1);
+            var deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytes);
+            instance1.ShouldBeEquivalentTo(deserializedValue);
+            
+            var bytesTwice = KrakenSerializer.Serialize(instance2);
+            deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytesTwice);
+            instance2.ShouldBeEquivalentTo(deserializedValue);
+
+            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void StringShouldNotBeSerializedTwiceAsADictionaryValue()
+        {
+            var str = RandomString(1000);
+            var instance1 = new Dictionary<int, string> { { 123, str } };
+            var instance2 = new Dictionary<int, string> { { 123, str }, { 1235, str } };
+            var bytes = KrakenSerializer.Serialize(instance1);
+            var deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytes);
+            instance1.ShouldBeEquivalentTo(deserializedValue);
+            
+            var bytesTwice = KrakenSerializer.Serialize(instance2);
+            deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytesTwice);
+            instance2.ShouldBeEquivalentTo(deserializedValue);
+
+            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void StringShouldNotBeSerializedTwiceAsType()
+        {
+            var instance1 = new ClassWithGenericInt { Value = 123 };
+            var instance2 = new ClassWithGenericInt { Value = 321 };
+
+            var instance = new List<object> { instance1 };
+            var bytes = KrakenSerializer.Serialize(instance);
+            var deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytes);
+            CollectionAssert.AreEqual(instance, deserializedValue);
+
+            instance = new List<object> { instance1, instance2 };
+            var bytesTwice = KrakenSerializer.Serialize(instance);
+            deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytesTwice);
             CollectionAssert.AreEqual(instance, deserializedValue);
 
             Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
@@ -203,28 +260,28 @@ namespace DesertOctopus.Tests
         [TestCategory("Unit")]
         public void DictionaryIsDetectedAsNormalDictionary()
         {
-            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<int, int>()));
+            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<int, int>()));
         }
 
         [TestMethod]
         [TestCategory("Unit")]
         public void CustomDictionaryIsDetectedAsNormalDictionary()
         {
-            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionary()));
+            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionary()));
         }
 
         [TestMethod]
         [TestCategory("Unit")]
         public void DictionaryWithCustomComparerIsNotDetectedAsNormalDictionary()
         {
-            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
+            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
         }
 
         [TestMethod]
         [TestCategory("Unit")]
         public void DictionaryAdditionalPropertiesAsNormalDictionary()
         {
-            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparer(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
+            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
         }
 
         [TestMethod]
