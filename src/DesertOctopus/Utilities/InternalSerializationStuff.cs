@@ -8,7 +8,9 @@ using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using DesertOctopus.Cloning;
+using DesertOctopus.Serialization;
 
 namespace DesertOctopus.Utilities
 {
@@ -22,7 +24,8 @@ namespace DesertOctopus.Utilities
         /// </summary>
         public const short Version = 3;
 
-        public static readonly ConcurrentDictionary<Type, FieldInfo[]> FieldsForType = new ConcurrentDictionary<Type, FieldInfo[]>();
+
+        private static readonly ConcurrentDictionary<TwoTypesClass, FieldInfo[]> FieldsForType = new ConcurrentDictionary<TwoTypesClass, FieldInfo[]>();
 
         /// <summary>
         /// Gets the fields of a type that can be serialized
@@ -31,11 +34,29 @@ namespace DesertOctopus.Utilities
         /// <returns>The fields of a type</returns>
         public static FieldInfo[] GetFields(Type type)
         {
-            return FieldsForType.GetOrAdd(type,
+            return GetFields(type,
+                             null);
+        }
+
+        /// <summary>
+        /// Gets the fields of a type that can be serialized
+        /// </summary>
+        /// <param name="type">Type to analyze</param>
+        /// <param name="baseClassToStopIterating">Stop iterating fields when encountering this base type</param>
+        /// <returns>The fields of a type</returns>
+        public static FieldInfo[] GetFields(Type type, Type baseClassToStopIterating)
+        {
+            var key = new TwoTypesClass
+                      {
+                          Type = type,
+                          OtherType = baseClassToStopIterating
+                      };
+
+            return FieldsForType.GetOrAdd(key,
                                           t =>
                                           {
                                               var fields = new List<FieldInfo>();
-                                              var targetType = t;
+                                              var targetType = t.Type;
 
                                               do
                                               {
@@ -44,7 +65,7 @@ namespace DesertOctopus.Utilities
                                                                             .Where(fi => (fi.Attributes & FieldAttributes.NotSerialized) == 0));
                                                   targetType = targetType.BaseType;
                                               }
-                                              while (targetType != null);
+                                              while (targetType != null && targetType != key.OtherType);
 
                                               return fields.OrderBy(f => f.Name,
                                                                     StringComparer.Ordinal)
@@ -118,6 +139,33 @@ namespace DesertOctopus.Utilities
             {
                 throw new NotSupportedException(type.ToString());
             }
+        }
+
+        internal static bool ImplementsISerializableWithSerializationConstructor(Type type)
+        {
+            return typeof(ISerializable).IsAssignableFrom(type)
+                   && ISerializableSerializer.GetSerializationConstructor(type) != null;
+        }
+
+        private static readonly ConcurrentDictionary<Type, Type> TypeImplementsIDictionary = new ConcurrentDictionary<Type, Type>();
+
+        internal static bool ImplementsDictionaryGeneric(Type type)
+        {
+            var targetType = type;
+
+            do
+            {
+                if (targetType.IsGenericType
+                    && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                {
+                    return true;
+                }
+
+                targetType = targetType.BaseType;
+            }
+            while (targetType != null);
+
+            return false;
         }
 
         internal static Expression TraceWriteLine(Expression value)

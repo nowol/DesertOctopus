@@ -75,6 +75,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="InternalSerializationStuffTest.cs" />
     <Compile Include="TrackerTest.cs" />
     <Compile Include="ExceptionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

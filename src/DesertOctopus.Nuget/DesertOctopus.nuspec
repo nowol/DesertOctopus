@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>DesertOctopus</id>
-    <version>0.0.9.0</version>
+    <version>0.1.1.0</version>
     <title>DesertOctopus</title>
     <authors>NoWoL</authors>
     <owners>NoWoL</owners>
@@ -13,7 +13,7 @@
     <description>DesertOctopus is a utility class.</description>
     <!--<releaseNotes>Summary of changes made in this release of the package.</releaseNotes>-->
     <copyright>Copyright 2016</copyright>
-    <tags>Serialization Serializer Clone Cloning Deep</tags>
+    <tags>Serialization Serializer Clone Cloning Deep DeepClone</tags>
     <dependencies>
       <group targetFramework="net452">
         <dependency id="Microsoft.CSharp" version="4.0.1" />

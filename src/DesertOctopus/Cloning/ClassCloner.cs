@@ -54,12 +54,12 @@ namespace DesertOctopus.Cloning
                                                                          Expression.Block(copyExpressions));
         }
 
-        private static void GenerateCopyFieldsExpressions(IEnumerable<FieldInfo> fields,
-                                                          ParameterExpression source,
-                                                          ParameterExpression clone,
-                                                          List<Expression> expressions,
-                                                          ParameterExpression refTrackerParam,
-                                                          ParameterExpression clonedItem)
+        internal static void GenerateCopyFieldsExpressions(IEnumerable<FieldInfo> fields,
+                                                           ParameterExpression source,
+                                                           ParameterExpression clone,
+                                                           List<Expression> expressions,
+                                                           ParameterExpression refTrackerParam,
+                                                           ParameterExpression clonedItem)
         {
             foreach (var field in fields)
             {

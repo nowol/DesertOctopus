@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -113,6 +114,24 @@ namespace SerializerTests.TestObjects
     [Serializable]
     public class CustomDictionaryWithoutSerializationConstructor<TKey, TValue> : Dictionary<TKey, TValue>
     {
+        public string SomeProperty { get; set; }
+
+        public CustomDictionaryWithoutSerializationConstructor()
+        {
+            
+        }
+
+        public CustomDictionaryWithoutSerializationConstructor(IEqualityComparer<TKey> comparer)
+            : base(comparer)
+        {
+            
+        }
+    }
+
+    [Serializable]
+    public class CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<TKey, TValue> : Dictionary<TKey, TValue>
+    {
+        public string SomeProperty { get; set; }
     }
 
     [Serializable]

@@ -679,6 +679,314 @@ namespace DesertOctopus.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceStringInt()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<string, int>
+                           {
+                               { "potato", 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructor<string, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0]["potato"]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceIntInt()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<int, int>
+                           {
+                               { 123, 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructor<int, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0][123]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceStringClass()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<string, ClassWithGenericInt>()
+            {
+                {"Key1", new ClassWithGenericInt(1)},
+                {"Key2", new ClassWithGenericInt(2)},
+                {"Key3", null}
+            };
+            var list = new List<CustomDictionaryWithoutSerializationConstructor<string, ClassWithGenericInt>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(3,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(new ClassWithGenericInt(1),
+                            duplicatedValue[0]["Key1"]);
+            Assert.AreEqual(new ClassWithGenericInt(2),
+                            duplicatedValue[0]["Key2"]);
+            Assert.IsNull(duplicatedValue[0]["Key3"]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceClassClass()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, ClassWithGenericInt>()
+            {
+                {new ClassWithGenericInt(1), new ClassWithGenericInt(3)},
+                {new ClassWithGenericInt(2), new ClassWithGenericInt(1)}
+            };
+            var list = new List<CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, ClassWithGenericInt>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(new ClassWithGenericInt(3),
+                            duplicatedValue[0][new ClassWithGenericInt(1)]);
+            Assert.AreEqual(new ClassWithGenericInt(1),
+                            duplicatedValue[0][new ClassWithGenericInt(2)]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
+                                          duplicatedValue[1][new ClassWithGenericInt(2)]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceCustomComparer()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<StructForTesting, int>
+                           {
+                               { new StructForTesting { Value = 3 }, 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructor<StructForTesting, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0][new StructForTesting { Value = 3 }]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+            Assert.AreEqual(instance.Comparer.GetType(),
+                            duplicatedValue[0].Comparer.GetType());
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Comparer,
+                                          duplicatedValue[1].Comparer));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceStringIntWihoutComparerConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, int>
+                           {
+                               { "potato", 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0]["potato"]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceIntIntWihoutComparerConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<int, int>
+                           {
+                               { 123, 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<int, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0][123]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceStringClassWihoutComparerConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, ClassWithGenericInt>()
+            {
+                {"Key1", new ClassWithGenericInt(1)},
+                {"Key2", new ClassWithGenericInt(2)},
+                {"Key3", null}
+            };
+            var list = new List<CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, ClassWithGenericInt>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(3,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(new ClassWithGenericInt(1),
+                            duplicatedValue[0]["Key1"]);
+            Assert.AreEqual(new ClassWithGenericInt(2),
+                            duplicatedValue[0]["Key2"]);
+            Assert.IsNull(duplicatedValue[0]["Key3"]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceClassClassWihoutComparerConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<ClassWithGenericInt, ClassWithGenericInt>()
+            {
+                {new ClassWithGenericInt(1), new ClassWithGenericInt(3)},
+                {new ClassWithGenericInt(2), new ClassWithGenericInt(1)}
+            };
+            var list = new List<CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<ClassWithGenericInt, ClassWithGenericInt>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(new ClassWithGenericInt(3),
+                            duplicatedValue[0][new ClassWithGenericInt(1)]);
+            Assert.AreEqual(new ClassWithGenericInt(1),
+                            duplicatedValue[0][new ClassWithGenericInt(2)]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
+                                          duplicatedValue[1][new ClassWithGenericInt(2)]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateTrackMultipleCustomDictionaryReferenceCustomComparerWihoutComparerConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<StructForTesting, int>
+                           {
+                               { new StructForTesting { Value = 3 }, 2 }
+                           };
+            var list = new List<CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<StructForTesting, int>>
+                        {
+                            instance,
+                            instance
+                        };
+
+            var duplicatedValue = Duplicate(list);
+
+            Assert.AreEqual(list.Count,
+                            duplicatedValue.Count);
+            Assert.AreEqual(2,
+                            duplicatedValue.Count);
+            Assert.AreEqual(1,
+                            duplicatedValue[0].Count);
+            Assert.AreEqual(2,
+                            duplicatedValue[0][new StructForTesting { Value = 3 }]);
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+                                          duplicatedValue[1]));
+            Assert.AreEqual(instance.Comparer.GetType(),
+                            duplicatedValue[0].Comparer.GetType());
+            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Comparer,
+                                          duplicatedValue[1].Comparer));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
         public void DuplicateTrackSamePrimitiveMultipleTimes()
         {
             // this case exists to make sure that the ReferenceWatcher only tracks classes
@@ -750,6 +1058,47 @@ namespace DesertOctopus.Tests
             var instance = new Dictionary<string, object>()
             {
                 {"Key1", 123},
+                {"Key2", "abc"},
+                {"Key3", new ClassWithGenericInt(3) },
+            };
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateDictionaryObjectKeyAndNullableIntValue()
+        {
+            var instance = new Dictionary<object, int?>()
+            {
+                {new ClassWithGenericInt(1), 1},
+                {new ClassWithGenericInt(2), 2},
+                {new ClassWithGenericInt(3), null}
+            };
+
+            var duplicatedValue = Duplicate(instance);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateDictionaryObjectObject()
+        {
+            var instance = new Dictionary<object, object>()
+            {
+                {new ClassWithGenericInt(1), 123},
                 {"Key2", "abc"},
                 {"Key3", new ClassWithGenericInt(3) },
             };
@@ -1062,8 +1411,125 @@ namespace DesertOctopus.Tests
 
         [TestMethod]
         [TestCategory("Unit")]
-        [ExpectedException(typeof(MissingConstructorException))]
-        public void DuplicateCustomDictionaryWithoutPublicParameterlessConstructor()
+        public void DuplicateCustomDictionaryStringKeyAndStringValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<string, string>()
+            {
+                {"Key1", "123"},
+                {"Key2", "abc"},
+                {"Key3", null}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryStringKeyAndClassValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<string, ClassWithGenericInt>()
+            {
+                {"Key1", new ClassWithGenericInt(1)},
+                {"Key2", new ClassWithGenericInt(2)},
+                {"Key3", null}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryClassKeyAndStringValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, string>()
+            {
+                {new ClassWithGenericInt(1), "Key1"},
+                {new ClassWithGenericInt(2), "Key2"}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryClassKeyAndClassValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, ClassWithGenericInt>()
+            {
+                {new ClassWithGenericInt(1), new ClassWithGenericInt(3)},
+                {new ClassWithGenericInt(2), new ClassWithGenericInt(4)}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryObjectKeyAndNullableIntValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<object, int?>()
+            {
+                {new ClassWithGenericInt(1), 1},
+                {new ClassWithGenericInt(2), 2},
+                {new ClassWithGenericInt(3), null}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryObjectKeyAndObjectValue()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<object, object>()
+            {
+                {new ClassWithGenericInt(1), new ClassWithGenericInt(4)},
+                {new ClassWithGenericInt(2), new ClassWithGenericInt(5)},
+                {new ClassWithGenericInt(3), null}
+            };
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+
+            CompareDictionaries(instance,
+                                duplicatedValue);
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryWithoutSerializationConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<object, object>()
             {
@@ -1073,7 +1539,82 @@ namespace DesertOctopus.Tests
                 {"Key4", null },
             };
 
-            Duplicate(instance);
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.SomeProperty,
+                           duplicatedValue.SomeProperty);
+            Assert.AreEqual(instance.Comparer.GetType(),
+                           duplicatedValue.Comparer.GetType());
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+            Assert.IsFalse(ReferenceEquals(instance["Key3"], duplicatedValue["Key3"]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicateCustomDictionaryWithoutSerializationConstructorAndCustomComparer()
+        {
+            var key3 = new StructForTesting { Value = 3 };
+            var instance = new CustomDictionaryWithoutSerializationConstructor<StructForTesting, object>(new StructForTestingComparer())
+            {
+                {new StructForTesting { Value = 1 }, 123},
+                {new StructForTesting { Value = 2 }, "abc"},
+                {key3, new ClassWithGenericInt(3) },
+            };
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Comparer.GetType(),
+                            duplicatedValue.Comparer.GetType());
+            Assert.IsFalse(ReferenceEquals(instance.Comparer, duplicatedValue.Comparer));
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
+
+            Assert.IsFalse(ReferenceEquals(instance[key3], duplicatedValue[key3]));
+        }
+
+        [TestMethod]
+        [TestCategory("Unit")]
+        public void DuplicatePrimitiveCustomDictionaryWithoutSerializationConstructor()
+        {
+            var instance = new CustomDictionaryWithoutSerializationConstructor<string, string>()
+            {
+                {"Key1", "123"},
+                {"Key2", "abc"},
+                {"Key4", null },
+            };
+
+            instance.SomeProperty = Guid.NewGuid().ToString();
+
+            var duplicatedValue = Duplicate(instance);
+
+            Assert.AreEqual(instance.Comparer.GetType(),
+                            duplicatedValue.Comparer.GetType());
+            Assert.AreEqual(instance.Count,
+                            duplicatedValue.Count);
+            CollectionAssert.AreEquivalent(instance.Keys,
+                                            duplicatedValue.Keys);
+            foreach (var kvp in instance)
+            {
+                Assert.AreEqual(kvp.Value,
+                                duplicatedValue[kvp.Key]);
+            }
         }
 
         [TestMethod]
