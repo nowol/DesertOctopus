@@ -9,16 +9,15 @@ using DesertOctopus.Cloning;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Utilities;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
+using Xunit;
 
 namespace DesertOctopus.Tests
 {
-    [TestClass]
     public class InternalSerializationStuffTest
     {
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void GetFieldsShouldIncludeBaseClass()
         {
             var fields = InternalSerializationStuff.GetFields(typeof(CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback));
@@ -40,8 +39,8 @@ namespace DesertOctopus.Tests
                                            });
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void GetFieldShouldExcludeSpecifiedBaseClass()
         {
             var fields = InternalSerializationStuff.GetFields(typeof(CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback),

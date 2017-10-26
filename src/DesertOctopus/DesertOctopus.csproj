@@ -1,159 +1,33 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7342E898-8AE6-4482-8A20-B54935DBECAB}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DesertOctopus</RootNamespace>
-    <AssemblyName>DesertOctopus</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Debug\DesertOctopus.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Release\DesertOctopus.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
+    <Description>DesertOctopus is a utility class.</Description>
+    <Company>NoWoL</Company>
+    <Authors>NoWoL</Authors>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\..\Build\DesertOctopus.snk</AssemblyOriginatorKeyFile>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <None Include="..\Common\DesertOctopus.ruleset" Link="DesertOctopus.ruleset" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="..\Common\GlobalAssemblyInfo.cs">
-      <Link>Properties\GlobalAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="Cloning\ArrayCloner.cs" />
-    <Compile Include="Cloning\ClassCloner.cs" />
-    <Compile Include="Cloning\DictionaryCloner.cs" />
-    <Compile Include="Cloning\ExpandoCloner.cs" />
-    <Compile Include="Cloning\IQueryableCloner.cs" />
-    <Compile Include="Cloning\ISerializableCloner.cs" />
-    <Compile Include="ConditionalResult.cs" />
-    <Compile Include="Exceptions\InvalidOmitRootTypeException.cs" />
-    <Compile Include="Exceptions\InvalidSerializationVersionException.cs" />
-    <Compile Include="KrakenSerializer.cs" />
-    <Compile Include="ObjectCloner.cs" />
-    <Compile Include="Cloning\ObjectClonerReferenceTracker.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Serialization\ArrayDeserializer.cs" />
-    <Compile Include="Serialization\ArraySerializer.cs" />
-    <Compile Include="Serialization\DictionaryDeserializer.cs" />
-    <Compile Include="Serialization\DictionarySerializer.cs" />
-    <Compile Include="Serialization\SerializationOptions.cs" />
-    <Compile Include="Utilities\DictionaryHelper.cs" />
-    <Compile Include="Utilities\EnumerableLoopBodyCargo.cs" />
-    <Compile Include="Utilities\ExtensionMethods.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\BigIntegerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\CopyReadOnlyFieldMethodInfo.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\CreateArrayMethodInfo.cs" />
-    <Compile Include="Serialization\Deserializer.cs" />
-    <Compile Include="Exceptions\MissingConstructorException.cs" />
-    <Compile Include="Exceptions\TypeNotFoundException.cs" />
-    <Compile Include="Exceptions\TypeWasModifiedSinceSerializationException.cs" />
-    <Compile Include="Serialization\ExpandoDeserializer.cs" />
-    <Compile Include="Serialization\ExpandoSerializer.cs" />
-    <Compile Include="Utilities\EnumerableLoopHelper.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ArrayMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\DateTimeMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\DeserializerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\DictionaryMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\EncodingMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\EndOfStreamExceptionMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\FormatterServicesMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\DecimalMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\FuncMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\CollectionMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IDisposableMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IQueryableMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IEnumerableMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\IEnumeratorMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\InvalidOperationExceptionMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ISerializableMih.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ListMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\NotSupportedExceptionMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ObjectClonerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ObjectClonerReferenceTrackerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\ObjectMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\PrimitiveHelpersMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\QueryableMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\SerializationInfoMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\SerializedTypeResolverMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\SerializerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\DeserializerObjectTrackerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\SerializerObjectTrackerMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\StreamingContextMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\StreamMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\TimeSpanMIH.cs" />
-    <Compile Include="Utilities\MethodInfoHelpers\UTF8EncodingMIH.cs" />
-    <Compile Include="Utilities\ObjectCleaner.cs" />
-    <Compile Include="Utilities\SerializationCallbacksHelper.cs" />
-    <Compile Include="Utilities\SerializedTypeResolver.cs" />
-    <Compile Include="Utilities\DeserializerObjectTracker.cs" />
-    <Compile Include="Utilities\TwoTypesClass.cs" />
-    <Compile Include="Utilities\TypeWithHashCode.cs" />
-    <Compile Include="Utilities\InternalSerializationStuff.cs" />
-    <Compile Include="Serialization\ISerializableDeserializer.cs" />
-    <Compile Include="Serialization\ISerializableSerializer.cs" />
-    <Compile Include="Serialization\JaggedArrayDeserializer.cs" />
-    <Compile Include="Serialization\JaggedArraySerializer.cs" />
-    <Compile Include="Serialization\PrimitiveHelpers.cs" />
-    <Compile Include="Serialization\Serializer.cs" />
-    <Compile Include="Utilities\SerializerObjectTracker.cs" />
+    <PackageReference Include="Microsoft.AnalyzerPowerPack" Version="1.1.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="..\Common\stylecop.json">
-      <Link>stylecop.json</Link>
-    </AdditionalFiles>
-    <None Include="..\Common\DesertOctopus.ruleset" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Analyzer Include="..\..\packages\Microsoft.AnalyzerPowerPack.1.1.0\analyzers\dotnet\cs\Microsoft.AnalyzerPowerPack.Common.dll" />
-    <Analyzer Include="..\..\packages\Microsoft.AnalyzerPowerPack.1.1.0\analyzers\dotnet\cs\Microsoft.AnalyzerPowerPack.CSharp.dll" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

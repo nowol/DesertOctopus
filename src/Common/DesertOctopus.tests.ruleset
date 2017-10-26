@@ -57,16 +57,18 @@
     <Rule Id="CA2214" Action="Warning" />
     <Rule Id="CA2216" Action="Warning" />
     <Rule Id="CA2220" Action="Warning" />
-    <Rule Id="CA2229" Action="Warning" />
+    <Rule Id="CA2229" Action="None" />
     <Rule Id="CA2231" Action="Warning" />
     <Rule Id="CA2232" Action="Warning" />
-    <Rule Id="CA2235" Action="Warning" />
+    <Rule Id="CA2235" Action="None" />
     <Rule Id="CA2236" Action="Warning" />
     <Rule Id="CA2237" Action="Warning" />
     <Rule Id="CA2238" Action="Warning" />
     <Rule Id="CA2240" Action="Warning" />
     <Rule Id="CA2241" Action="Warning" />
     <Rule Id="CA2242" Action="Warning" />
+    <Rule Id="CA2235" Action="None" />
+    <Rule Id="CA2229" Action="None" />
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1200" Action="None" />
@@ -89,5 +91,17 @@
     <Rule Id="SA1115" Action="None" />
     <Rule Id="SA1508" Action="None" />
     <Rule Id="SA1652" Action="None" />
+    <Rule Id="SA1402" Action="None" />
+    <Rule Id="SA1649" Action="None" />
+    <Rule Id="SA1012" Action="None" />
+    <Rule Id="SA1013" Action="None" />
+    <Rule Id="SA1513" Action="None" />
+    <Rule Id="SA1516" Action="None" />
+    <Rule Id="SA1003" Action="None" />
+    <Rule Id="SA1204" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.AnalyzerPowerPack.Common" RuleNamespace="Microsoft.AnalyzerPowerPack.Common">
+    <Rule Id="CA2235" Action="None" />
+    <Rule Id="CA2229" Action="None" />
   </Rules>
 </RuleSet>

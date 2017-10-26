@@ -13,16 +13,22 @@ using DesertOctopus.Serialization;
 using DesertOctopus.Tests.TestObjects;
 using DesertOctopus.Utilities;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace DesertOctopus.Tests
 {
-    [TestClass]
     public abstract class BaseDuplicationTest
     {
         public abstract T Duplicate<T>(T obj);
 
+        private readonly ITestOutputHelper _output;
+
+        public BaseDuplicationTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
 
 #if FALSE
         static uint EncodeZigZag32(int n)
@@ -54,7 +60,7 @@ namespace DesertOctopus.Tests
         }
 
 
-        [TestMethod]
+        [Fact]
         public unsafe void TestPrimitiveeeeee()
         {
             //using (var ms = new MemoryStream())
@@ -110,7 +116,7 @@ namespace DesertOctopus.Tests
 
             //        int d = read(ms, new DeserializerObjectTracker());
 
-            //        Assert.AreEqual(i, d);
+            //        Assert.Equal(i, d);
             //    }
             //}
 
@@ -172,7 +178,7 @@ namespace DesertOctopus.Tests
 
                     long dd = read(ms, new DeserializerObjectTracker());
 
-                    Assert.AreEqual(i, dd);
+                    Assert.Equal(i, dd);
                 }
             }
 
@@ -207,8 +213,8 @@ namespace DesertOctopus.Tests
         }
 #endif
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void TestPrimitives()
         {
             PrimitiveTestSuite<double>(double.MaxValue, double.MinValue, 1.1D, -1.1D, 0);
@@ -280,30 +286,30 @@ namespace DesertOctopus.Tests
 
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateWrappedString()
         {
             var instance = new GenericBaseClass<string>();
             instance.Value = "abc";
             var duplicate = Duplicate(instance);
-            Assert.AreEqual(instance.Value,
+            Assert.Equal(instance.Value,
                             duplicate.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateWrappedInt32()
         {
             var instance = new GenericBaseClass<int>();
             instance.Value = 32;
             var duplicate = Duplicate(instance);
-            Assert.AreEqual(instance.Value,
+            Assert.Equal(instance.Value,
                             duplicate.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTuple()
         {
             PrimitiveTestSuite<Tuple<int, string>>(new Tuple<int, string>(1, "a"), new Tuple<int, string>(2, "b"));
@@ -311,129 +317,127 @@ namespace DesertOctopus.Tests
             PrimitiveTestSuite<Tuple<int, string, bool>>(new Tuple<int, string, bool>(1, "a", true), new Tuple<int, string, bool>(2, "b", false));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeUtcDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.UtcNow };
             var deserializedValue = Duplicate<Wrapper<DateTime>>(instance);
-            Assert.IsNotNull(deserializedValue.Value);
-            Assert.AreEqual(instance.Value, deserializedValue.Value);
-            Assert.AreEqual(instance.Value.Kind, deserializedValue.Value.Kind);
+            Assert.Equal(instance.Value, deserializedValue.Value);
+            Assert.Equal(instance.Value.Kind, deserializedValue.Value.Kind);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeDateTime()
         {
             var instance = new Wrapper<DateTime> { Value = DateTime.Now };
             var deserializedValue = Duplicate<Wrapper<DateTime>>(instance);
-            Assert.IsNotNull(deserializedValue.Value);
-            Assert.AreEqual(instance.Value, deserializedValue.Value);
-            Assert.AreEqual(instance.Value.Kind, deserializedValue.Value.Kind);
+            Assert.Equal(instance.Value, deserializedValue.Value);
+            Assert.Equal(instance.Value.Kind, deserializedValue.Value.Kind);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullPrimitiveArray()
         {
             int[] nullArray = null;
             var duplicatedValue = Duplicate(nullArray);
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyObjectArray()
         {
             Object[] emptyArray = new Object[0];
             var duplicatedValue = Duplicate(emptyArray);
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullObjectArray()
         {
             Object[] nullArray = null;
             var duplicatedValue = Duplicate(nullArray);
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyPrimitiveArray()
         {
             int[] emptyArray = new int[0];
             var duplicatedValue = Duplicate(emptyArray);
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectArrayWithNullValues()
         {
             var array = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var duplicatedValue = Duplicate(array);
-            Assert.AreEqual(array.Length, duplicatedValue.Length);
-            Assert.AreEqual(array[0].PublicPropertyValue, duplicatedValue[0].PublicPropertyValue);
-            Assert.IsNull(duplicatedValue[1]);
-            Assert.AreEqual(array[2].PublicPropertyValue, duplicatedValue[2].PublicPropertyValue);
+            Assert.Equal(array.Length, duplicatedValue.Length);
+            Assert.Equal(array[0].PublicPropertyValue, duplicatedValue[0].PublicPropertyValue);
+            Assert.Null(duplicatedValue[1]);
+            Assert.Equal(array[2].PublicPropertyValue, duplicatedValue[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullPrimitiveList()
         {
             List<int> nullList = null;
             var duplicatedValue = Duplicate(nullList);
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyObjectList()
         {
             List<Object> emptyList = new List<Object>();
             var duplicatedValue = Duplicate(emptyList);
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullObjectList()
         {
             List<object> nullList = null;
             var duplicatedValue = Duplicate(nullList);
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyPrimitiveList()
         {
             List<int> emptyList = new List<int>();
             var duplicatedValue = Duplicate(emptyList);
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectListWithNullValues()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var duplicatedValue = Duplicate(list);
-            Assert.AreEqual(list.Count, duplicatedValue.Count);
-            Assert.AreEqual(list[0].PublicPropertyValue, duplicatedValue[0].PublicPropertyValue);
-            Assert.IsNull(duplicatedValue[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, duplicatedValue[2].PublicPropertyValue);
+            Assert.Equal(list.Count, duplicatedValue.Count);
+            Assert.Equal(list[0].PublicPropertyValue, duplicatedValue[0].PublicPropertyValue);
+            Assert.Null(duplicatedValue[1]);
+            Assert.Equal(list[2].PublicPropertyValue, duplicatedValue[2].PublicPropertyValue);
         }
 
-        public void PrimitiveTestSuite<T>(params T[] values)
+        protected void PrimitiveTestSuite<T>(params T[] values)
         {
             foreach (var value in values)
             {
@@ -442,7 +446,7 @@ namespace DesertOctopus.Tests
                 DuplicateArrayOfOne(value);
                 DuplicateListOfOne(value);
             }
-            DuplicateArray<T>(values);
+            DuplicateArrayValue<T>(values);
             DuplicateList<T>(values);
             DuplicateReadOnly<T>(values.First());
             DuplicateCSharp6StyleReadOnly<T>(values.First());
@@ -455,20 +459,18 @@ namespace DesertOctopus.Tests
             instance.Value = value;
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
-                            duplicatedValue.Value,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            typeof(T)));
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.Equal(instance.Value,
+                         duplicatedValue.Value);
         }
 
         private void DuplicatePrimitiveValue<T>(T instance)
         {
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance,
-                            duplicatedValue,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            typeof(T)));
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.Equal(instance,
+                         duplicatedValue);
         }
 
         private void DuplicateReadOnly<T>(T value)
@@ -476,10 +478,9 @@ namespace DesertOctopus.Tests
             var instance = new ClassWithReadOnlyProperty<T>(value);
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
-                            duplicatedValue.Value,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            typeof(T)));
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.Equal(instance.Value,
+                         duplicatedValue.Value);
         }
 
         private void DuplicateCSharp6StyleReadOnly<T>(T value)
@@ -487,23 +488,20 @@ namespace DesertOctopus.Tests
             var instance = new ClassWithCSharp6StyleReadOnlyProperty<T>(value);
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
-                            duplicatedValue.Value,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            typeof(T)));
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.Equal(instance.Value,
+                         duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateReadOnlyObjectProperty()
         {
             var instance = new ClassWithReadOnlyProperty<ClassWithGenericInt>(new ClassWithGenericInt { Value = 38 });
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
-                            duplicatedValue.Value,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            typeof(ClassWithReadOnlyProperty<ClassWithGenericInt>)));
+            Assert.Equal(instance.Value,
+                         duplicatedValue.Value);
         }
 
         private void DuplicateWrappedValue<T>(T value)
@@ -516,19 +514,18 @@ namespace DesertOctopus.Tests
             Type targetType = typeof(T);
             var duplicatedValue = Duplicate(wrappedObject);
 
-            Assert.AreEqual(wrappedObject.Value,
-                            duplicatedValue.Value,
-                            string.Format("Type {0} does not have the same value after being deserialized.",
-                                            targetType));
-
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.Equal(wrappedObject.Value,
+                            duplicatedValue.Value);
         }
 
-        private void DuplicateArray<T>(T[] value)
+        private void DuplicateArrayValue<T>(T[] value)
         {
             var duplicatedValue = Duplicate(value);
 
-            CollectionAssert.AreEquivalent(value,
-                                           duplicatedValue);
+            _output.WriteLine("Array Type: " + typeof(T));
+            Assert.Equal(value,
+                         duplicatedValue);
         }
 
         private void DuplicateArrayOfOne<T>(T value)
@@ -537,9 +534,11 @@ namespace DesertOctopus.Tests
             array[0] = value;
 
             var duplicatedValue = Duplicate(array);
-            Assert.IsNotNull(duplicatedValue, "Type: " + typeof(T));
-            CollectionAssert.AreEquivalent(array,
-                                            duplicatedValue, "Type: " + typeof(T));
+
+            _output.WriteLine("Type: " + typeof(T));
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(array,
+                         duplicatedValue);
         }
 
         private void DuplicateListOfOne<T>(T value)
@@ -551,8 +550,8 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            CollectionAssert.AreEquivalent(list,
-                                            duplicatedValue);
+            Assert.Equal(list,
+                         duplicatedValue);
         }
 
         private void DuplicateList<T>(T[] value)
@@ -561,44 +560,44 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            CollectionAssert.AreEquivalent(list,
-                                            duplicatedValue);
+            Assert.Equal(list,
+                         duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateStruct()
         {
             var instance = new Wrapper<StructForTesting> { Value = new StructForTesting { Value = 1 } };
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.Value, duplicatedValue.Value);
+            Assert.Equal(instance.Value, duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateShortString()
         {
             var duplicatedValue = Duplicate("abc");
-            //Assert.AreEqual(5, bytes.Length);
-            Assert.AreEqual("abc", duplicatedValue);
+            //Assert.Equal(5, bytes.Length);
+            Assert.Equal("abc", duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateMediumString()
         {
             var str = RandomString(3000);
             var duplicatedValue = Duplicate(str);
-            Assert.AreEqual(str, duplicatedValue);
+            Assert.Equal(str, duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateLongString()
         {
             var str = RandomString(100000);
             var duplicatedValue = Duplicate(str);
-            Assert.AreEqual(str, duplicatedValue);
+            Assert.Equal(str, duplicatedValue);
         }
 
         public static string RandomString(int length)
@@ -608,8 +607,8 @@ namespace DesertOctopus.Tests
             return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTestClass()
         {
             ClassWithDifferentAccessModifiers classInstance = new ClassWithDifferentAccessModifiers
@@ -624,22 +623,22 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(classInstance);
 
-            Assert.AreEqual(classInstance.PublicFieldValue,
+            Assert.Equal(classInstance.PublicFieldValue,
                             duplicatedValue.PublicFieldValue);
-            Assert.AreEqual(classInstance.GetPrivateFieldValue(),
+            Assert.Equal(classInstance.GetPrivateFieldValue(),
                             duplicatedValue.GetPrivateFieldValue());
-            Assert.AreEqual(classInstance.InternalFieldValue,
+            Assert.Equal(classInstance.InternalFieldValue,
                             duplicatedValue.InternalFieldValue);
-            Assert.AreEqual(classInstance.PublicPropertyValue,
+            Assert.Equal(classInstance.PublicPropertyValue,
                             duplicatedValue.PublicPropertyValue);
-            Assert.AreEqual(classInstance.GetPrivatePropertyValue(),
+            Assert.Equal(classInstance.GetPrivatePropertyValue(),
                             duplicatedValue.GetPrivatePropertyValue());
-            Assert.AreEqual(classInstance.InternalPropertyValue,
+            Assert.Equal(classInstance.InternalPropertyValue,
                             duplicatedValue.InternalPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         //[ExpectedException(typeof(ObjectExistsInCurrentSerializationGraphException))]
         public void DuplicateCircularReference()
         {
@@ -650,16 +649,16 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance1);
 
-            Assert.IsTrue(ReferenceEquals(duplicatedValue,
+            Assert.True(ReferenceEquals(duplicatedValue,
                                           duplicatedValue.Child.Parent));
 
-            Assert.AreEqual(1, duplicatedValue.Id);
-            Assert.AreEqual(2, duplicatedValue.Child.Id);
-            Assert.AreEqual(1, duplicatedValue.Child.Parent.Id);
+            Assert.Equal(1, duplicatedValue.Id);
+            Assert.Equal(2, duplicatedValue.Child.Id);
+            Assert.Equal(1, duplicatedValue.Child.Parent.Id);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleReference()
         {
             var instance = new ClassWithGenericInt(123);
@@ -671,14 +670,14 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(list,
-                                            duplicatedValue);
+            Assert.Equal(list,
+                         duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceStringInt()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<string, int>
@@ -693,20 +692,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0]["potato"]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceIntInt()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<int, int>
@@ -721,20 +719,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0][123]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceStringClass()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<string, ClassWithGenericInt>()
@@ -751,23 +748,23 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(3,
+            Assert.Equal(3,
                             duplicatedValue[0].Count);
-            Assert.AreEqual(new ClassWithGenericInt(1),
+            Assert.Equal(new ClassWithGenericInt(1),
                             duplicatedValue[0]["Key1"]);
-            Assert.AreEqual(new ClassWithGenericInt(2),
+            Assert.Equal(new ClassWithGenericInt(2),
                             duplicatedValue[0]["Key2"]);
-            Assert.IsNull(duplicatedValue[0]["Key3"]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.Null(duplicatedValue[0]["Key3"]);
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceClassClass()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, ClassWithGenericInt>()
@@ -783,24 +780,24 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue[0].Count);
-            Assert.AreEqual(new ClassWithGenericInt(3),
+            Assert.Equal(new ClassWithGenericInt(3),
                             duplicatedValue[0][new ClassWithGenericInt(1)]);
-            Assert.AreEqual(new ClassWithGenericInt(1),
+            Assert.Equal(new ClassWithGenericInt(1),
                             duplicatedValue[0][new ClassWithGenericInt(2)]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
+            Assert.True(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
                                           duplicatedValue[1][new ClassWithGenericInt(2)]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceCustomComparer()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<StructForTesting, int>
@@ -815,24 +812,23 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0][new StructForTesting { Value = 3 }]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue[0].Comparer.GetType());
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Comparer,
+            Assert.True(ReferenceEquals(duplicatedValue[0].Comparer,
                                           duplicatedValue[1].Comparer));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceStringIntWihoutComparerConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, int>
@@ -847,20 +843,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0]["potato"]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceIntIntWihoutComparerConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<int, int>
@@ -875,20 +870,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0][123]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceStringClassWihoutComparerConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<string, ClassWithGenericInt>()
@@ -905,23 +899,23 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(3,
+            Assert.Equal(3,
                             duplicatedValue[0].Count);
-            Assert.AreEqual(new ClassWithGenericInt(1),
+            Assert.Equal(new ClassWithGenericInt(1),
                             duplicatedValue[0]["Key1"]);
-            Assert.AreEqual(new ClassWithGenericInt(2),
+            Assert.Equal(new ClassWithGenericInt(2),
                             duplicatedValue[0]["Key2"]);
-            Assert.IsNull(duplicatedValue[0]["Key3"]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.Null(duplicatedValue[0]["Key3"]);
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceClassClassWihoutComparerConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<ClassWithGenericInt, ClassWithGenericInt>()
@@ -937,24 +931,24 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue[0].Count);
-            Assert.AreEqual(new ClassWithGenericInt(3),
+            Assert.Equal(new ClassWithGenericInt(3),
                             duplicatedValue[0][new ClassWithGenericInt(1)]);
-            Assert.AreEqual(new ClassWithGenericInt(1),
+            Assert.Equal(new ClassWithGenericInt(1),
                             duplicatedValue[0][new ClassWithGenericInt(2)]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
+            Assert.True(ReferenceEquals(duplicatedValue[0].Keys.Single(x => x.Value == new ClassWithGenericInt(1).Value),
                                           duplicatedValue[1][new ClassWithGenericInt(2)]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackMultipleCustomDictionaryReferenceCustomComparerWihoutComparerConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructorWithoutComparerConstructor<StructForTesting, int>
@@ -969,24 +963,23 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(2,
+            Assert.Equal(2,
                             duplicatedValue.Count);
-            Assert.AreEqual(1,
-                            duplicatedValue[0].Count);
-            Assert.AreEqual(2,
+            Assert.Single(duplicatedValue[0]);
+            Assert.Equal(2,
                             duplicatedValue[0][new StructForTesting { Value = 3 }]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0],
+            Assert.True(ReferenceEquals(duplicatedValue[0],
                                           duplicatedValue[1]));
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue[0].Comparer.GetType());
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0].Comparer,
+            Assert.True(ReferenceEquals(duplicatedValue[0].Comparer,
                                           duplicatedValue[1].Comparer));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTrackSamePrimitiveMultipleTimes()
         {
             // this case exists to make sure that the ReferenceWatcher only tracks classes
@@ -1000,14 +993,14 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(list,
-                                            duplicatedValue);
+            Assert.Equal(list,
+                         duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateClassWithoutSerializableAttribute()
         {
             var instance = new ClassWithoutSerializableAttribute
@@ -1017,12 +1010,12 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.PublicPropertyValue,
+            Assert.Equal(instance.PublicPropertyValue,
                             duplicatedValue.PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateClassWithGenericBase()
         {
             var instance = new ClassWithGenericInt()
@@ -1032,12 +1025,12 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
+            Assert.Equal(instance.Value,
                             duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateGenericClass()
         {
             var instance = new GenericBaseClass<int>()
@@ -1047,12 +1040,12 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
+            Assert.Equal(instance.Value,
                             duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryStringObject()
         {
             var instance = new Dictionary<string, object>()
@@ -1064,19 +1057,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryObjectKeyAndNullableIntValue()
         {
             var instance = new Dictionary<object, int?>()
@@ -1092,8 +1085,8 @@ namespace DesertOctopus.Tests
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryObjectObject()
         {
             var instance = new Dictionary<object, object>()
@@ -1105,19 +1098,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryIntString()
         {
             var instance = new Dictionary<int, string>()
@@ -1129,29 +1122,29 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateWrappedNullDictionary()
         {
             var instance = new GenericBaseClass<Dictionary<int, string>>();
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNull(duplicatedValue.Value);
+            Assert.Null(duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryGuidString()
         {
             var instance = new Dictionary<Guid, string>()
@@ -1163,19 +1156,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionary()
         {
             var instance = new CustomDictionary
@@ -1187,13 +1180,13 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
@@ -1204,8 +1197,8 @@ namespace DesertOctopus.Tests
             public ICollection Values { get; set; }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaries()
         {
             var cargoes = new TypeValueCargo[]
@@ -1268,7 +1261,7 @@ namespace DesertOctopus.Tests
 
         private void DuplicateDictionary<TKey, TValue>(object valuesForKey, TValue[] valuesForValues)
         {
-            var vk = (TKey[]) valuesForKey;
+            var vk = (TKey[])valuesForKey;
             var rnd = new Random();
             var instance = new Dictionary<TKey, TValue>();
             foreach (var key in vk)
@@ -1278,19 +1271,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectKeyDictionary()
         {
             var instance = new Dictionary<object, int>();
@@ -1299,38 +1292,38 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyDictionary()
         {
             var instance = new Dictionary<string, int>();
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateWrappedCustomDictionary()
         {
             var instance = new Wrapper<CustomDictionary>
@@ -1345,19 +1338,19 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value.Count,
+            Assert.Equal(instance.Value.Count,
                             duplicatedValue.Value.Count);
-            CollectionAssert.AreEquivalent(instance.Value.Keys,
-                                            duplicatedValue.Value.Keys);
+            Assert.Equal(instance.Value.Keys,
+                         duplicatedValue.Value.Keys);
             foreach (var kvp in instance.Value)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue.Value[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithComparer()
         {
             var instance = new CustomDictionary(StringComparer.CurrentCultureIgnoreCase)
@@ -1369,21 +1362,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateDictionaryWithCustomComparer()
         {
             var instance = new Dictionary<StructForTesting, object>(new StructForTestingComparer())
@@ -1396,21 +1389,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryStringKeyAndStringValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<string, string>()
@@ -1422,15 +1415,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryStringKeyAndClassValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<string, ClassWithGenericInt>()
@@ -1442,15 +1435,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryClassKeyAndStringValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, string>()
@@ -1461,15 +1454,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryClassKeyAndClassValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<ClassWithGenericInt, ClassWithGenericInt>()
@@ -1480,15 +1473,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryObjectKeyAndNullableIntValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<object, int?>()
@@ -1500,15 +1493,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryObjectKeyAndObjectValue()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<object, object>()
@@ -1520,15 +1513,15 @@ namespace DesertOctopus.Tests
             instance.SomeProperty = Guid.NewGuid().ToString();
 
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithoutSerializationConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<object, object>()
@@ -1543,24 +1536,24 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                            duplicatedValue.SomeProperty);
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                            duplicatedValue.Comparer.GetType());
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
-            Assert.IsFalse(ReferenceEquals(instance["Key3"], duplicatedValue["Key3"]));
+            Assert.False(ReferenceEquals(instance["Key3"], duplicatedValue["Key3"]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithoutSerializationConstructorAndCustomComparer()
         {
             var key3 = new StructForTesting { Value = 3 };
@@ -1573,24 +1566,24 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            Assert.IsFalse(ReferenceEquals(instance.Comparer, duplicatedValue.Comparer));
-            Assert.AreEqual(instance.Count,
+            Assert.False(ReferenceEquals(instance.Comparer, duplicatedValue.Comparer));
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
 
-            Assert.IsFalse(ReferenceEquals(instance[key3], duplicatedValue[key3]));
+            Assert.False(ReferenceEquals(instance[key3], duplicatedValue[key3]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicatePrimitiveCustomDictionaryWithoutSerializationConstructor()
         {
             var instance = new CustomDictionaryWithoutSerializationConstructor<string, string>()
@@ -1604,21 +1597,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesWithCallback()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesWithOverridingOnDeserializedCallback
@@ -1631,21 +1624,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                             duplicatedValue.SomeProperty);
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesWithoutCallback()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback
@@ -1658,21 +1651,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(0,
+            Assert.Equal(0,
                             duplicatedValue.SomeProperty); // default value for property
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithDictionaryProperty()
         {
             var instance = new CustomDictionaryWithDictionaryProperty<string, object>
@@ -1696,8 +1689,8 @@ namespace DesertOctopus.Tests
                                 duplicatedValue.SwitchedDictionary);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithNullDictionaryProperty()
         {
             var instance = new CustomDictionaryWithDictionaryProperty<string, object>
@@ -1711,40 +1704,40 @@ namespace DesertOctopus.Tests
 
             CompareDictionaries(instance,
                                 duplicatedValue);
-            Assert.IsNull(instance.SwitchedDictionary);
+            Assert.Null(instance.SwitchedDictionary);
         }
 
         private static void CompareDictionaries<TKey, TValue>(Dictionary<TKey, TValue> instance, Dictionary<TKey, TValue> duplicatedValue)
         {
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                           duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var key in instance.Keys)
             {
                 if (instance[key] != null
                     && instance[key].GetType() == typeof(object))
                 {
-                    Assert.IsTrue(duplicatedValue[key] != null && duplicatedValue[key].GetType() == typeof(object));
+                    Assert.True(duplicatedValue[key] != null && duplicatedValue[key].GetType() == typeof(object));
                 }
                 else if (instance[key] != null
                     && instance[key].GetType() == typeof(ClassWithoutSerializableAttribute))
                 {
-                    Assert.AreEqual(((ClassWithoutSerializableAttribute)(object)instance[key]).PublicPropertyValue,
+                    Assert.Equal(((ClassWithoutSerializableAttribute)(object)instance[key]).PublicPropertyValue,
                                     ((ClassWithoutSerializableAttribute)(object)duplicatedValue[key]).PublicPropertyValue);
                 }
                 else
                 {
-                    Assert.AreEqual(instance[key],
+                    Assert.Equal(instance[key],
                                     duplicatedValue[key]);
                 }
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithAdditionalPropertiesAndGenerics()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<string, int>
@@ -1757,21 +1750,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                             duplicatedValue.SomeProperty);
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateCustomDictionaryWithOfObjectString()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<object, string>
@@ -1783,21 +1776,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                             duplicatedValue.SomeProperty);
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyCustomDictionaryWithAdditionalPropertiesAndGenerics()
         {
             var instance = new CustomDictionaryWithAdditionalPropertiesAndGenerics<string, int>();
@@ -1805,21 +1798,21 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SomeProperty,
+            Assert.Equal(instance.SomeProperty,
                             duplicatedValue.SomeProperty);
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.Keys,
-                                            duplicatedValue.Keys);
+            Assert.Equal(instance.Keys,
+                         duplicatedValue.Keys);
             foreach (var kvp in instance)
             {
-                Assert.AreEqual(kvp.Value,
+                Assert.Equal(kvp.Value,
                                 duplicatedValue[kvp.Key]);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateListWithMultipleTypes()
         {
             var list = new List<IHierarchy>
@@ -1830,30 +1823,30 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(list);
 
-            Assert.AreEqual(list.Count,
+            Assert.Equal(list.Count,
                             duplicatedValue.Count);
-            Assert.AreEqual(list.OfType<ChildIntHierarchy>().First().Value,
+            Assert.Equal(list.OfType<ChildIntHierarchy>().First().Value,
                             duplicatedValue.OfType<ChildIntHierarchy>().First().Value);
-            Assert.AreEqual(list.OfType<ChildStringHierarchy>().First().Value,
+            Assert.Equal(list.OfType<ChildStringHierarchy>().First().Value,
                             duplicatedValue.OfType<ChildStringHierarchy>().First().Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithListAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 } };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithHashsetAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int>
@@ -1863,42 +1856,42 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateHashSetWithEqualityComparer()
         {
             var instance = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { "a", "b", "C" };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Comparer.GetType(),
+            Assert.Equal(instance.Comparer.GetType(),
                             duplicatedValue.Comparer.GetType());
-            Assert.AreEqual(instance.Count(),
+            Assert.Equal(instance.Count(),
                             duplicatedValue.Count());
-            CollectionAssert.AreEquivalent(instance.ToList(),
-                                            duplicatedValue.ToList());
+            Assert.Equal(instance.ToList(),
+                         duplicatedValue.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithEnumProperty()
         {
             var instance = new GenericBaseClass<EnumForTestingInt32> { Value = EnumForTestingInt32.Two };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Value,
+            Assert.Equal(instance.Value,
                             duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateHashtable()
         {
             var instance = new Hashtable
@@ -1909,14 +1902,14 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance,
-                                            duplicatedValue);
+            Assert.Equal(instance,
+                         duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateHashtableWithEqualityComparer()
         {
             var instance = new Hashtable(StringComparer.CurrentCultureIgnoreCase)
@@ -1927,14 +1920,14 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(GetHashTableComparer(instance));
-            Assert.IsNotNull(GetHashTableComparer(duplicatedValue));
-            Assert.AreEqual(GetHashTableComparer(instance).GetType(),
+            Assert.NotNull(GetHashTableComparer(instance));
+            Assert.NotNull(GetHashTableComparer(duplicatedValue));
+            Assert.Equal(GetHashTableComparer(instance).GetType(),
                             GetHashTableComparer(duplicatedValue).GetType());
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance,
-                                            duplicatedValue);
+            Assert.Equal(instance,
+                         duplicatedValue);
         }
 
         private object GetHashTableComparer(Hashtable ht)
@@ -1950,252 +1943,234 @@ namespace DesertOctopus.Tests
                      .GetValue(ht);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithArrayAsIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new[] { 1, 2, 3 } };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithDistinctIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 1, 2, 3 }.Distinct() };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithWhereIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Where(x => x > 1) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithOrderByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OrderBy(x => x) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithDefaultIfEmptyIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.DefaultIfEmpty(123) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithExceptIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Except(new[] { 2 }) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithUnionIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Union(new[] { 4 }) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithIntersectIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Intersect(new[] { 2 }) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithOfTypeIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.OfType<int>() };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithSkipByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Skip(1) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithTakeByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Take(1) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithSelectByIEnumerable()
         {
             var instance = new ClassWithIEnumerable<int> { Items = new List<int> { 1, 2, 3 }.Select(x => x * 2) };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Items.Count(),
+            Assert.Equal(instance.Items.Count(),
                             duplicatedValue.Items.Count());
-            CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                            duplicatedValue.Items.ToList());
+            Assert.Equal(instance.Items.ToList(),
+                         duplicatedValue.Items.ToList());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateSimpleFunc()
         {
             var testData = new List<int> { 1, 2, 3, 4, 5, 6 };
             System.Func<int, bool> instance = x => x > 3;
 
-            var duplicatedValue = Duplicate(instance);
-
-            Assert.IsNotNull(duplicatedValue);
-
-            Assert.AreEqual(testData.Count(x => instance(x)),
-                            testData.Count(x => duplicatedValue(x)));
+            Assert.Throws<NotSupportedException>(() => Duplicate(instance));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateSimpleExpression()
         {
             var testData = new List<int> { 1, 2, 3, 4, 5, 6 };
 
             Expression<System.Func<int, bool>> instance = x => x > 3;
 
-            var duplicatedValue = Duplicate(instance);
-
-            Assert.IsNotNull(duplicatedValue);
-
-            Assert.AreEqual(testData.Count(instance.Compile()),
-                            testData.Count(duplicatedValue.Compile()));
-            Assert.Fail("we should not allow serialization of Expression");
+            Assert.Throws<NotSupportedException>(() => Duplicate(instance));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAnonymousObject()
         {
             var instance = new { Property1 = "hello", Property2 = 123 };
-            var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.Property1, duplicatedValue.Property1);
-            Assert.AreEqual(instance.Property2, duplicatedValue.Property2);
-
-            Assert.Fail("we should not allow serialization of anonymous types");
+            Assert.Throws<NotSupportedException>(() => Duplicate(instance));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArray()
         {
             var instance = new int[] { 123, 456 };
             var duplicatedValue = Duplicate(instance);
-            CollectionAssert.AreEqual(instance, duplicatedValue);
+            Assert.Equal(instance, duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayWithNullablePrimitive()
         {
             var instance = new int?[] { 123, null, 456 };
             var duplicatedValue = Duplicate(instance);
-            CollectionAssert.AreEqual(instance, duplicatedValue);
+            Assert.Equal(instance, duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayObject()
         {
             var instance = new ClassWithoutSerializableAttribute[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(2, duplicatedValue.Length);
-            Assert.AreEqual(123, duplicatedValue[0].PublicPropertyValue);
-            Assert.AreEqual(456, duplicatedValue[1].PublicPropertyValue);
+            Assert.Equal(2, duplicatedValue.Length);
+            Assert.Equal(123, duplicatedValue[0].PublicPropertyValue);
+            Assert.Equal(456, duplicatedValue[1].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayOfClassWithGenericInt()
         {
             var obj = new ClassWithGenericInt(123);
@@ -2206,33 +2181,33 @@ namespace DesertOctopus.Tests
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayObjectHierarchy()
         {
             var instance = new SomeBaseClass[] { new ClassWithGenericInt(123), new ClassWithGenericDouble(3.38D) };
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(2, duplicatedValue.Length);
-            Assert.AreEqual(123, (duplicatedValue[0] as ClassWithGenericInt).Value);
-            Assert.AreEqual(3.38D, (duplicatedValue[1] as ClassWithGenericDouble).Value);
+            Assert.Equal(2, duplicatedValue.Length);
+            Assert.Equal(123, (duplicatedValue[0] as ClassWithGenericInt).Value);
+            Assert.Equal(3.38D, (duplicatedValue[1] as ClassWithGenericDouble).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateSameObjectMultipleTimeInArray()
         {
             var obj123 = new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 };
             var instance = new ClassWithoutSerializableAttribute[] { obj123, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 }, obj123 };
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(3, duplicatedValue.Length);
-            Assert.AreEqual(123, duplicatedValue[0].PublicPropertyValue);
-            Assert.AreEqual(456, duplicatedValue[1].PublicPropertyValue);
-            Assert.AreEqual(123, duplicatedValue[2].PublicPropertyValue);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0], duplicatedValue[2]));
+            Assert.Equal(3, duplicatedValue.Length);
+            Assert.Equal(123, duplicatedValue[0].PublicPropertyValue);
+            Assert.Equal(456, duplicatedValue[1].PublicPropertyValue);
+            Assert.Equal(123, duplicatedValue[2].PublicPropertyValue);
+            Assert.True(ReferenceEquals(duplicatedValue[0], duplicatedValue[2]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTwoDimensionalArray()
         {
             var instance = new int[3, 4];
@@ -2253,8 +2228,8 @@ namespace DesertOctopus.Tests
             instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateMultiDimensionalArray()
         {
             var instance = CreateMultiDimensionalArray<int>(8);
@@ -2264,8 +2239,8 @@ namespace DesertOctopus.Tests
             instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateMultiDimensionalArrayOfObjects()
         {
             var instance = CreateMultiDimensionalArray<Object>(2);
@@ -2274,14 +2249,14 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsTrue(duplicatedValue.GetValue(new[] { 0, 0 }).GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue.GetValue(new[] { 0, 1 }));
-            Assert.IsTrue(duplicatedValue.GetValue(new[] { 1, 0 }).GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue.GetValue(new[] { 1, 1 }));
+            Assert.True(duplicatedValue.GetValue(new[] { 0, 0 }).GetType() == typeof(object));
+            Assert.Null(duplicatedValue.GetValue(new[] { 0, 1 }));
+            Assert.True(duplicatedValue.GetValue(new[] { 1, 0 }).GetType() == typeof(object));
+            Assert.Null(duplicatedValue.GetValue(new[] { 1, 1 }));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateMultiDimensionalArrayOfClass()
         {
             var instance = CreateMultiDimensionalArray<ClassWithGenericInt>(2);
@@ -2292,8 +2267,8 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
             instance.Should().BeEquivalentTo(duplicatedValue);
-            Assert.AreEqual(456, ((ClassWithGenericInt)duplicatedValue.GetValue(1, 0)).Value);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue.GetValue(0, 0), duplicatedValue.GetValue(1, 1)));
+            Assert.Equal(456, ((ClassWithGenericInt)duplicatedValue.GetValue(1, 0)).Value);
+            Assert.True(ReferenceEquals(duplicatedValue.GetValue(0, 0), duplicatedValue.GetValue(1, 1)));
         }
 
         private void SeedArray(Array array)
@@ -2327,8 +2302,8 @@ namespace DesertOctopus.Tests
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateJaggedArrayObject()
         {
             var instance = new object[2][];
@@ -2337,15 +2312,15 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsTrue(duplicatedValue[0][0].GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue[0][1]);
-            Assert.IsTrue(duplicatedValue[1][0].GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue[1][1]);
+            Assert.True(duplicatedValue[0][0].GetType() == typeof(object));
+            Assert.Null(duplicatedValue[0][1]);
+            Assert.True(duplicatedValue[1][0].GetType() == typeof(object));
+            Assert.Null(duplicatedValue[1][1]);
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateJaggedArrayClass()
         {
             var obj = new ClassWithGenericInt(123);
@@ -2358,8 +2333,8 @@ namespace DesertOctopus.Tests
 
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
 
-            Assert.AreEqual(456, ((ClassWithGenericInt)duplicatedValue[1][0]).Value);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0][0], duplicatedValue[1][1]));
+            Assert.Equal(456, ((ClassWithGenericInt)duplicatedValue[1][0]).Value);
+            Assert.True(ReferenceEquals(duplicatedValue[0][0], duplicatedValue[1][1]));
 
             instance = new ClassWithGenericInt[2][];
             instance[0] = new ClassWithGenericInt[] { obj, new ClassWithGenericInt(4563) };
@@ -2371,8 +2346,8 @@ namespace DesertOctopus.Tests
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateJaggedArrayClassInheritance()
         {
             var obj = new ClassWithGenericInt(123);
@@ -2382,26 +2357,26 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(123, ((ClassWithGenericInt)duplicatedValue[0][0]).Value);
-            Assert.AreEqual(123.3D, ((ClassWithGenericDouble)duplicatedValue[0][1]).Value);
-            Assert.AreEqual(456, ((ClassWithGenericInt)duplicatedValue[1][0]).Value);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0][0], duplicatedValue[1][1]));
+            Assert.Equal(123, ((ClassWithGenericInt)duplicatedValue[0][0]).Value);
+            Assert.Equal(123.3D, ((ClassWithGenericDouble)duplicatedValue[0][1]).Value);
+            Assert.Equal(456, ((ClassWithGenericInt)duplicatedValue[1][0]).Value);
+            Assert.True(ReferenceEquals(duplicatedValue[0][0], duplicatedValue[1][1]));
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullJaggedArray()
         {
             int[][] nullArray = null;
             var instance = new Wrapper<int[][]> { Value = nullArray };
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNull(duplicatedValue.Value);
+            Assert.Null(duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateThreeDimensionJaggedArray()
         {
             int[][][] instance = new[] { new int[2][], new int[3][] };
@@ -2411,8 +2386,8 @@ namespace DesertOctopus.Tests
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyJaggedArray()
         {
             int[][] instance = new int[2][];
@@ -2420,18 +2395,18 @@ namespace DesertOctopus.Tests
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateJaggedArray()
         {
             var instance = new int[][] { new int[] { 123, 238 }, new int[] { 456, 546, 784 }, null };
             var duplicatedValue = Duplicate(instance);
-            Assert.AreEqual(instance.Length, duplicatedValue.Length);
+            Assert.Equal(instance.Length, duplicatedValue.Length);
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void TrackArrayInMultipleObjects()
         {
             int[] arr = new[] { 1, 2, 3 };
@@ -2443,22 +2418,22 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance1);
 
-            CollectionAssert.AreEqual(arr, duplicatedValue.Child.Ids);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue.Child.Ids, duplicatedValue.Child.Child.Ids));
+            Assert.Equal(arr, duplicatedValue.Child.Ids);
+            Assert.True(ReferenceEquals(duplicatedValue.Child.Ids, duplicatedValue.Child.Child.Ids));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateClassWithDynamicObject()
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
 
             var duplicatedValue = Duplicate(instance);
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(instance.Value, duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(instance.Value, duplicatedValue.Value);
         }
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateExpandoObject()
         {
             dynamic instance = new ExpandoObject();
@@ -2470,48 +2445,48 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
-            Assert.AreEqual(instance.Property1,
+            Assert.Equal(instance.Property1,
                             duplicatedValue.Property1);
-            Assert.AreEqual(instance.Property2,
+            Assert.Equal(instance.Property2,
                             duplicatedValue.Property2);
-            Assert.AreEqual(instance.Property3,
+            Assert.Equal(instance.Property3,
                             duplicatedValue.Property3);
-            Assert.IsTrue(duplicatedValue.Property4.GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue.Property5);
+            Assert.True(duplicatedValue.Property4.GetType() == typeof(object));
+            Assert.Null(duplicatedValue.Property5);
 
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyExpandoObject()
         {
             dynamic instance = new ExpandoObject();
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, (duplicatedValue as IDictionary<string, object>).Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(0, (duplicatedValue as IDictionary<string, object>).Count);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullExpandoObject()
         {
             ExpandoObject instance = null;
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
 
             var wrappedduplicatedValue2 = Duplicate(new Wrapper<ExpandoObject> { Value = instance });
 
-            Assert.IsNull(wrappedduplicatedValue2.Value);
+            Assert.Null(wrappedduplicatedValue2.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTypedQueue()
         {
             var instance = new Queue<int>();
@@ -2521,16 +2496,16 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.ToArray(),
-                                            duplicatedValue.ToArray());
+            Assert.Equal(instance.ToArray(),
+                         duplicatedValue.ToArray());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateUntypedQueue()
         {
             var instance = new Queue();
@@ -2541,16 +2516,16 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.ToArray(),
-                                            duplicatedValue.ToArray());
+            Assert.Equal(instance.ToArray(),
+                         duplicatedValue.ToArray());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateTypedStack()
         {
             var instance = new Stack<int>();
@@ -2560,16 +2535,16 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.ToArray(),
-                                            duplicatedValue.ToArray());
+            Assert.Equal(instance.ToArray(),
+                         duplicatedValue.ToArray());
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateUntypedStack()
         {
             var instance = new Stack();
@@ -2580,78 +2555,78 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
-            Assert.AreEqual(instance.Count,
+            Assert.Equal(instance.Count,
                             duplicatedValue.Count);
-            CollectionAssert.AreEquivalent(instance.ToArray(),
-                                            duplicatedValue.ToArray());
+            Assert.Equal(instance.ToArray(),
+                         duplicatedValue.ToArray());
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEnumEqualityComparer()
         {
             var instance = new Dictionary<EnumForTestingInt32, int> { { EnumForTestingInt32.One, 1 }, { EnumForTestingInt32.Two, 2 } };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
 
             CompareDictionaries(instance,
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAnObject()
         {
             var instance = new object();
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAClassWithANullObjectProperty()
         {
             var instance = new ClassWithObjectProperty();
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNull(duplicatedValue.Obj);
+            Assert.NotNull(duplicatedValue);
+            Assert.Null(duplicatedValue.Obj);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAClassWithANotNullObjectProperty()
         {
             var instance = new ClassWithObjectProperty { Obj = new object() };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNotNull(duplicatedValue.Obj);
+            Assert.NotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue.Obj);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAClassWithAnBoxedInt()
         {
             var instance = new ClassWithObjectProperty { Obj = 123 };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(123, (int)duplicatedValue.Obj);
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(123, (int)duplicatedValue.Obj);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateIList()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2659,17 +2634,17 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNotNull(duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue.Value);
             var dList = duplicatedValue.Value as List<ClassWithoutSerializableAttribute>;
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateICollection()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2677,17 +2652,17 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNotNull(duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue.Value);
             var dList = duplicatedValue.Value as List<ClassWithoutSerializableAttribute>;
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2695,17 +2670,17 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNotNull(duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue.Value);
             var dList = duplicatedValue.Value.Cast<ClassWithoutSerializableAttribute>().ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateGenericIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2713,18 +2688,18 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNotNull(duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.NotNull(duplicatedValue.Value);
             var dList = duplicatedValue.Value.Cast<ClassWithoutSerializableAttribute>().ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateListOfIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2732,18 +2707,18 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(1, duplicatedValue.Count);
-            Assert.IsNotNull(duplicatedValue[0].Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.Single(duplicatedValue);
+            Assert.NotNull(duplicatedValue[0].Value);
             var dList = duplicatedValue[0].Value.Cast<ClassWithoutSerializableAttribute>().ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayOfIQueryableContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2751,104 +2726,104 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(1, duplicatedValue.Length);
-            Assert.IsNotNull(duplicatedValue[0].Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.Single(duplicatedValue);
+            Assert.NotNull(duplicatedValue[0].Value);
             var dList = duplicatedValue[0].Value.Cast<ClassWithoutSerializableAttribute>().ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
-            Assert.IsNull(dList[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, dList[0].PublicPropertyValue);
+            Assert.Null(dList[1]);
+            Assert.Equal(list[2].PublicPropertyValue, dList[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateListOfMultipleObjects()
         {
             var instance = new List<object> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(4, duplicatedValue.Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(4, duplicatedValue.Count);
 
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyList()
         {
             var instance = new List<object>();
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
 
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullList()
         {
             List<object> instance = null;
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
 
             var wrappedduplicatedValue = Duplicate(new Wrapper<List<object>> { Value = instance });
 
-            Assert.IsNull(wrappedduplicatedValue.Value);
+            Assert.Null(wrappedduplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayOfMultipleObjects()
         {
             var instance = new object[] { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new CircularReference { Id = 456 }, 1234 };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(4, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Equal(4, duplicatedValue.Length);
 
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateEmptyArray()
         {
             var instance = new object[0];
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(0, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Empty(duplicatedValue);
 
             instance.ShouldAllBeEquivalentTo(duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullArray()
         {
             object[] instance = null;
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNull(duplicatedValue);
+            Assert.Null(duplicatedValue);
 
             var wrappedduplicatedValue = Duplicate(new Wrapper<object[]> { Value = instance });
 
-            Assert.IsNull(wrappedduplicatedValue.Value);
+            Assert.Null(wrappedduplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateListOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2856,17 +2831,17 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(1, duplicatedValue.Count);
+            Assert.NotNull(duplicatedValue);
+            Assert.Single(duplicatedValue);
             var deserializedArray = duplicatedValue[0].ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
-            Assert.IsNull(deserializedArray[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
+            Assert.Null(deserializedArray[1]);
+            Assert.Equal(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateArrayOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2874,17 +2849,17 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(1, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Single(duplicatedValue);
             var deserializedArray = duplicatedValue[0].ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
-            Assert.IsNull(deserializedArray[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
+            Assert.Null(deserializedArray[1]);
+            Assert.Equal(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateJaggedArrayOfIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -2895,32 +2870,32 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.Rank, duplicatedValue.Rank);
-            Assert.AreEqual(instance[0].Length, duplicatedValue[0].Length);
+            Assert.Equal(instance.Rank, duplicatedValue.Rank);
+            Assert.Equal(instance[0].Length, duplicatedValue[0].Length);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.AreEqual(1, duplicatedValue.Length);
+            Assert.NotNull(duplicatedValue);
+            Assert.Single(duplicatedValue);
             var deserializedArray = duplicatedValue[0][2].ToArray();
 
-            Assert.AreEqual(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
-            Assert.IsNull(deserializedArray[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
+            Assert.Null(deserializedArray[1]);
+            Assert.Equal(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateNullIQueryableContainedInAClass()
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.IsNotNull(duplicatedValue);
-            Assert.IsNull(duplicatedValue.Value);
+            Assert.NotNull(duplicatedValue);
+            Assert.Null(duplicatedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateObjectWithISerializable()
         {
             var instance = new Dictionary<string, object>();
@@ -2937,8 +2912,8 @@ namespace DesertOctopus.Tests
                                 duplicatedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateClassWithNonSerializableProperty()
         {
             var instance = new ClassWithNonSerializableField();
@@ -2947,13 +2922,12 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(instance.SerializableProperty, duplicatedValue.SerializableProperty);
-            Assert.AreEqual(0, duplicatedValue.NonSerializableProperty);
+            Assert.Equal(instance.SerializableProperty, duplicatedValue.SerializableProperty);
+            Assert.Equal(0, duplicatedValue.NonSerializableProperty);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public unsafe void DuplicatePointerTypeIsNotSupported()
         {
             int[] a = new int[5] { 10, 20, 30, 40, 50 };
@@ -2961,22 +2935,22 @@ namespace DesertOctopus.Tests
             {
                 var instance = new ClassWithPointer();
                 instance.Value = p;
-                Duplicate(instance);
+                Assert.Throws<NotSupportedException>(() => Duplicate(instance));
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateAutoInitializeList()
         {
             var instance = new ClassWithInitializedList();
             instance.Values = null;
             var duplicatedValue = Duplicate(instance);
-            Assert.IsNull(duplicatedValue.Values);
+            Assert.Null(duplicatedValue.Values);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void TrackReferenceOfExpandoObject()
         {
             dynamic eo = new ExpandoObject();
@@ -2989,19 +2963,19 @@ namespace DesertOctopus.Tests
             var instance = new List<ExpandoObject> { eo, null, eo };
             var duplicatedList = Duplicate(instance);
 
-            Assert.AreEqual(3, duplicatedList.Count);
+            Assert.Equal(3, duplicatedList.Count);
             dynamic duplicatedValue = duplicatedList[0];
 
-            Assert.AreEqual(eo.Property1, duplicatedValue.Property1);
-            Assert.AreEqual(eo.Property2, duplicatedValue.Property2);
-            Assert.AreEqual(eo.Property3, duplicatedValue.Property3);
-            Assert.IsTrue(duplicatedValue.Property4.GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue.Property5);
-            Assert.IsTrue(ReferenceEquals(duplicatedList[0], duplicatedList[2]));
+            Assert.Equal(eo.Property1, duplicatedValue.Property1);
+            Assert.Equal(eo.Property2, duplicatedValue.Property2);
+            Assert.Equal(eo.Property3, duplicatedValue.Property3);
+            Assert.True(duplicatedValue.Property4.GetType() == typeof(object));
+            Assert.Null(duplicatedValue.Property5);
+            Assert.True(ReferenceEquals(duplicatedList[0], duplicatedList[2]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void TrackReferenceOfDictionary()
         {
             var dict = new Dictionary<string, object>();
@@ -3014,26 +2988,25 @@ namespace DesertOctopus.Tests
             var instance = new List<object> { dict, null, dict };
             var duplicatedValue = Duplicate(instance);
 
-            Assert.AreEqual(3, duplicatedValue.Count);
+            Assert.Equal(3, duplicatedValue.Count);
             Dictionary<string, object> deserializedDict = (Dictionary<string, object>)duplicatedValue[0];
 
-            Assert.AreEqual(dict["Property1"], deserializedDict["Property1"]);
-            Assert.AreEqual(dict["Property2"], deserializedDict["Property2"]);
-            Assert.AreEqual(dict["Property3"], deserializedDict["Property3"]);
-            Assert.IsTrue(deserializedDict["Property4"].GetType() == typeof(object));
-            Assert.AreEqual(dict["Property5"], deserializedDict["Property5"]);
-            Assert.IsTrue(ReferenceEquals(duplicatedValue[0], duplicatedValue[2]));
+            Assert.Equal(dict["Property1"], deserializedDict["Property1"]);
+            Assert.Equal(dict["Property2"], deserializedDict["Property2"]);
+            Assert.Equal(dict["Property3"], deserializedDict["Property3"]);
+            Assert.True(deserializedDict["Property4"].GetType() == typeof(object));
+            Assert.Equal(dict["Property5"], deserializedDict["Property5"]);
+            Assert.True(ReferenceEquals(duplicatedValue[0], duplicatedValue[2]));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateGroupByContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IEnumerable<IGrouping<int, ClassWithoutSerializableAttribute>>> { Value = list.GroupBy(x => x.PublicPropertyValue) };
 
-            var bytes = Duplicate(instance);
+            Assert.Throws<NotSupportedException>(() => Duplicate(instance));
         }
     }
 }
