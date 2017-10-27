@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 using DesertOctopus.Utilities;
 using DesertOctopus.Utilities.MethodInfoHelpers;
 
@@ -28,7 +29,7 @@ namespace DesertOctopus.Cloning
                                                          ParameterExpression refTrackerParam)
         {
             var elementType = sourceType.GetElementType();
-            if (elementType.IsPrimitive || elementType.IsValueType || (elementType == typeof(string)))
+            if (elementType.GetTypeInfo().IsPrimitive || elementType.GetTypeInfo().IsValueType || (elementType == typeof(string)))
             {
                 return Expression.Block(Expression.Assign(clone, Expression.Convert(Expression.Call(Expression.Convert(source, typeof(Array)), ArrayMih.Clone()), sourceType)),
                                         Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
@@ -97,7 +98,7 @@ namespace DesertOctopus.Cloning
             var expressions = new List<Expression>();
             expressions.Add(Expression.Assign(indices, Expression.Call(CreateArrayMethodInfo.GetCreateArrayMethodInfo(typeof(int)), Expression.Constant(rank))));
 
-            Debug.Assert(!(elementType.IsPrimitive || elementType.IsValueType || elementType == typeof(string)), "This method is not made to handle primitive types");
+            Debug.Assert(!(elementType.GetTypeInfo().IsPrimitive || elementType.GetTypeInfo().IsValueType || elementType == typeof(string)), "This method is not made to handle primitive types");
 
             Expression innerExpression = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, item, clonedItem, elementType),
                                                           Expression.Call(cloneArray, ArrayMih.SetValueRank(), Expression.Convert(clonedItem, typeof(object)), indices));
@@ -185,10 +186,10 @@ namespace DesertOctopus.Cloning
             var notTrackedExpressions = new List<Expression>();
             notTrackedExpressions.Add(Expression.Assign(length, Expression.Property(source, "Length")));
             notTrackedExpressions.Add(Expression.Assign(i, Expression.Constant(0)));
-            notTrackedExpressions.Add(Expression.Assign(clone, Expression.Convert(Expression.New(sourceType.GetConstructor(new[] { typeof(int) }), length), sourceType)));
+            notTrackedExpressions.Add(Expression.Assign(clone, Expression.Convert(Expression.New(ReflectionHelpers.GetPublicConstructor(sourceType, typeof(int)), length), sourceType)));
             notTrackedExpressions.Add(Expression.Call(refTrackerParam, ObjectClonerReferenceTrackerMih.Track(), source, clone));
 
-            Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string), "Element type cannot be a primitive type");
+            Debug.Assert(!elementType.GetTypeInfo().IsPrimitive && !elementType.GetTypeInfo().IsValueType && elementType != typeof(string), "Element type cannot be a primitive type");
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(item, Expression.Convert(Expression.Call(source, ArrayMih.GetValue(), i), elementType)));

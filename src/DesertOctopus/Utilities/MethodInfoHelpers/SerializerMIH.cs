@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using DesertOctopus.Serialization;
@@ -17,8 +18,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Serializer.SetValue</returns>
         public static MethodInfo ConvertEnumerableToArray(Type itemType)
         {
-            return typeof(Serializer).GetMethod(nameof(Serializer.ConvertEnumerableToArray), BindingFlags.Static | BindingFlags.NonPublic)
-                                     .MakeGenericMethod(itemType);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(Serializer), nameof(Serializer.ConvertEnumerableToArray), typeof(IEnumerable)).MakeGenericMethod(itemType);
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Serializer.PrepareObjectForSerialization</returns>
         public static MethodInfo PrepareObjectForSerialization()
         {
-            return typeof(ObjectCleaner).GetMethod(nameof(ObjectCleaner.PrepareObjectForSerialization), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(ObjectCleaner), nameof(ObjectCleaner.PrepareObjectForSerialization), typeof(object));
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Serializer.PrepareObjectForSerialization</returns>
         public static MethodInfo ConvertObjectToExpectedType()
         {
-            return typeof(ObjectCleaner).GetMethod(nameof(ObjectCleaner.ConvertObjectToExpectedType), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(ObjectCleaner), nameof(ObjectCleaner.ConvertObjectToExpectedType), typeof(object), typeof(Type));
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Serializer.GetTypeSerializer</returns>
         public static MethodInfo GetTypeToObjectSerializer()
         {
-            return typeof(Serializer).GetMethod(nameof(Serializer.GetTypeToObjectSerializer), BindingFlags.Static | BindingFlags.NonPublic);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(Serializer), nameof(Serializer.GetTypeToObjectSerializer), typeof(Type));
         }
     }
 }

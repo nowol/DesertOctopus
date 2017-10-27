@@ -96,7 +96,7 @@ namespace DesertOctopus.Serialization
             {
                 innerExpression = Expression.Assign(tmpValue, Deserializer.GenerateStringExpression(inputStream, objTracker));
             }
-            else if (elementType.IsPrimitive || elementType.IsValueType)
+            else if (elementType.GetTypeInfo().IsPrimitive || elementType.GetTypeInfo().IsValueType)
             {
                 var primitiveReader = Deserializer.GetPrimitiveReader(elementType);
                 if (primitiveReader == null)

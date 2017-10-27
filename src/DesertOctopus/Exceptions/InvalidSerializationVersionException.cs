@@ -10,7 +10,9 @@ namespace DesertOctopus.Exceptions
     /// <summary>
     /// Exception thrown when the version is not the expected one
     /// </summary>
+#if !NETSTANDARD1_6
     [Serializable]
+#endif
     public class InvalidSerializationVersionException : Exception
     {
         /// <summary>
@@ -22,6 +24,7 @@ namespace DesertOctopus.Exceptions
         {
         }
 
+#if !NETSTANDARD1_6
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidSerializationVersionException"/> class.
         /// </summary>
@@ -31,5 +34,6 @@ namespace DesertOctopus.Exceptions
             : base(info, context)
         {
         }
+#endif
     }
 }

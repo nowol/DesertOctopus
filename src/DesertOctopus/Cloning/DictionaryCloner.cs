@@ -20,7 +20,7 @@ namespace DesertOctopus.Cloning
                                                                      Type sourceType,
                                                                      ParameterExpression refTrackerParam)
         {
-            var ctor = sourceType.GetConstructor(new Type[0]);
+            var ctor = ReflectionHelpers.GetPublicConstructor(sourceType);
             if (ctor == null)
             {
                 throw new MissingConstructorException("Type " + sourceType + " must have a public constructor without parameter.");
@@ -41,7 +41,7 @@ namespace DesertOctopus.Cloning
             }
 
             return Expression.IfThenElse(Expression.IsTrue(Expression.Call(DictionaryMih.IsDefaultEqualityComparer(),
-                                                                           Expression.Constant(genericDictionaryType.GetGenericArguments()[0]),
+                                                                           Expression.Constant(genericDictionaryType.GetTypeInfo().GetGenericArguments()[0]),
                                                                            Expression.Property(source, nameof(Dictionary<int, int>.Comparer)))),
                                          cloneDictionaryWithDefaultComparer,
                                          CloneDictionaryWithCustomComparer(genericDictionaryType,
@@ -60,7 +60,7 @@ namespace DesertOctopus.Cloning
                                                                      Type sourceType,
                                                                      ParameterExpression refTrackerParam)
         {
-            var ctor = sourceType.GetConstructor(new Type[0]);
+            var ctor = ReflectionHelpers.GetPublicConstructor(sourceType);
             if (ctor == null)
             {
                 throw new MissingConstructorException("Type " + sourceType + " must have a public constructor without parameter.");
@@ -100,7 +100,7 @@ namespace DesertOctopus.Cloning
 
             var expressions = new List<Expression>();
             var sourceComparer = Expression.Property(source, nameof(Dictionary<int, int>.Comparer));
-            var comparerType = typeof(IEqualityComparer<>).MakeGenericType(genericDictionaryType.GetGenericArguments()[0]);
+            var comparerType = typeof(IEqualityComparer<>).MakeGenericType(genericDictionaryType.GetTypeInfo().GetGenericArguments()[0]);
             var clonedComparer = ClassCloner.CallCopyExpression(sourceComparer,
                                                                 refTrackerParam,
                                                                 Expression.Constant(comparerType));
@@ -188,8 +188,8 @@ namespace DesertOctopus.Cloning
 
         private static bool IsPrimitive(Type type)
         {
-            return type.IsPrimitive
-                   || type.IsValueType
+            return type.GetTypeInfo().IsPrimitive
+                   || type.GetTypeInfo().IsValueType
                    || (type == typeof(string));
         }
 

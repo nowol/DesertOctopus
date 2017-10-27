@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.CreateInstance</returns>
         public static MethodInfo CreateInstance()
         {
-            return typeof(Array).GetMethod(nameof(Array.CreateInstance), BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(Type), typeof(int[]) }, null);
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.CreateInstance), typeof(Type), typeof(int[]));
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.SetValue</returns>
         public static MethodInfo SetValueRank()
         {
-            return typeof(Array).GetMethod(nameof(Array.SetValue), new[] { typeof(object), typeof(int[]) });
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.SetValue), typeof(object), typeof(int[]));
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.GetValue</returns>
         public static MethodInfo GetValueRank()
         {
-            return typeof(Array).GetMethod(nameof(Array.GetValue), new[] { typeof(int[]) });
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.GetValue), typeof(int[]));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.GetLength</returns>
         public static MethodInfo GetLength()
         {
-            return typeof(Array).GetMethod(nameof(Array.GetLength));
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.GetLength), typeof(int));
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.SetValue</returns>
         public static MethodInfo SetValue()
         {
-            return typeof(Array).GetMethod(nameof(Array.SetValue), new[] { typeof(object), typeof(int) });
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.SetValue), typeof(object), typeof(int));
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.GetValue</returns>
         public static MethodInfo GetValue()
         {
-            return typeof(Array).GetMethod(nameof(Array.GetValue), new[] { typeof(int) });
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.GetValue), typeof(int));
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Array.Clone</returns>
         public static MethodInfo Clone()
         {
-            return typeof(Array).GetMethod(nameof(Array.Clone));
+            return ReflectionHelpers.GetPublicStaticMethod(typeof(Array), nameof(Array.Clone));
         }
     }
 }

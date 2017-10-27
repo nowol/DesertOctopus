@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for NotSupportedException.Constructor</returns>
         public static ConstructorInfo ConstructorString()
         {
-            return typeof(NotSupportedException).GetConstructor(new[] { typeof(string) });
+            return ReflectionHelpers.GetPublicConstructor(typeof(NotSupportedException), typeof(string));
         }
     }
 }

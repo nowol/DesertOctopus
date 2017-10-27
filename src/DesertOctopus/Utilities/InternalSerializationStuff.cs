@@ -60,10 +60,10 @@ namespace DesertOctopus.Utilities
 
                                               do
                                               {
-                                                  fields.AddRange(targetType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
-                                                                                       | BindingFlags.DeclaredOnly)
+                                                  fields.AddRange(targetType.GetTypeInfo()
+                                                                            .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                                                                             .Where(fi => (fi.Attributes & FieldAttributes.NotSerialized) == 0));
-                                                  targetType = targetType.BaseType;
+                                                  targetType = targetType.GetTypeInfo().BaseType;
                                               }
                                               while (targetType != null && targetType != key.OtherType);
 
@@ -79,12 +79,12 @@ namespace DesertOctopus.Utilities
         /// <param name="type">Type to analyze</param>
         public static void ValidateSupportedTypes(Type type)
         {
-            if (typeof(Expression).IsAssignableFrom(type))
+            if (typeof(Expression).GetTypeInfo().IsAssignableFrom(type))
             {
                 throw new NotSupportedException(type.ToString());
             }
 
-            if (typeof(Delegate).IsAssignableFrom(type))
+            if (typeof(Delegate).GetTypeInfo().IsAssignableFrom(type))
             {
                 throw new NotSupportedException(type.ToString());
             }
@@ -112,8 +112,8 @@ namespace DesertOctopus.Utilities
             var enumerableType = IQueryableCloner.GetInterfaceType(type, typeof(IEnumerable<>));
             if (enumerableType != null)
             {
-                var genericArgument = enumerableType.GetGenericArguments()[0];
-                if (genericArgument.IsGenericType
+                var genericArgument = enumerableType.GetTypeInfo().GetGenericArguments()[0];
+                if (genericArgument.GetTypeInfo().IsGenericType
                     && genericArgument.GetGenericTypeDefinition() == typeof(IGrouping<,>))
                 {
                     throw new NotSupportedException(type.ToString());
@@ -121,11 +121,11 @@ namespace DesertOctopus.Utilities
             }
 
             if (Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
-                     && type.IsGenericType && type.Name.Contains("AnonymousType")
+                     && type.GetTypeInfo().IsGenericType && type.Name.Contains("AnonymousType")
                      && (type.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase)
                         ||
                         type.Name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
-                    && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic)
+                    && (type.GetTypeInfo().Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic)
             {
                 throw new NotSupportedException(type.ToString());
             }
@@ -133,7 +133,7 @@ namespace DesertOctopus.Utilities
             if (!type.IsArray
                 && type.Namespace != null
                 && (type.Namespace.StartsWith("System.") || type.Namespace.StartsWith("Microsoft."))
-                && type.GetCustomAttribute<SerializableAttribute>() == null
+                && type.GetTypeInfo().GetCustomAttribute<SerializableAttribute>() == null
                 && type != typeof(ExpandoObject)
                 && type != typeof(BigInteger))
             {
@@ -155,13 +155,13 @@ namespace DesertOctopus.Utilities
 
             do
             {
-                if (targetType.IsGenericType
+                if (targetType.GetTypeInfo().IsGenericType
                     && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                 {
                     return true;
                 }
 
-                targetType = targetType.BaseType;
+                targetType = targetType.GetTypeInfo().BaseType;
             }
             while (targetType != null);
 
@@ -175,7 +175,7 @@ namespace DesertOctopus.Utilities
 
         internal static Expression TraceWriteLineToString(Expression value)
         {
-            return TraceWriteLine(Expression.Call(value, typeof(object).GetMethod(nameof(object.ToString))));
+            return TraceWriteLine(Expression.Call(value, ReflectionHelpers.GetPublicMethod(typeof(object), nameof(object.ToString))));
         }
     }
 }

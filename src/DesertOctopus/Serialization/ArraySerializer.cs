@@ -89,7 +89,7 @@ namespace DesertOctopus.Serialization
             {
                 innerExpression = Serializer.GenerateStringExpression(outputStream, item, objTracking);
             }
-            else if (elementType.IsPrimitive || elementType.IsValueType)
+            else if (elementType.GetTypeInfo().IsPrimitive || elementType.GetTypeInfo().IsValueType)
             {
                 var primitiveWriter = Serializer.GetPrimitiveWriter(elementType);
 

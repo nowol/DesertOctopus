@@ -65,7 +65,7 @@ namespace DesertOctopus.Cloning
             {
                 var cloneField = Expression.Field(clone, field);
                 var sourceField = Expression.Field(source, field);
-                if (field.FieldType.IsPrimitive || field.FieldType.IsValueType || (field.FieldType == typeof(string)))
+                if (field.FieldType.GetTypeInfo().IsPrimitive || field.FieldType.GetTypeInfo().IsValueType || (field.FieldType == typeof(string)))
                 {
                     if (field.IsInitOnly)
                     {

@@ -6,7 +6,9 @@ namespace DesertOctopus.Exceptions
     /// <summary>
     /// Exception used when a type cannot be found
     /// </summary>
+#if !NETSTANDARD1_6
     [Serializable]
+#endif
     public class TypeNotFoundException : Exception
     {
         /// <summary>
@@ -18,6 +20,7 @@ namespace DesertOctopus.Exceptions
         {
         }
 
+#if !NETSTANDARD1_6
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeNotFoundException"/> class.
         /// </summary>
@@ -27,5 +30,6 @@ namespace DesertOctopus.Exceptions
             : base(info, context)
         {
         }
+#endif
     }
 }

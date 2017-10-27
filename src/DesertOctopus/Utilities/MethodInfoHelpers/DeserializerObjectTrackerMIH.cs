@@ -16,7 +16,8 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Deserializer.GetTrackedObject</returns>
         public static MethodInfo GetTrackedObject()
         {
-            return typeof(DeserializerObjectTracker).GetMethod(nameof(DeserializerObjectTracker.GetTrackedObject), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(int) }, new ParameterModifier[0]);
+            return ReflectionHelpers.GetPublicMethod(typeof(DeserializerObjectTracker), nameof(DeserializerObjectTracker.GetTrackedObject), typeof(int));
+            //return typeof(DeserializerObjectTracker).GetTypeInfo().GetMethod(nameof(DeserializerObjectTracker.GetTrackedObject), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(int) }, new ParameterModifier[0]);
         }
 
         /// <summary>
@@ -25,7 +26,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Deserializer.TrackedObject</returns>
         public static MethodInfo TrackedObject()
         {
-            return typeof(DeserializerObjectTracker).GetMethod(nameof(DeserializerObjectTracker.TrackObject), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(object) }, new ParameterModifier[0]);
+            return ReflectionHelpers.GetPublicMethod(typeof(DeserializerObjectTracker), nameof(DeserializerObjectTracker.TrackObject), typeof(object));
         }
 
         /// <summary>
@@ -34,7 +35,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for DeserializerObjectTracker.EnsureBufferSize</returns>
         public static MethodInfo EnsureBufferSize()
         {
-            return typeof(DeserializerObjectTracker).GetMethod(nameof(DeserializerObjectTracker.EnsureBufferSize));
+            return ReflectionHelpers.GetPublicMethod(typeof(DeserializerObjectTracker), nameof(DeserializerObjectTracker.EnsureBufferSize), typeof(int));
         }
 
         /// <summary>
@@ -43,7 +44,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for DeserializerObjectTracker.DecimalArray</returns>
         public static PropertyInfo DecimalArray()
         {
-            return typeof(DeserializerObjectTracker).GetProperty(nameof(DeserializerObjectTracker.DecimalArray));
+            return typeof(DeserializerObjectTracker).GetTypeInfo().GetProperty(nameof(DeserializerObjectTracker.DecimalArray));
         }
     }
 }

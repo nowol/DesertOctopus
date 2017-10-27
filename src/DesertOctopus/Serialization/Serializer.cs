@@ -169,17 +169,17 @@ namespace DesertOctopus.Serialization
                 return writer;
             }
 
-            if (type.IsEnum
-                && LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(), out writer))
+            if (type.GetTypeInfo().IsEnum
+                && LazyPrimitiveMap.Value.TryGetValue(type.GetTypeInfo().GetEnumUnderlyingType(), out writer))
             {
                 return writer;
             }
 
             var underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null
-                && underlyingType.IsEnum)
+                && underlyingType.GetTypeInfo().IsEnum)
             {
-                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetTypeInfo().GetEnumUnderlyingType());
                 if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out writer))
                 {
                     return writer;
@@ -202,7 +202,7 @@ namespace DesertOctopus.Serialization
             var primitiveWriter = GetPrimitiveWriter(type);
             if (primitiveWriter != null)
             {
-                Debug.Assert(type.IsPrimitive || type.IsValueType, "Value is not a primitive");
+                Debug.Assert(type.GetTypeInfo().IsPrimitive || type.GetTypeInfo().IsValueType, "Value is not a primitive");
                 expressions.Add(primitiveWriter(outputStream, objToSerialize, objTracking));
             }
             else if (type == typeof(string))
@@ -358,7 +358,7 @@ namespace DesertOctopus.Serialization
             variables.Add(itemAsObj);
 
             List<Expression> copyFieldsExpressions = new List<Expression>();
-            if (type.IsClass)
+            if (type.GetTypeInfo().IsClass)
             {
                 copyFieldsExpressions.Add(Expression.Call(objTracking, SerializerObjectTrackerMih.TrackObject(), objToSerialize));
             }
@@ -373,7 +373,7 @@ namespace DesertOctopus.Serialization
                 {
                     copyFieldsExpressions.Add(GenerateStringExpression(outputStream, fieldValueExpr, objTracking));
                 }
-                else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
+                else if (fieldInfo.FieldType.GetTypeInfo().IsPrimitive || fieldInfo.FieldType.GetTypeInfo().IsValueType)
                 {
                     var primitiveWriter = GetPrimitiveWriter(fieldInfo.FieldType);
 

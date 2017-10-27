@@ -16,7 +16,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for StreamingContext.Constructor</returns>
         public static ConstructorInfo Constructor()
         {
-            return typeof(StreamingContext).GetConstructor(new[] { typeof(StreamingContextStates) });
+            return ReflectionHelpers.GetPublicConstructor(typeof(StreamingContext), typeof(StreamingContextStates));
         }
     }
 }

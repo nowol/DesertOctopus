@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.Serialization;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Serialization;
@@ -99,8 +100,8 @@ namespace DesertOctopus.Cloning
         {
             Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
             {
-                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Name"));
-                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
+                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetProperty("Current")), cargo.KvpType.GetTypeInfo().GetProperty("Name"));
+                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetProperty("Current")), cargo.KvpType.GetTypeInfo().GetProperty("Value"));
                 var cloneValueExpr = Expression.Block(ClassCloner.GetCloneClassTypeExpression(refTrackerParam, valueExpression, clonedItem, typeof(object)),
                                                     Expression.Call(siClone, SerializationInfoMih.AddValue(), keyExpression, clonedItem));
 

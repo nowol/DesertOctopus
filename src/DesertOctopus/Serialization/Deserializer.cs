@@ -233,8 +233,8 @@ namespace DesertOctopus.Serialization
                 return reader;
             }
 
-            if (type.IsEnum
-                && LazyPrimitiveMap.Value.TryGetValue(type.GetEnumUnderlyingType(),
+            if (type.GetTypeInfo().IsEnum
+                && LazyPrimitiveMap.Value.TryGetValue(type.GetTypeInfo().GetEnumUnderlyingType(),
                                                       out reader))
             {
                 return reader;
@@ -242,9 +242,9 @@ namespace DesertOctopus.Serialization
 
             var underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null
-                && underlyingType.IsEnum)
+                && underlyingType.GetTypeInfo().IsEnum)
             {
-                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetEnumUnderlyingType());
+                var nullableType = typeof(Nullable<>).MakeGenericType(underlyingType.GetTypeInfo().GetEnumUnderlyingType());
                 if (LazyPrimitiveMap.Value.TryGetValue(nullableType, out reader))
                 {
                     return reader;
@@ -375,10 +375,10 @@ namespace DesertOctopus.Serialization
                 return null;
             }
 
-            Debug.Assert(typeof(IQueryable).IsAssignableFrom(expectedQueryableType), "Type is not assignable");
-            Debug.Assert(instance.GetType().IsArray, "Type must be an array");
+            Debug.Assert(typeof(IQueryable).GetTypeInfo().IsAssignableFrom(expectedQueryableType), "Type is not assignable");
+            Debug.Assert(instance.GetType().GetTypeInfo().IsArray, "Type must be an array");
 
-            var elementType = instance.GetType().GetElementType();
+            var elementType = instance.GetType().GetTypeInfo().GetElementType();
             var m = QueryableMih.AsQueryable(elementType);
 
             return m.Invoke(null, new[] { instance });
@@ -408,7 +408,7 @@ namespace DesertOctopus.Serialization
             notTrackedExpressions.Add(Expression.Assign(newInstance, Expression.Convert(Expression.Call(FormatterServicesMih.GetUninitializedObject(), Expression.Constant(type)), type)));
             notTrackedExpressions.AddRange(SerializationCallbacksHelper.GenerateOnDeserializingAttributeExpression(type, newInstance, Expression.New(StreamingContextMih.Constructor(), Expression.Constant(StreamingContextStates.All))));
 
-            if (type.IsClass)
+            if (type.GetTypeInfo().IsClass)
             {
                 notTrackedExpressions.Add(Expression.Call(objTracker, DeserializerObjectTrackerMih.TrackedObject(), newInstance));
             }
@@ -491,7 +491,7 @@ namespace DesertOctopus.Serialization
                         notTrackedExpressions.Add(Expression.Assign(fieldValueExpr, tmpVar));
                     }
                 }
-                else if (fieldInfo.FieldType.IsPrimitive || fieldInfo.FieldType.IsValueType)
+                else if (fieldInfo.FieldType.GetTypeInfo().IsPrimitive || fieldInfo.FieldType.GetTypeInfo().IsValueType)
                 {
                     var primitiveReader = GetPrimitiveReader(fieldInfo.FieldType);
                     Expression newValue;
@@ -549,7 +549,7 @@ namespace DesertOctopus.Serialization
 
         internal static bool IsEnumOrNullableEnum(Type type)
         {
-            if (type.IsEnum)
+            if (type.GetTypeInfo().IsEnum)
             {
                 return true;
             }
@@ -557,7 +557,7 @@ namespace DesertOctopus.Serialization
             var underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null)
             {
-                return underlyingType.IsEnum;
+                return underlyingType.GetTypeInfo().IsEnum;
             }
 
             return false;

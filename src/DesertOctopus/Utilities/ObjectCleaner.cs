@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using DesertOctopus.Cloning;
@@ -26,8 +27,8 @@ namespace DesertOctopus.Utilities
             {
                 var objectType = objToPrepare.GetType();
                 if (objectType.IsArray
-                    || typeof(IList).IsAssignableFrom(objectType)
-                    || typeof(ICollection).IsAssignableFrom(objectType))
+                    || typeof(IList).GetTypeInfo().IsAssignableFrom(objectType)
+                    || typeof(ICollection).GetTypeInfo().IsAssignableFrom(objectType))
                 {
                     return objToPrepare;
                 }
@@ -36,10 +37,10 @@ namespace DesertOctopus.Utilities
                 {
                     Type itemType = typeof(object);
 
-                    var enumerableInterface = objectType.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                    var enumerableInterface = objectType.GetTypeInfo().GetInterfaces().FirstOrDefault(x => x.GetTypeInfo().IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
                     if (enumerableInterface != null)
                     {
-                        itemType = enumerableInterface.GetGenericArguments()[0];
+                        itemType = enumerableInterface.GetTypeInfo().GetGenericArguments()[0];
                     }
 
                     var converter = SerializerMih.ConvertEnumerableToArray(itemType);
@@ -99,18 +100,18 @@ namespace DesertOctopus.Utilities
 
             var objectType = obj.GetType();
             if (objectType == expectedType
-                || objectType.IsSubclassOf(expectedType))
+                || objectType.GetTypeInfo().IsSubclassOf(expectedType))
             {
                 return obj;
             }
 
             if (IQueryableCloner.IsGenericIQueryableType(expectedType))
             {
-                var m = QueryableMih.AsQueryable(expectedType.GetGenericArguments()[0]);
+                var m = QueryableMih.AsQueryable(expectedType.GetTypeInfo().GetGenericArguments()[0]);
                 return m.Invoke(null, new[] { obj });
             }
 
-            if (typeof(IQueryable).IsAssignableFrom(expectedType))
+            if (typeof(IQueryable).GetTypeInfo().IsAssignableFrom(expectedType))
             {
                 return IQueryableCloner.ConvertToNonGenericQueryable(obj);
             }

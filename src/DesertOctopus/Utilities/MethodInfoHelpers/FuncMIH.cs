@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities.MethodInfoHelpers
         /// <returns>The method info for Func.Invoke</returns>
         public static MethodInfo CloneMethodInvoke()
         {
-            return typeof(Func<object, ObjectClonerReferenceTracker, object>).GetMethod(nameof(Func<object, ObjectClonerReferenceTracker, object>.Invoke));
+            return ReflectionHelpers.GetPublicMethod(typeof(Func<object, ObjectClonerReferenceTracker, object>), nameof(Func<object, ObjectClonerReferenceTracker, object>.Invoke), typeof(object), typeof(ObjectClonerReferenceTracker));
         }
     }
 }

@@ -35,17 +35,17 @@ namespace DesertOctopus.Cloning
                                k =>
                                {
                                    Type enumerableInterface = null;
-                                   if (k.Type.IsGenericType
+                                   if (k.Type.GetTypeInfo().IsGenericType
                                        && k.Type.GetGenericTypeDefinition() == k.OtherType)
                                    {
                                        enumerableInterface = k.Type;
                                    }
                                    else
                                    {
-                                       enumerableInterface = k.Type.GetInterfaces()
-                                                              .FirstOrDefault(t => t.IsGenericType
+                                       enumerableInterface = k.Type.GetTypeInfo().GetInterfaces()
+                                                              .FirstOrDefault(t => t.GetTypeInfo().IsGenericType
                                                                                    && t.GetGenericTypeDefinition() == k.OtherType
-                                                                                   && t.GetGenericArguments()
+                                                                                   && t.GetTypeInfo().GetGenericArguments()
                                                                                        .Length == 1);
                                    }
 

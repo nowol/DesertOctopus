@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Stream.WriteByte</returns>
         public static MethodInfo WriteByte()
         {
-            return typeof(System.IO.Stream).GetMethod(nameof(System.IO.Stream.WriteByte));
+            return ReflectionHelpers.GetPublicMethod(typeof(System.IO.Stream), nameof(System.IO.Stream.WriteByte), typeof(byte));
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Stream.Write</returns>
         public static MethodInfo Write()
         {
-            return typeof(System.IO.Stream).GetMethod(nameof(System.IO.Stream.Write));
+            return ReflectionHelpers.GetPublicMethod(typeof(System.IO.Stream), nameof(System.IO.Stream.Write), typeof(byte[]), typeof(int), typeof(int));
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Stream.ReadByte</returns>
         public static MethodInfo ReadByte()
         {
-            return typeof(System.IO.Stream).GetMethod(nameof(System.IO.Stream.ReadByte));
+            return ReflectionHelpers.GetPublicMethod(typeof(System.IO.Stream), nameof(System.IO.Stream.ReadByte));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Stream.Read</returns>
         public static MethodInfo Read()
         {
-            return typeof(System.IO.Stream).GetMethod(nameof(System.IO.Stream.Read));
+            return ReflectionHelpers.GetPublicMethod(typeof(System.IO.Stream), nameof(System.IO.Stream.Read), typeof(byte[]), typeof(int), typeof(int));
         }
     }
 }

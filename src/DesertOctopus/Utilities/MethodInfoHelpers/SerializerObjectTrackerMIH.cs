@@ -15,7 +15,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.TrackObject</returns>
         public static MethodInfo TrackObject()
         {
-            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.TrackObject), new Type[] { typeof(object) });
+            return ReflectionHelpers.GetPublicMethod(typeof(SerializerObjectTracker), nameof(SerializerObjectTracker.TrackObject), typeof(object));
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.GetTrackedObjectIndex</returns>
         public static MethodInfo GetTrackedObjectIndex()
         {
-            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.GetTrackedObjectIndex));
+            return ReflectionHelpers.GetPublicMethod(typeof(SerializerObjectTracker), nameof(SerializerObjectTracker.GetTrackedObjectIndex), typeof(object));
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.EnsureBufferSize</returns>
         public static MethodInfo EnsureBufferSize()
         {
-            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.EnsureBufferSize));
+            return ReflectionHelpers.GetPublicMethod(typeof(SerializerObjectTracker), nameof(SerializerObjectTracker.EnsureBufferSize), typeof(int));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for SerializerObjectTracker.CanBeTracked</returns>
         public static MethodInfo CanBeTracked()
         {
-            return typeof(SerializerObjectTracker).GetMethod(nameof(SerializerObjectTracker.CanBeTracked));
+            return ReflectionHelpers.GetPublicMethod(typeof(SerializerObjectTracker), nameof(SerializerObjectTracker.CanBeTracked), typeof(Type));
         }
     }
 }

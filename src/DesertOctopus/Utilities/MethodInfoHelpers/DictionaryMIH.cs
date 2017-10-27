@@ -19,39 +19,22 @@ namespace DesertOctopus.Utilities
         /// <returns>The method info for Dictionary.Add</returns>
         public static MethodInfo Add<TKey, TValue>()
         {
-            return typeof(IDictionary<TKey, TValue>).GetMethod(nameof(IDictionary<TKey, TValue>.Add), new[] { typeof(TKey), typeof(TValue) });
+            return ReflectionHelpers.GetPublicMethod(typeof(IDictionary<TKey, TValue>), nameof(IDictionary<TKey, TValue>.Add), typeof(TKey), typeof(TValue));
         }
 
         public static MethodInfo Add(Type dictionaryType, Type keyType, Type valueType)
         {
-            return dictionaryType.GetMethod("Add", new[] { keyType, valueType });
+            return ReflectionHelpers.GetPublicMethod(dictionaryType, "Add", keyType, valueType);
         }
 
         public static MethodInfo IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties()
         {
-            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties),
-                                                      BindingFlags.Static | BindingFlags.NonPublic,
-                                                      null,
-                                                      CallingConventions.Any,
-                                                      new[]
-                                                      {
-                                                          typeof(object)
-                                                      },
-                                                      new ParameterModifier[0]);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(DictionaryHelper), nameof(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties), typeof(object));
         }
 
         public static MethodInfo IsDefaultEqualityComparer()
         {
-            return typeof(DictionaryHelper).GetMethod(nameof(DictionaryHelper.IsDefaultEqualityComparer),
-                                                      BindingFlags.Static | BindingFlags.NonPublic,
-                                                      null,
-                                                      CallingConventions.Any,
-                                                      new[]
-                                                      {
-                                                          typeof(Type),
-                                                          typeof(object)
-                                                      },
-                                                      new ParameterModifier[0]);
+            return ReflectionHelpers.GetNonPublicStaticMethod(typeof(DictionaryHelper), nameof(DictionaryHelper.IsDefaultEqualityComparer), typeof(Type), typeof(object));
         }
     }
 }

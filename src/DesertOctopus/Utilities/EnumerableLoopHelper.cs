@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using DesertOctopus.Serialization;
 
 namespace DesertOctopus.Utilities
@@ -22,8 +23,8 @@ namespace DesertOctopus.Utilities
         {
             Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
             {
-                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Key"));
-                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
+                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetProperty("Current")), cargo.KvpType.GetTypeInfo().GetProperty("Key"));
+                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetProperty("Current")), cargo.KvpType.GetTypeInfo().GetProperty("Value"));
 
                 return Expression.Block(Serializer.GenerateStringExpression(outputStream, keyExpression, objTracking),
                                         Serializer.GetWriteClassTypeExpression(outputStream, objTracking, valueExpression, cargo.ItemAsObj, cargo.TypeExpr, cargo.Serializer, typeof(object)));

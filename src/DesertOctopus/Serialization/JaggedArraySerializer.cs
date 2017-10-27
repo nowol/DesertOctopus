@@ -73,7 +73,7 @@ namespace DesertOctopus.Serialization
             expressions.Add(PrimitiveHelpers.WriteInt32(outputStream, length, objTracking));
             expressions.Add(Expression.Assign(i, Expression.Constant(0)));
 
-            Debug.Assert(!elementType.IsPrimitive && !elementType.IsValueType && elementType != typeof(string), "Type cannot be a primitive");
+            Debug.Assert(!elementType.GetTypeInfo().IsPrimitive && !elementType.GetTypeInfo().IsValueType && elementType != typeof(string), "Type cannot be a primitive");
 
             var loopExpressions = new List<Expression>();
             loopExpressions.Add(Expression.Assign(item, Expression.ArrayAccess(arr, i)));   // uh?

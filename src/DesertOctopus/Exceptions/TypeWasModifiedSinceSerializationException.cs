@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using DesertOctopus.Utilities;
@@ -8,7 +9,9 @@ namespace DesertOctopus.Exceptions
     /// <summary>
     /// Exception used when a type was modified since it was serialized
     /// </summary>
+#if !NETSTANDARD1_6
     [Serializable]
+#endif
     public class TypeWasModifiedSinceSerializationException : Exception
     {
         /// <summary>
@@ -29,6 +32,7 @@ namespace DesertOctopus.Exceptions
         {
         }
 
+#if !NETSTANDARD1_6
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeWasModifiedSinceSerializationException"/> class.
         /// </summary>
@@ -38,6 +42,7 @@ namespace DesertOctopus.Exceptions
             : base(info, context)
         {
         }
+#endif
 
         /// <summary>
         /// Returns the constructor that takes a Type parameter
@@ -45,13 +50,18 @@ namespace DesertOctopus.Exceptions
         /// <returns>The constructor that takes a Type parameter</returns>
         internal static ConstructorInfo GetConstructor()
         {
-            return typeof(TypeWasModifiedSinceSerializationException).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic,
-                                                                                     null,
-                                                                                     new[]
-                                                                                     {
-                                                                                         typeof(TypeWithHashCode)
-                                                                                     },
-                                                                                     new ParameterModifier[0]);
+            return typeof(TypeWasModifiedSinceSerializationException).GetTypeInfo().DeclaredConstructors.Single(x =>
+                                                                                                                {
+                                                                                                                    if (!x.IsAssembly)
+                                                                                                                    {
+                                                                                                                        return false;
+                                                                                                                    }
+
+                                                                                                                    var p = x.GetParameters();
+
+                                                                                                                    return p != null && p.Length == 1
+                                                                                                                           && p[0].ParameterType == typeof(TypeWithHashCode);
+                                                                                                                });
         }
     }
 }

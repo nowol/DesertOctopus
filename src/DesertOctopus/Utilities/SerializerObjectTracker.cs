@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace DesertOctopus.Utilities
 {
@@ -37,7 +38,7 @@ namespace DesertOctopus.Utilities
 
             _numberOfTrackedObject++;
 
-            if (obj.GetType().IsClass
+            if (obj.GetType().GetTypeInfo().IsClass
                 && !_trackedObjects.ContainsKey(obj))
             {
                 _trackedObjects.Add(obj, _numberOfTrackedObject - 1);
@@ -51,7 +52,7 @@ namespace DesertOctopus.Utilities
         /// <returns>True if the type can be tracked otherwise false.</returns>
         public bool CanBeTracked(Type type)
         {
-            return type.IsClass;
+            return type.GetTypeInfo().IsClass;
         }
 
         /// <summary>
