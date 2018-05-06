@@ -8,6 +8,9 @@
     <Description>Provides a distributed cache with a memory-based first level cache for fast acces to recent items.</Description>
     <Company>NoWoL</Company>
     <Authors>NoWoL</Authors>
+    <Version>0.5.0</Version>
+    <PackageLicenseUrl>https://github.com/nowol/DesertOctopus/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/nowol/DesertOctopus/blob</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
