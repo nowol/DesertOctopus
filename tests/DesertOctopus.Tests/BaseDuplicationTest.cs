@@ -2178,7 +2178,7 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2331,7 +2331,7 @@ namespace DesertOctopus.Tests
 
             var duplicatedValue = Duplicate(instance);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
 
             Assert.Equal(456, ((ClassWithGenericInt)duplicatedValue[1][0]).Value);
             Assert.True(ReferenceEquals(duplicatedValue[0][0], duplicatedValue[1][1]));
@@ -2342,7 +2342,7 @@ namespace DesertOctopus.Tests
 
             duplicatedValue = Duplicate(instance);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
 
@@ -2383,7 +2383,7 @@ namespace DesertOctopus.Tests
             instance[0][0] = new int[] { 123, 238 };
             var duplicatedValue = Duplicate(instance);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2392,7 +2392,7 @@ namespace DesertOctopus.Tests
         {
             int[][] instance = new int[2][];
             var duplicatedValue = Duplicate(instance);
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2402,7 +2402,7 @@ namespace DesertOctopus.Tests
             var instance = new int[][] { new int[] { 123, 238 }, new int[] { 456, 546, 784 }, null };
             var duplicatedValue = Duplicate(instance);
             Assert.Equal(instance.Length, duplicatedValue.Length);
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2747,7 +2747,7 @@ namespace DesertOctopus.Tests
             Assert.NotNull(duplicatedValue);
             Assert.Equal(4, duplicatedValue.Count);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2761,7 +2761,7 @@ namespace DesertOctopus.Tests
             Assert.NotNull(duplicatedValue);
             Assert.Empty(duplicatedValue);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2790,7 +2790,7 @@ namespace DesertOctopus.Tests
             Assert.NotNull(duplicatedValue);
             Assert.Equal(4, duplicatedValue.Length);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]
@@ -2804,7 +2804,7 @@ namespace DesertOctopus.Tests
             Assert.NotNull(duplicatedValue);
             Assert.Empty(duplicatedValue);
 
-            instance.ShouldAllBeEquivalentTo(duplicatedValue);
+            instance.Should().BeEquivalentTo(duplicatedValue);
         }
 
         [Fact]

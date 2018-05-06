@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus", "src\DesertOctopus\DesertOctopus.csproj", "{7342E898-8AE6-4482-8A20-B54935DBECAB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus", "src\DesertOctopus\DesertOctopus.csproj", "{7342E898-8AE6-4482-8A20-B54935DBECAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Tests", "tests\DesertOctopus.Tests\DesertOctopus.Tests.csproj", "{C302FA36-8B66-4C79-8966-D79734A52406}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus.Tests", "tests\DesertOctopus.Tests\DesertOctopus.Tests.csproj", "{C302FA36-8B66-4C79-8966-D79734A52406}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1006FFC1-3831-4A24-8E7C-3BC52C1EA2CB}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,32 +14,33 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Benchmark", "tests\DesertOctopus.Benchmark\DesertOctopus.Benchmark.csproj", "{0747C3C7-4B11-4F06-8ACE-35A75FA69240}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache", "src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj", "{141B4827-785B-4644-87F2-D54770CA4E9B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus.MammothCache", "src\DesertOctopus.MammothCache\DesertOctopus.MammothCache.csproj", "{141B4827-785B-4644-87F2-D54770CA4E9B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{520E6EF7-469D-4892-A6B8-976B73D5D82D}"
 	ProjectSection(SolutionItems) = preProject
 		tests\tests.runsettings = tests\tests.runsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Tests", "tests\DesertOctopus.MammothCache.Tests\DesertOctopus.MammothCache.Tests.csproj", "{253CDEB9-46D5-453B-A801-A8AC4F7DF634}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus.MammothCache.Tests", "tests\DesertOctopus.MammothCache.Tests\DesertOctopus.MammothCache.Tests.csproj", "{253CDEB9-46D5-453B-A801-A8AC4F7DF634}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Common", "src\DesertOctopus.MammothCache.Common\DesertOctopus.MammothCache.Common.csproj", "{7DC09C74-AE2A-4A2E-A411-69B9A261F694}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus.MammothCache.Common", "src\DesertOctopus.MammothCache.Common\DesertOctopus.MammothCache.Common.csproj", "{7DC09C74-AE2A-4A2E-A411-69B9A261F694}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nugets", "Nugets", "{EEFA52C8-BBDE-4830-8EF2-1174FA3DB681}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.Nuget", "src\DesertOctopus.Nuget\DesertOctopus.Nuget.csproj", "{9DD795A2-B3DA-48AF-A548-8E0B0BA077D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctopus.MammothCache.Redis", "src\DesertOctopus.MammothCache.Redis\DesertOctopus.MammothCache.Redis.csproj", "{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopus.MammothCache.Redis", "src\DesertOctopus.MammothCache.Redis\DesertOctopus.MammothCache.Redis.csproj", "{C42CFB36-C60A-47FC-BF74-12D93C1E92E4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{68948E3B-D6DD-4949-A612-F9A95379C062}"
 	ProjectSection(SolutionItems) = preProject
 		Docs\KrakenSerializer.md = Docs\KrakenSerializer.md
+		Docs\KrakenSerializerCore.md = Docs\KrakenSerializerCore.md
 		Docs\Main.md = Docs\Main.md
 		Docs\MammothCache.md = Docs\MammothCache.md
 		Docs\ObjectCloner.md = Docs\ObjectCloner.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesertOctupos.MammothCache.Redis.Tests", "tests\DesertOctopus.MammothCache.Redis.Tests\DesertOctupos.MammothCache.Redis.Tests.csproj", "{465618C0-B665-4C9B-A224-F83938AF0BC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DesertOctopos.MammothCache.Redis.Tests", "tests\DesertOctopus.MammothCache.Redis.Tests\DesertOctopos.MammothCache.Redis.Tests.csproj", "{465618C0-B665-4C9B-A224-F83938AF0BC7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,33 +11,40 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnostics.Windows;
+using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using DesertOctopus.Benchmark.Models;
-using DesertOctopus.MammothCache;
-using DesertOctopus.MammothCache.Common;
-using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
 using Force.DeepCloner;
+using Xunit;
+using Xunit.Abstractions;
+
+#if  NET46
+using BenchmarkDotNet.Diagnostics.Windows;
 using GeorgeCloney;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NClone;
 using NetSerializer;
 using Serializer = NetSerializer.Serializer;
+#endif
+
+#pragma warning disable CA1052
+
 
 // ReSharper disable PossibleMultipleEnumeration
 // ReSharper disable UnusedVariable
 
 namespace DesertOctopus.Benchmark
 {
-    [TestClass]
     public class CloneSerializationBenchmark
     {
-        public CloneSerializationBenchmark()
+        private readonly ITestOutputHelper _output;
+
+        public CloneSerializationBenchmark(ITestOutputHelper output)
         {
+            _output = output;
 //#if DEBUG
 //            throw new Exception("Use release mode");
 //#endif
@@ -45,13 +52,13 @@ namespace DesertOctopus.Benchmark
 
 
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void ProfileCloning()
         {
+#if NET46
             var root = BenchmarkObjectNonISerializablerDictionary.GetNewInitialized();
             DesertOctopus.ObjectCloner.Clone(root);
-
 
             var c = Clone.ObjectGraph(root);
             var d = DeepClonerExtensions.DeepClone(root);
@@ -64,45 +71,46 @@ namespace DesertOctopus.Benchmark
             }
 
             sw.Stop();
-            Assert.Fail(sw.Elapsed.ToString());
+            _output.WriteLine(sw.Elapsed.ToString());
+#endif
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void BenchmarkBenchmarkObjectNormalDictionaryCloningBenchMark()
         {
             var summary = BenchmarkRunner.Run<BenchmarkObjectNormalDictionaryCloningBenchMark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void SimpleDtoWithEveryPrimitivesCloningBenchmark()
         {
             var summary = BenchmarkRunner.Run<SimpleDtoWithEveryPrimitivesCloningBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void CloneBenchmarks()
         {
 #if DEBUG
@@ -134,9 +142,9 @@ namespace DesertOctopus.Benchmark
                         {
                             foreach (var validationError in summary.ValidationErrors)
                             {
-                                Console.WriteLine(validationError.Message);
+                                _output.WriteLine(validationError.Message);
                             }
-                            Assert.Fail(kvp.Key);
+                            Assert.True(false, kvp.Key);
                         }
 
                         BenchmarkDotNet.Exporters.MarkdownExporter.GitHub.ExportToLog(summary, logger);
@@ -157,7 +165,7 @@ namespace DesertOctopus.Benchmark
             var pos = fileContent.IndexOf(marker, StringComparison.InvariantCultureIgnoreCase);
             if (pos == -1)
             {
-                Assert.Fail("Could not find position of " + marker);
+                Assert.True(false, "Could not find position of " + marker);
             }
 
             fileContent = fileContent.Substring(0, pos + marker.Length);
@@ -176,8 +184,8 @@ namespace DesertOctopus.Benchmark
         {
             public CloneBenchmarkConfiguration()
             {
-                Add(new MemoryDiagnoser());
-                Add(new InliningDiagnoser());
+                Add(BenchmarkDotNet.Diagnosers.MemoryDiagnoser.Default);
+                //Add(new InliningDiagnoser());
             }
         }
     }
@@ -191,8 +199,10 @@ namespace DesertOctopus.Benchmark
         public CloneBenchmarkBase()
         {
             DesertOctopus();
+#if NET46
             GeorgeCloney();
             NClone();
+#endif
             DeepCloner();
         }
 
@@ -208,6 +218,7 @@ namespace DesertOctopus.Benchmark
             return ObjectCloner.Clone(_objectToTest);
         }
 
+#if NET46
         [Benchmark]
         public object GeorgeCloney()
         {
@@ -219,6 +230,7 @@ namespace DesertOctopus.Benchmark
         {
             return Clone.ObjectGraph(_objectToTest);
         }
+#endif
 
         [Benchmark]
         public object DeepCloner()

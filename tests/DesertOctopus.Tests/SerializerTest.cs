@@ -141,11 +141,11 @@ namespace DesertOctopus.Tests
             var instance2 = new ClassWith2Property<string>(str, str);
             var bytes = KrakenSerializer.Serialize(instance1);
             var deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytes);
-            instance1.ShouldBeEquivalentTo(deserializedValue);
+            instance1.Should().BeEquivalentTo(deserializedValue);
 
             var bytesTwice = KrakenSerializer.Serialize(instance2);
             deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytesTwice);
-            instance2.ShouldBeEquivalentTo(deserializedValue);
+            instance2.Should().BeEquivalentTo(deserializedValue);
 
             Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
@@ -159,11 +159,11 @@ namespace DesertOctopus.Tests
             var instance2 = new Dictionary<int, string> { { 123, str }, { 1235, str } };
             var bytes = KrakenSerializer.Serialize(instance1);
             var deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytes);
-            instance1.ShouldBeEquivalentTo(deserializedValue);
+            instance1.Should().BeEquivalentTo(deserializedValue);
 
             var bytesTwice = KrakenSerializer.Serialize(instance2);
             deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytesTwice);
-            instance2.ShouldBeEquivalentTo(deserializedValue);
+            instance2.Should().BeEquivalentTo(deserializedValue);
 
             Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
@@ -195,7 +195,7 @@ namespace DesertOctopus.Tests
             var instance = new ClassWithAllPrimitiveTypes();
             var bytes = KrakenSerializer.Serialize(instance);
             var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytes);
-            instance.ShouldBeEquivalentTo(deserializedValue);
+            instance.Should().BeEquivalentTo(deserializedValue);
         }
 
         [Fact]
@@ -308,8 +308,8 @@ namespace DesertOctopus.Tests
             var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithType);
             var deserializedValueFromOmitted = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithOmittedType, new SerializationOptions() { OmitRootTypeName = true });
 
-            instance.ShouldBeEquivalentTo(deserializedValue);
-            deserializedValueFromOmitted.ShouldBeEquivalentTo(deserializedValue);
+            instance.Should().BeEquivalentTo(deserializedValue);
+            deserializedValueFromOmitted.Should().BeEquivalentTo(deserializedValue);
         }
 
 

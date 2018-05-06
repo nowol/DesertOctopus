@@ -23,20 +23,21 @@ namespace DesertOctopus.Tests
             var fields = InternalSerializationStuff.GetFields(typeof(CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback));
             fields.Select(x => x.Name)
                   .ToArray()
-                  .ShouldAllBeEquivalentTo(new[]
-                                           {
-                                               "<SomeProperty>k__BackingField",
-                                               "_syncRoot",
-                                               "buckets",
-                                               "comparer",
-                                               "count",
-                                               "entries",
-                                               "freeCount",
-                                               "freeList",
-                                               "keys",
-                                               "values",
-                                               "version"
-                                           });
+                  .Should()
+                  .BeEquivalentTo(new[]
+                                  {
+                                      "<SomeProperty>k__BackingField",
+                                      "_syncRoot",
+                                      "buckets",
+                                      "comparer",
+                                      "count",
+                                      "entries",
+                                      "freeCount",
+                                      "freeList",
+                                      "keys",
+                                      "values",
+                                      "version"
+                                  });
         }
 
         [Fact]
@@ -47,10 +48,11 @@ namespace DesertOctopus.Tests
                                                               typeof(Dictionary<string, object>));
             fields.Select(x => x.Name)
                   .ToArray()
-                  .ShouldAllBeEquivalentTo(new[]
-                                           {
-                                               "<SomeProperty>k__BackingField"
-                                           });
+                  .Should()
+                  .BeEquivalentTo(new[]
+                                  {
+                                      "<SomeProperty>k__BackingField"
+                                  });
         }
     }
 }

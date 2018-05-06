@@ -67,8 +67,6 @@
     <Rule Id="CA2240" Action="Warning" />
     <Rule Id="CA2241" Action="Warning" />
     <Rule Id="CA2242" Action="Warning" />
-    <Rule Id="CA2235" Action="None" />
-    <Rule Id="CA2229" Action="None" />
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1200" Action="None" />
@@ -99,6 +97,12 @@
     <Rule Id="SA1516" Action="None" />
     <Rule Id="SA1003" Action="None" />
     <Rule Id="SA1204" Action="None" />
+    <Rule Id="SA1127" Action="None" />
+    <Rule Id="SA1114" Action="None" />
+    <Rule Id="SA1026" Action="None" />
+    <Rule Id="SA1008" Action="None" />
+    <Rule Id="SA1128" Action="None" />
+    <Rule Id="SA1214" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.AnalyzerPowerPack.Common" RuleNamespace="Microsoft.AnalyzerPowerPack.Common">
     <Rule Id="CA2235" Action="None" />
