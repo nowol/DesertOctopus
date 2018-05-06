@@ -1,4 +1,4 @@
-﻿#define INLINE_PRIMITIVE_METHOD
+﻿//#define INLINE_PRIMITIVE_METHOD
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using DesertOctopus.Utilities;
 
@@ -1457,6 +1458,7 @@ namespace DesertOctopus.Serialization
                                    objTracker);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string ReadStringImpl(Stream inputStream, DeserializerObjectTracker objTracker)
         {
             if (inputStream.ReadByte() == SerializerObjectTracker.Value0)
@@ -1503,6 +1505,7 @@ namespace DesertOctopus.Serialization
                                    objTracker);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteStringImpl(Stream outputStream,
                                          string obj,
                                          SerializerObjectTracker objTracker)

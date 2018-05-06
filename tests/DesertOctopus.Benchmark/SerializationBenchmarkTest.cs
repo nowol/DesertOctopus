@@ -188,6 +188,7 @@ namespace DesertOctopus.Benchmark
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 ints.", typeof(IntArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 doubles.", typeof(DoubleArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 decimals.", typeof(DecimalArraySerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an array of 100000 DateTimes.", typeof(DateTimeArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.", typeof(DictionaryIntIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.", typeof(DictionaryStringIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize a string of 1000 characters.", typeof(StringSerializationBenchmark));
@@ -312,6 +313,25 @@ namespace DesertOctopus.Benchmark
             var ii = new DecimalArraySerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<DecimalArraySerializationBenchmark>(new AllowNonOptimized());
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                _output.WriteLine(validationError.Message);
+            }
+
+            _output.WriteLine(k.First());
+        }
+
+        [Fact]
+        [Trait("Category", "Benchmark")]
+        public void DateTimeArraySerializationBenchmark()
+        {
+            var ii = new DateTimeArraySerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<DateTimeArraySerializationBenchmark>(new AllowNonOptimized());
 
             var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
             _output.WriteLine(k.First());
@@ -479,6 +499,16 @@ namespace DesertOctopus.Benchmark
 
         //public static decimal[] Array = Enumerable.Range(0, 100000).Select(x => Decimal.MaxValue).ToArray();
         public static decimal[] Array = Enumerable.Range(0, 100000).Select(x => 5456465.564M).ToArray();
+    }
+
+    public class DateTimeArraySerializationBenchmark : SerializationBenchmarkBase<DateTime[]>
+    {
+        public DateTimeArraySerializationBenchmark()
+            : base(DateTimeArraySerializationBenchmark.Array)
+        {
+        }
+
+        public static DateTime[] Array = Enumerable.Range(0, 100000).Select(x => DateTime.UtcNow).ToArray();
     }
 
     public class DictionaryStringIntSerializationBenchmark : SerializationBenchmarkBase<Dictionary<string, int>>
@@ -675,19 +705,17 @@ namespace DesertOctopus.Benchmark
 //    }
 //}
 
-#if NET46
-        private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
-#endif
         private BinaryFormatter bf = new BinaryFormatter();
         public byte[] krakenBytes;
         public byte[] krakenBytesWithOmittedRootType;
         public byte[] bfBytes;
 #if NET46
+        private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         public byte[] omniBytes;
         private NetSerializer.Serializer netSerializer;
+        public byte[] netBytes;
 #endif
         public byte[] wireBytes;
-        public byte[] netBytes;
         protected object obj;
         private string json = String.Empty;
         private Wire.Serializer wireSerializer = new Wire.Serializer();
@@ -750,8 +778,8 @@ namespace DesertOctopus.Benchmark
             System.IO.File.WriteAllText("BinaryFormatterSerialization", bfBytes.Length.ToString());
 #if NET46
             System.IO.File.WriteAllText("OmniSerialization", omniBytes.Length.ToString());
-#endif
             System.IO.File.WriteAllText("NetSerializerSerialization", netBytes.Length.ToString());
+#endif
 
             //using (var ms = new MemoryStream())
             //{
