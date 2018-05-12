@@ -7,7 +7,6 @@
     <Description>DesertOctopus is a utility class.</Description>
     <Company>NoWoL</Company>
     <Authors>NoWoL</Authors>
-    <Version>0.5.0</Version>
     <PackageLicenseUrl>https://github.com/nowol/DesertOctopus/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/nowol/DesertOctopus</PackageProjectUrl>
   </PropertyGroup>
