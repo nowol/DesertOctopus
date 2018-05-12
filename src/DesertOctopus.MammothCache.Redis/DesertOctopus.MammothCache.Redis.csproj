@@ -12,6 +12,11 @@
     <PackageProjectUrl>https://github.com/nowol/DesertOctopus</PackageProjectUrl>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -21,6 +26,10 @@
     <CodeAnalysisRuleSet>..\Common\DesertOctopus.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Common\GlobalAssemblyInfo.cs" Link="GlobalAssemblyInfo.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\Common\DesertOctopus.ruleset" Link="DesertOctopus.ruleset" />
