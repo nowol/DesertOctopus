@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Tests.Models;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace DesertOctopus.MammothCache.Tests
 {
-    [TestClass]
-    public class SquirrelCacheTest : BaseTest
+    public class SquirrelCacheTest : BaseTest, IDisposable
     {
         private SquirrelCache _cacheRepository;
         private CachingTestClass _testObject;
@@ -21,8 +21,7 @@ namespace DesertOctopus.MammothCache.Tests
         private readonly IFirstLevelCacheCloningProvider _alwaysCloningProvider = new AlwaysCloningProvider();
         private readonly IMammothCacheSerializationProvider _serializationProvider = new MammothCacheSerializationProvider();
 
-        [TestInitialize]
-        public void Initialize()
+        public SquirrelCacheTest()
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             _config.MaximumMemorySize = 1000;
@@ -33,50 +32,46 @@ namespace DesertOctopus.MammothCache.Tests
             _serializedTestObject = KrakenSerializer.Serialize(_testObject);
         }
 
-        [TestCleanup]
-        public void Cleanup()
+        public void Dispose()
         {
             _cacheRepository.Dispose();
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(ArgumentException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void CreatingASquirrelCacheWithInvalidTimerValueShoudThrowException()
         {
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             config.MaximumMemorySize = 1000;
             config.TimerInterval = TimeSpan.FromSeconds(0);
-            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+            Assert.Throws<ArgumentException>(() => new SquirrelCache(config, _noCloningProvider, _serializationProvider));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(ArgumentException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void CreatingASquirrelCacheWithInvalidAbsoluteExpirationValueShoudThrowException()
         {
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(0);
             config.MaximumMemorySize = 1000;
             config.TimerInterval = TimeSpan.FromSeconds(1);
-            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+            Assert.Throws<ArgumentException>(() => new SquirrelCache(config, _noCloningProvider, _serializationProvider));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(ArgumentException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void CreatingASquirrelCacheWithInvalidMemorySizeValueShoudThrowException()
         {
             var config = new FirstLevelCacheConfig();
             config.AbsoluteExpiration = TimeSpan.FromSeconds(5);
             config.MaximumMemorySize = 0;
             config.TimerInterval = TimeSpan.FromSeconds(1);
-            var cacheRepository = new SquirrelCache(config, _noCloningProvider, _serializationProvider);
+            Assert.Throws<ArgumentException>(() => new SquirrelCache(config, _noCloningProvider, _serializationProvider));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void UsingACustomSerializationProviderShouldWork()
         {
             var key = Guid.NewGuid().ToString();
@@ -85,86 +80,90 @@ namespace DesertOctopus.MammothCache.Tests
 
             var cacheRepository = new SquirrelCache(_config, _noCloningProvider, sp);
             cacheRepository.Set(key, objBytes);
-            Assert.AreEqual(_testObject.Value, cacheRepository.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, cacheRepository.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void AddingItemToCacheWithoutTtlShouldStoreIt()
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ItemsShouldRespectTheAbsoluteExpiration()
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
 
             Thread.Sleep(Convert.ToInt32(_config.AbsoluteExpiration.TotalMilliseconds + 2000));
 
-            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void EstimatedMemoryUsageShouldGrowWhenAddingItems()
         {
             var key1 = Guid.NewGuid().ToString();
             var key2 = Guid.NewGuid().ToString();
             _cacheRepository.Set(key1, _serializedTestObject);
-            Assert.AreEqual(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
             _cacheRepository.Set(key2, _serializedTestObject);
-            Assert.AreEqual(_serializedTestObject.Length * 2, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(_serializedTestObject.Length * 2, _cacheRepository.EstimatedMemorySize);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void EstimatedMemoryUsageShouldDecreaseWhenRemovingItems()
         {
             var key1 = Guid.NewGuid().ToString();
             var key2 = Guid.NewGuid().ToString();
             _cacheRepository.Set(key1, _serializedTestObject);
             _cacheRepository.Set(key2, _serializedTestObject);
-            Assert.AreEqual(_serializedTestObject.Length * 2, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(_serializedTestObject.Length * 2, _cacheRepository.EstimatedMemorySize);
 
             _cacheRepository.Remove(key1);
-            Assert.AreEqual(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+
+            WaitFor(0.5);
+            Assert.Equal(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
             _cacheRepository.RemoveAll();
-            Assert.AreEqual(0, _cacheRepository.EstimatedMemorySize);
+            WaitFor(0.5);
+            Assert.Equal(0, _cacheRepository.EstimatedMemorySize);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void EstimatedMemoryUsageShouldDecreaseWhenAnItemIsRemovedDueToAbsoluteExpiration()
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
+            WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.AreEqual(0, _cacheRepository.EstimatedMemorySize);
+            Assert.False(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Equal(0, _cacheRepository.EstimatedMemorySize);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void RemovingItemFromTheCacheShouldRemoveItFromTheStore()
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _cacheRepository.Get<CachingTestClass>(key).Value.Value);
             _cacheRepository.Remove(key);
-            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void RemovingAllItemsFromTheCacheShouldRemoveThemFromTheStore()
         {
             var key1 = Guid.NewGuid().ToString();
@@ -172,32 +171,32 @@ namespace DesertOctopus.MammothCache.Tests
             _cacheRepository.Set(key1, _serializedTestObject);
             _cacheRepository.Set(key2, _serializedTestObject);
             _cacheRepository.RemoveAll();
-            Assert.AreEqual(0, _cacheRepository.NumberOfObjects);
+            Assert.Equal(0, _cacheRepository.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectShouldBeRemovedFromTheCacheBecauseTheCacheIsOverTheConfiguredMemoryLimit()
         {
-            var bigTestObject = new CachingTestClass() { ByteArray = new bool[1000]};
+            var bigTestObject = new CachingTestClass() { ByteArray = new bool[1000] };
             var bigSerializedTestObject = KrakenSerializer.Serialize(bigTestObject);
 
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, bigSerializedTestObject);
 
-            Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
+            Assert.True(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
 
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
-            Assert.AreEqual(0, _cacheRepository.EstimatedMemorySize);
-            Assert.AreEqual(0, _cacheRepository.NumberOfObjects);
+            Assert.Equal(0, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(0, _cacheRepository.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectsShouldBeRemovedInTheOrderTheyWereAddedOnceTheCacheisOverTheConfiguredMemoryLimit()
         {
-            var bigTestObject = new CachingTestClass() { ByteArray = new bool[800]};
+            var bigTestObject = new CachingTestClass() { ByteArray = new bool[800] };
             var bigSerializedTestObject = KrakenSerializer.Serialize(bigTestObject);
 
             var key1 = Guid.NewGuid().ToString();
@@ -205,46 +204,47 @@ namespace DesertOctopus.MammothCache.Tests
             _cacheRepository.Set(key1, _serializedTestObject);
             _cacheRepository.Set(key2, bigSerializedTestObject);
 
-            Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
+            Assert.True(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
 
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
-            Assert.AreEqual(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
-            Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
-            Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
+            Assert.Equal(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(1, _cacheRepository.NumberOfObjects);
+            Assert.True(_cacheRepository.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.NotNull(_cacheRepository.Get<CachingTestClass>(key2).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectsShouldBeRemovedUntilTheCacheIsNoLongerOverTheConfigureMemoryLimit()
         {
+            var sw = Stopwatch.StartNew();
             var keys = new List<string>();
             int numberOfItemsToAdd = (_config.MaximumMemorySize / _serializedTestObject.Length) + 5;
-            for (int i = 0 ; i < numberOfItemsToAdd ; i++)
+            for (int i = 0; i < numberOfItemsToAdd; i++)
             {
                 var key = Guid.NewGuid().ToString();
                 _cacheRepository.Set(key, _serializedTestObject);
                 keys.Add(key);
             }
 
-            Assert.AreEqual(numberOfItemsToAdd, _cacheRepository.NumberOfObjects);
-            Assert.IsTrue(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize);
+            Assert.Equal(numberOfItemsToAdd, _cacheRepository.NumberOfObjects);
+            Assert.True(_cacheRepository.EstimatedMemorySize > _config.MaximumMemorySize, _cacheRepository.EstimatedMemorySize + " > " + _config.MaximumMemorySize + " " + sw.ElapsedMilliseconds + " " + _cacheRepository.NumberOfObjects);
 
             WaitFor(_config.TimerInterval.TotalSeconds * 2);
 
-            Assert.AreEqual(numberOfItemsToAdd - 5, _cacheRepository.NumberOfObjects);
-            Assert.AreEqual(_serializedTestObject.Length * (numberOfItemsToAdd - 5), _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(numberOfItemsToAdd - 5, _cacheRepository.NumberOfObjects);
+            Assert.Equal(_serializedTestObject.Length * (numberOfItemsToAdd - 5), _cacheRepository.EstimatedMemorySize);
 
             foreach (var key in keys.Skip(5))
             {
-                Assert.IsTrue(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
-                Assert.IsNotNull(_cacheRepository.Get<CachingTestClass>(key).Value);
+                Assert.True(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+                Assert.NotNull(_cacheRepository.Get<CachingTestClass>(key).Value);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectShouldBeReplaced()
         {
             var bigTestObject = new CachingTestClass() { ByteArray = new bool[800] };
@@ -252,15 +252,17 @@ namespace DesertOctopus.MammothCache.Tests
 
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+            WaitFor(0.5);
+            Assert.Equal(_serializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
             _cacheRepository.Set(key, bigSerializedTestObject);
 
-            Assert.AreEqual(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
-            Assert.AreEqual(1, _cacheRepository.NumberOfObjects);
+            WaitFor(0.5);
+            Assert.Equal(bigSerializedTestObject.Length, _cacheRepository.EstimatedMemorySize);
+            Assert.Equal(1, _cacheRepository.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldNotNeverBeCloned()
         {
             var cache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -269,12 +271,12 @@ namespace DesertOctopus.MammothCache.Tests
             cache.Set(key, _serializedTestObject);
             var obj1 = cache.Get<object>(key).Value;
             var obj2 = cache.Get<object>(key).Value;
-            Assert.IsNotNull(obj1);
-            Assert.IsTrue(ReferenceEquals(obj1, obj2));
+            Assert.NotNull(obj1);
+            Assert.True(ReferenceEquals(obj1, obj2));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldAlwaysBeCloned()
         {
             var cache = new SquirrelCache(_config, _alwaysCloningProvider, _serializationProvider);
@@ -283,12 +285,12 @@ namespace DesertOctopus.MammothCache.Tests
             cache.Set(key, _serializedTestObject);
             var obj1 = cache.Get<object>(key).Value;
             var obj2 = cache.Get<object>(key).Value;
-            Assert.IsNotNull(obj1);
-            Assert.IsFalse(ReferenceEquals(obj1, obj2));
+            Assert.NotNull(obj1);
+            Assert.False(ReferenceEquals(obj1, obj2));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldBeClonedIfTheyAreFromASpecificNameSpace()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
@@ -304,25 +306,25 @@ namespace DesertOctopus.MammothCache.Tests
 
             var obj1_1 = cache.Get<object>(key1).Value;
             var obj1_2 = cache.Get<object>(key1).Value;
-            Assert.IsNotNull(obj1_1);
-            Assert.IsFalse(ReferenceEquals(obj1_1, obj1_2));
+            Assert.NotNull(obj1_1);
+            Assert.False(ReferenceEquals(obj1_1, obj1_2));
 
             var obj2_1 = cache.Get<object>(key2).Value;
             var obj2_2 = cache.Get<object>(key2).Value;
-            Assert.IsNotNull(obj2_1);
-            Assert.IsTrue(ReferenceEquals(obj2_1, obj2_2));
+            Assert.NotNull(obj2_1);
+            Assert.True(ReferenceEquals(obj2_1, obj2_2));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void NamespacesBasedCloningProviderShouldReturnFalseForNullObjects()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "DesertOctopus.MammothCache.Tests" });
-            Assert.IsFalse(namespaceCloningProvider.RequireCloning(null));
+            Assert.False(namespaceCloningProvider.RequireCloning(null));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectRetrievedFromFirstLevelCacheShouldNotBeClonedIfTheyAreFromASpecificNameSpace()
         {
             var namespaceCloningProvider = new NamespacesBasedCloningProvider(new [] { "System" });
@@ -338,42 +340,41 @@ namespace DesertOctopus.MammothCache.Tests
 
             var obj1_1 = cache.Get<object>(key1).Value;
             var obj1_2 = cache.Get<object>(key1).Value;
-            Assert.IsNotNull(obj1_1);
-            Assert.IsTrue(ReferenceEquals(obj1_1, obj1_2));
+            Assert.NotNull(obj1_1);
+            Assert.True(ReferenceEquals(obj1_1, obj1_2));
 
             var obj2_1 = cache.Get<object>(key2).Value;
             var obj2_2 = cache.Get<object>(key2).Value;
-            Assert.IsNotNull(obj2_1);
-            Assert.IsFalse(ReferenceEquals(obj2_1, obj2_2));
+            Assert.NotNull(obj2_1);
+            Assert.False(ReferenceEquals(obj2_1, obj2_2));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectsRemoveFromSquirrelCacheAreRemovedFromTheByAgeCache()
         {
             var key = Guid.NewGuid().ToString();
             _cacheRepository.Set(key, _serializedTestObject);
-            Assert.AreEqual(1, _cacheRepository.CachedObjectsByAge.Count);
+            Assert.Equal(1, _cacheRepository.NumberOfObjects);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_cacheRepository.Get<CachingTestClass>(key).IsSuccessful);
 
             WaitFor(1);
 
-            Assert.AreEqual(0, _cacheRepository.CachedObjectsByAge.Count);
+            Assert.Equal(0, _cacheRepository.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotImplementedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void NoCloningProviderShouldThrowWhenCloning()
         {
-            _noCloningProvider.Clone(new object());
+            Assert.Throws<NotImplementedException>(() => _noCloningProvider.Clone(new object()));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SquirrelCacheShouldBeThreadSafe()
         {
             var config = new FirstLevelCacheConfig();
@@ -384,7 +385,7 @@ namespace DesertOctopus.MammothCache.Tests
 
             // seed cache
             var seededItems = 100000;
-            int numberOfMod3Items = Enumerable.Range(0, seededItems) .Count(x => x % 3 == 0);
+            int numberOfMod3Items = Enumerable.Range(0, seededItems).Count(x => x % 3 == 0);
 
             Parallel.For(0,
                          seededItems,
@@ -394,9 +395,9 @@ namespace DesertOctopus.MammothCache.Tests
                                                   _serializedTestObject);
                          });
 
-            Assert.AreEqual(seededItems,
+            Assert.Equal(seededItems,
                             cacheRepository.NumberOfObjects);
-            Assert.AreEqual(seededItems * _serializedTestObject.Length,
+            Assert.Equal(seededItems * _serializedTestObject.Length,
                             cacheRepository.EstimatedMemorySize);
 
             Parallel.For(0,
@@ -416,10 +417,34 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(10);
 
-            Assert.AreEqual(seededItems - numberOfMod3Items,
+            Assert.Equal(seededItems - numberOfMod3Items,
                             cacheRepository.NumberOfObjects);
-            Assert.AreEqual((seededItems - numberOfMod3Items) * _serializedTestObject.Length,
-                            cacheRepository.EstimatedMemorySize);
+            Assert.Equal((seededItems - numberOfMod3Items) * _serializedTestObject.Length,
+                         cacheRepository.EstimatedMemorySize);
         }
+
+
+        //[Fact]
+        //[Trait("Category", "Unit")]
+        //public void aaa()
+        //{
+        //    var sw = Stopwatch.StartNew();
+
+        //    _cacheRepository.Set("cache_0",
+        //                        _serializedTestObject);
+
+        //    int i = 0;
+
+        //    while (true)
+        //    {
+
+        //        _cacheRepository.Set("cache_" + i++,
+        //                            _serializedTestObject,
+        //                            TimeSpan.FromSeconds(0.1));
+        //        Thread.Sleep(500);
+        //    }
+        //}
     }
+
+// add test where we cache a null value (it should be cached and return a conditional true
 }

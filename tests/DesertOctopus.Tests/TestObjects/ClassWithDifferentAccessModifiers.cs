@@ -9,9 +9,13 @@ namespace SerializerTests.TestObjects
     [Serializable]
     public class ClassWithDifferentAccessModifiers
     {
+#pragma warning disable SA1401 // Fields must be private
         public int PublicFieldValue;
-        private int PrivateFieldValue;
         internal int InternalFieldValue;
+#pragma warning restore SA1401 // Fields must be private
+#pragma warning disable SA1306 // Field names must begin with lower-case letter
+        private int PrivateFieldValue;
+#pragma warning restore SA1306 // Field names must begin with lower-case letter
 
         public int PublicPropertyValue { get; set; }
         private int PrivatePropertyValue { get; set; }

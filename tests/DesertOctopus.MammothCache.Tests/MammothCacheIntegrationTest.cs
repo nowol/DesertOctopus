@@ -9,12 +9,11 @@ using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.MammothCache.Tests.Models;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace DesertOctopus.MammothCache.Tests
 {
-    [TestClass]
-    public class MammothCacheIntegrationTest : BaseTest
+    public class MammothCacheIntegrationTest : BaseTest, IDisposable
     {
         private SquirrelCache _firstLevelCache;
         private CachingTestClass _testObject;
@@ -34,8 +33,7 @@ namespace DesertOctopus.MammothCache.Tests
         private MammothCache _cache;
         private MammothCacheSerializationProvider _mammothCacheSerializationProvider;
 
-        [TestInitialize]
-        public void Initialize()
+        public MammothCacheIntegrationTest()
         {
             _config.AbsoluteExpiration = TimeSpan.FromSeconds(10);
             _config.MaximumMemorySize = 1000;
@@ -60,46 +58,7 @@ namespace DesertOctopus.MammothCache.Tests
 #endif
         }
 
-        private void RemoveAllAndWait()
-        {
-            var receivedEvent = false;
-
-            _secondLevelCache.OnRemoveAllItems += (sender,
-                                                   args) =>
-                                                  {
-                                                      receivedEvent = true;
-                                                  };
-
-            _cache.RemoveAll();
-
-            var sw = Stopwatch.StartNew();
-            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
-            {
-                WaitFor(0.01);
-            }
-        }
-
-        private async Task RemoveAllAndWaitAsync()
-        {
-            var receivedEvent = false;
-
-            _secondLevelCache.OnRemoveAllItems += (sender,
-                                                   args) =>
-                                                  {
-                                                      receivedEvent = true;
-                                                  };
-
-            await _cache.RemoveAllAsync().ConfigureAwait(false);
-
-            var sw = Stopwatch.StartNew();
-            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
-            {
-                WaitFor(0.01);
-            }
-        }
-
-        [TestCleanup]
-        public void Cleanup()
+        public void Dispose()
         {
             try
             {
@@ -141,32 +100,70 @@ namespace DesertOctopus.MammothCache.Tests
             _nonSerializableCache.Dispose();
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        private void RemoveAllAndWait()
+        {
+            var receivedEvent = false;
+
+            _secondLevelCache.OnRemoveAllItems += (sender,
+                                                   args) =>
+                                                  {
+                                                      receivedEvent = true;
+                                                  };
+
+            _cache.RemoveAll();
+
+            var sw = Stopwatch.StartNew();
+            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                WaitFor(0.01);
+            }
+        }
+
+        private async Task RemoveAllAndWaitAsync()
+        {
+            var receivedEvent = false;
+
+            _secondLevelCache.OnRemoveAllItems += (sender,
+                                                   args) =>
+                                                  {
+                                                      receivedEvent = true;
+                                                  };
+
+            await _cache.RemoveAllAsync().ConfigureAwait(false);
+
+            var sw = Stopwatch.StartNew();
+            while (!receivedEvent && sw.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                WaitFor(0.01);
+            }
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task AddingAnItemShouldAddItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void AddingAnItemShouldAddItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RemovingAnItemShouldRemoveItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
@@ -174,12 +171,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.RemoveAsync(key).ConfigureAwait(false);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemovingAnItemShouldRemoveItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
@@ -187,12 +184,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Remove(key);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task UpdatingAnItemShouldRemoveItFromOtherDistributedCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -203,15 +200,15 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemoved = true;
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemovedFromOtherCache = true;
 
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedFromOtherCache = false;
@@ -220,12 +217,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsTrue(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.True(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void UpdatingAnItemShouldRemoveItFromOtherDistributedCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -236,15 +233,15 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemoved = true;
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemovedFromOtherCache = true;
 
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedFromOtherCache = false;
@@ -253,12 +250,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsTrue(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.True(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -278,12 +275,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
                                                         {
                                                             itemsWereRemoved = true;
                                                             Interlocked.Increment(ref itemsWereRemovedCount);
                                                         };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
                                                             {
                                                                 itemsWereRemovedFromOtherCache = true;
                                                                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -293,10 +290,10 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(0, itemsWereRemovedCount);
-            Assert.AreEqual(3, itemsWereRemovedCountFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
+            Assert.Equal(0, itemsWereRemovedCount);
+            Assert.Equal(3, itemsWereRemovedCountFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
@@ -307,14 +304,14 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsTrue(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(3, itemsWereRemovedCount);
-            Assert.AreEqual(0, itemsWereRemovedCountFromOtherCache);
+            Assert.True(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
+            Assert.Equal(3, itemsWereRemovedCount);
+            Assert.Equal(0, itemsWereRemovedCountFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void UpdatingMultipleItemsShouldRemoveItFromOtherDistributedCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -334,12 +331,12 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
                                                         {
                                                             itemsWereRemoved = true;
                                                             Interlocked.Increment(ref itemsWereRemovedCount);
                                                         };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
                                                             {
                                                                 itemsWereRemovedFromOtherCache = true;
                                                                 Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
@@ -349,10 +346,10 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(0, itemsWereRemovedCount);
-            Assert.AreEqual(3, itemsWereRemovedCountFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
+            Assert.Equal(0, itemsWereRemovedCount);
+            Assert.Equal(3, itemsWereRemovedCountFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
@@ -363,52 +360,52 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsTrue(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(3, itemsWereRemovedCount);
-            Assert.AreEqual(0, itemsWereRemovedCountFromOtherCache);
+            Assert.True(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
+            Assert.Equal(3, itemsWereRemovedCount);
+            Assert.Equal(0, itemsWereRemovedCountFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task UpdatingAnItemShouldUpdateItInBothLevelOfCacheAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
             var testObject2 = new CachingTestClass();
             await _cache.SetAsync(key, testObject2, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            Assert.AreEqual(testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(testObject2.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(testObject2.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void UpdatingAnItemShouldUpdateItInBothLevelOfCacheSync()
         {
             var key = RandomKey();
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
             var testObject2 = new CachingTestClass();
             _cache.Set(key, testObject2, TimeSpan.FromSeconds(30));
 
-            Assert.AreEqual(testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(testObject2.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(testObject2.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ExpiredItemFromFirstLevelShouldStillExistInSecondLevelAsync()
         {
             var key = RandomKey();
@@ -416,14 +413,14 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.NotNull(bytes);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ExpiredItemFromFirstLevelShouldStillExistInSecondLevelSync()
         {
             var key = RandomKey();
@@ -431,14 +428,14 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.NotNull(bytes);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheAsync()
         {
             var key = RandomKey();
@@ -446,17 +443,17 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
-            Assert.IsNotNull(await _cache.GetAsync<CachingTestClass>(key).ConfigureAwait(false));
+            Assert.NotNull(await _cache.GetAsync<CachingTestClass>(key).ConfigureAwait(false));
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ItemShouldBePutIntoFirstLevelCacheWhenFetchFromTheSecondLevelCacheSync()
         {
             var key = RandomKey();
@@ -464,17 +461,17 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds * 2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
-            Assert.IsNotNull(_cache.Get<CachingTestClass>(key));
+            Assert.NotNull(_cache.Get<CachingTestClass>(key));
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RemovingAnItemFromTheSecondLevelCacheShouldRemoveItFromTheFirstLevelCacheAsync()
         {
             var key = RandomKey();
@@ -485,12 +482,12 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.Get(key);
             WaitFor(2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemovingAnItemFromTheSecondLevelCacheShouldRemoveItFromTheFirstLevelCacheSync()
         {
             var key = RandomKey();
@@ -501,12 +498,12 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.Get(key);
             WaitFor(2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ItemIsRemovedFromFirstLevelCacheIfItExpiresFromSecondLevelCacheAsync()
         {
             var key = RandomKey();
@@ -517,12 +514,12 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.Get(key);
             WaitFor(2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ItemIsRemovedFromFirstLevelCacheIfItExpiresFromSecondLevelCacheSync()
         {
             var key = RandomKey();
@@ -533,17 +530,17 @@ namespace DesertOctopus.MammothCache.Tests
             _secondLevelCache.Get(key);
             WaitFor(2);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ItemsEvictedFromBecauseOfMemoryPressureShouldBeRemovedFromFirstLevelCacheAsync()
         {
             var c = _secondLevelCache.GetConfig(null);
             var config = await _secondLevelCache.GetConfigAsync(pattern: "maxmemory").ConfigureAwait(false);
-            var memoryStr = GetAppSetting("RedisMaxMemory");
+            var memoryStr = RedisMaxMemory;
             if (config != null
                 && config.Length == 1)
             {
@@ -559,14 +556,15 @@ namespace DesertOctopus.MammothCache.Tests
             int slicedInto = 1000;
             var bigTestObject = new CachingTestClass() { ByteArray = new bool[memoryLimit / slicedInto] };
             var bigSerializedTestObject = KrakenSerializer.Serialize(bigTestObject);
-            var nbToStore = memoryLimit / bigSerializedTestObject.Length + 10;
+            var nbToStore = (memoryLimit / bigSerializedTestObject.Length) + 10;
             var keys = new List<string>();
             bool itemsWereRemoved = true;
             var removedKeys = new ConcurrentBag<string>();
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate(object sender, ItemEvictedEventArgs e)
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
                                                         {
-                                                            Assert.IsTrue(keys.Contains(e.Key));
+                                                            Assert.Contains(e.Key,
+                                                                            keys);
                                                             itemsWereRemoved = true;
                                                             removedKeys.Add(e.Key);
                                                         };
@@ -585,16 +583,16 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(20);
 
-            Assert.IsTrue(itemsWereRemoved);
+            Assert.True(itemsWereRemoved);
 
             foreach (var key in removedKeys.Take(10).ToArray())
             {
-                Assert.IsFalse(_firstLevelCache.Get<object>(key).IsSuccessful);
+                Assert.False(_firstLevelCache.Get<object>(key).IsSuccessful);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -607,19 +605,19 @@ namespace DesertOctopus.MammothCache.Tests
                                                                      },
                                                                      TimeSpan.FromSeconds(30))
                                     .ConfigureAwait(false);
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(_testObject.Value, value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Equal(_testObject.Value, value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
 
             var bytes = await _secondLevelCache.GetAsync(key).ConfigureAwait(false);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
-            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
+            Assert.Equal(_testObject.Value, deserializedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -631,19 +629,19 @@ namespace DesertOctopus.MammothCache.Tests
                                                               return _testObject;
                                                           },
                                                           TimeSpan.FromSeconds(30));
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(_testObject.Value, value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Equal(_testObject.Value, value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
 
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
-            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
+            Assert.Equal(_testObject.Value, deserializedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
         {
             bool delegateWasCalled = false;
@@ -659,15 +657,15 @@ namespace DesertOctopus.MammothCache.Tests
                                                                      },
                                                                      TimeSpan.FromSeconds(30))
                                     .ConfigureAwait(false);
-            Assert.IsFalse(delegateWasCalled);
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(_testObject.Value, value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.False(delegateWasCalled);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(_testObject.Value, value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
         {
             bool delegateWasCalled = false;
@@ -682,15 +680,15 @@ namespace DesertOctopus.MammothCache.Tests
                                                               return _testObject;
                                                           },
                                                           TimeSpan.FromSeconds(30));
-            Assert.IsFalse(delegateWasCalled);
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(_testObject.Value, value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.False(delegateWasCalled);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(_testObject.Value, value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -703,7 +701,7 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
             keys.Add(new CacheItemDefinition { Key = key3 });
 
-            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys, 
+            var values = await _cache.GetOrAddAsync<CachingTestClass>(keys,
                                                                       definitions =>
                                                                       {
                                                                           delegateWasCalled = true;
@@ -712,22 +710,22 @@ namespace DesertOctopus.MammothCache.Tests
                                                                           return Task.FromResult(results);
                                                                       })
                                      .ConfigureAwait(false);
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(1, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Single(values);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
 
             var bytes = await _secondLevelCache.GetAsync(key1).ConfigureAwait(false);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
-            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
+            Assert.Equal(_testObject.Value, deserializedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddMultipleItemsShouldUseTheItemProvidedByTheDelegateIfItIsMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -748,22 +746,22 @@ namespace DesertOctopus.MammothCache.Tests
                                                                results.Add(definitions.Single(x => x.Key == key1), _testObject);
                                                                return results;
                                                            });
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(1, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Single(values);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
 
             var bytes = _secondLevelCache.Get(key1);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize<CachingTestClass>(bytes);
-            Assert.AreEqual(_testObject.Value, deserializedValue.Value);
+            Assert.Equal(_testObject.Value, deserializedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task SetMultipleItemsShouldStoreAllItemsAsync()
         {
             var key1 = RandomKey();
@@ -777,18 +775,18 @@ namespace DesertOctopus.MammothCache.Tests
 
             await _cache.SetAsync(objects).ConfigureAwait(false);
 
-            Assert.AreEqual(3, _firstLevelCache.NumberOfObjects);
-            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
-            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
-            Assert.IsTrue(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+            Assert.Equal(3, _firstLevelCache.NumberOfObjects);
+            Assert.True(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+            Assert.True(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
+            Assert.True(await _secondLevelCache.KeyExistsAsync(key1).ConfigureAwait(false));
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
-            Assert.IsFalse(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
+            Assert.True(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.True(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
+            Assert.False(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void SetMultipleItemsShouldStoreAllItemsSync()
         {
             var key1 = RandomKey();
@@ -802,18 +800,18 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(objects);
 
-            Assert.AreEqual(3, _firstLevelCache.NumberOfObjects);
-            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
-            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
-            Assert.IsTrue(_secondLevelCache.KeyExists(key1));
+            Assert.Equal(3, _firstLevelCache.NumberOfObjects);
+            Assert.True(_secondLevelCache.KeyExists(key1));
+            Assert.True(_secondLevelCache.KeyExists(key1));
+            Assert.True(_secondLevelCache.KeyExists(key1));
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
-            Assert.IsFalse(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
+            Assert.True(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.True(_secondLevelCache.GetTimeToLive(key2).TimeToLive.Value.TotalSeconds > 5);
+            Assert.False(_secondLevelCache.GetTimeToLive(key3).TimeToLive.HasValue);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedAsync()
         {
             bool delegateWasCalled = false;
@@ -840,19 +838,19 @@ namespace DesertOctopus.MammothCache.Tests
                                                                           return Task.FromResult(results);
                                                                       })
                                      .ConfigureAwait(false);
-            Assert.IsFalse(delegateWasCalled);
-            Assert.AreEqual(3, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
-            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
-            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+            Assert.False(delegateWasCalled);
+            Assert.Equal(3, values.Count);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.Equal(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.Equal(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddMultipleItemsNotShouldUseTheDelegateIfTheItemIsAlreadyCachedSync()
         {
             bool delegateWasCalled = false;
@@ -878,19 +876,19 @@ namespace DesertOctopus.MammothCache.Tests
                                                                results.Add(definitions.Single(x => x.Key == key1), _testObject);
                                                                return results;
                                                            });
-            Assert.IsFalse(delegateWasCalled);
-            Assert.AreEqual(3, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
-            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
-            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+            Assert.False(delegateWasCalled);
+            Assert.Equal(3, values.Count);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.Equal(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.Equal(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheAsync()
         {
             bool delegateWasCalled = false;
@@ -910,26 +908,26 @@ namespace DesertOctopus.MammothCache.Tests
             var values = await _cache.GetOrAddAsync<CachingTestClass>(keys,
                                                                       definitions =>
                                                                       {
-                                                                          Assert.AreEqual(1, definitions.Length);
+                                                                          Assert.Single(definitions);
                                                                           delegateWasCalled = true;
                                                                           var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
                                                                           results.Add(definitions.Single(x => x.Key == key3), _testObject3);
                                                                           return Task.FromResult(results);
                                                                       })
                                      .ConfigureAwait(false);
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(3, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
-            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
-            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Equal(3, values.Count);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.Equal(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.Equal(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddMultipleItemsNotShouldOnlyUseTheDelegateIfSomeItemsAreMissingFromTheCacheSync()
         {
             bool delegateWasCalled = false;
@@ -948,25 +946,25 @@ namespace DesertOctopus.MammothCache.Tests
             var values = _cache.GetOrAdd<CachingTestClass>(keys,
                                                            definitions =>
                                                            {
-                                                               Assert.AreEqual(1, definitions.Length);
+                                                               Assert.Single(definitions);
                                                                delegateWasCalled = true;
                                                                var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
                                                                results.Add(definitions.Single(x => x.Key == key3), _testObject3);
                                                                return results;
                                                            });
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(3, values.Count);
-            Assert.AreEqual(_testObject.Value, values.First().Value.Value);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
-            Assert.IsTrue(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
-            Assert.AreEqual(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
-            Assert.AreEqual(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
+            Assert.True(delegateWasCalled);
+            Assert.Equal(3, values.Count);
+            Assert.Equal(_testObject.Value, values.First().Value.Value);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key1).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key2).IsSuccessful);
+            Assert.True(_firstLevelCache.Get<CachingTestClass>(key3).IsSuccessful);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key1).Value.Value);
+            Assert.Equal(_testObject2.Value, _firstLevelCache.Get<CachingTestClass>(key2).Value.Value);
+            Assert.Equal(_testObject3.Value, _firstLevelCache.Get<CachingTestClass>(key3).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetMultipleValuesAsync()
         {
             var key1 = RandomKey();
@@ -986,14 +984,14 @@ namespace DesertOctopus.MammothCache.Tests
 
             Dictionary<CacheItemDefinition, CachingTestClass> values = await _cache.GetAsync<CachingTestClass>(keys).ConfigureAwait(false);
 
-            Assert.AreEqual(2, values.Count);
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
-            Assert.AreEqual(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
+            Assert.Equal(2, values.Count);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
+            Assert.Equal(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetMultipleValuesSync()
         {
             var key1 = RandomKey();
@@ -1013,14 +1011,14 @@ namespace DesertOctopus.MammothCache.Tests
 
             Dictionary<CacheItemDefinition, CachingTestClass> values = _cache.Get<CachingTestClass>(keys);
 
-            Assert.AreEqual(2, values.Count);
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
-            Assert.AreEqual(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
+            Assert.Equal(2, values.Count);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(_testObject.Value, values.First(x => x.Key.Key == key1).Value.Value);
+            Assert.Equal(testObject2.Value, values.First(x => x.Key.Key == key2).Value.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task SetMultipleValuesAsync()
         {
             var key1 = RandomKey();
@@ -1032,17 +1030,17 @@ namespace DesertOctopus.MammothCache.Tests
             values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
 
             await _cache.SetAsync(values).ConfigureAwait(false);
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
             _firstLevelCache.RemoveAll();
-            Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
-            Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
+            Assert.Equal(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
+            Assert.Equal(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
-            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
+            Assert.True(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.Null(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void SetMultipleValuesSync()
         {
             var key1 = RandomKey();
@@ -1055,17 +1053,17 @@ namespace DesertOctopus.MammothCache.Tests
 
             _cache.Set(values);
 
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
             _firstLevelCache.RemoveAll();
-            Assert.AreEqual(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
-            Assert.AreEqual(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
+            Assert.Equal(_testObject.Value, _cache.Get<CachingTestClass>(key1).Value);
+            Assert.Equal(testObject2.Value, _cache.Get<CachingTestClass>(key2).Value);
 
-            Assert.IsTrue(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
-            Assert.IsNull(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
+            Assert.True(_secondLevelCache.GetTimeToLive(key1).TimeToLive.Value.TotalSeconds > 25);
+            Assert.Null(_secondLevelCache.GetTimeToLive(key2).TimeToLive);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task MultipleItemsRetrievedShouldHaveTheirTtlSetAsync()
         {
             var key1 = RandomKey();
@@ -1077,7 +1075,7 @@ namespace DesertOctopus.MammothCache.Tests
             values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
 
             await _cache.SetAsync(values).ConfigureAwait(false);
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
             _firstLevelCache.RemoveAll();
 
             var keys = new List<CacheItemDefinition>();
@@ -1090,17 +1088,17 @@ namespace DesertOctopus.MammothCache.Tests
             WaitFor(5);
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds);
 
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void MultipleItemsRetrievedShouldHaveTheirTtlSetSync()
         {
             var key1 = RandomKey();
@@ -1112,7 +1110,7 @@ namespace DesertOctopus.MammothCache.Tests
             values.Add(new CacheItemDefinition { Key = key2 }, testObject2);
 
             _cache.Set(values);
-            Assert.AreEqual(2, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _firstLevelCache.NumberOfObjects);
             _firstLevelCache.RemoveAll();
 
             var keys = new List<CacheItemDefinition>();
@@ -1126,17 +1124,17 @@ namespace DesertOctopus.MammothCache.Tests
 
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds);
 
             _firstLevelCache.Get<CachingTestClass>(key1);
             _firstLevelCache.Get<CachingTestClass>(key2);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemovingAnItemShouldRemoveItFromAllMammothCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1148,17 +1146,17 @@ namespace DesertOctopus.MammothCache.Tests
             _cache.Get<CachingTestClass>(key);
             otherCache.Get<CachingTestClass>(key);
 
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(1, otherFirstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, otherFirstLevelCache.NumberOfObjects);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, otherFirstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void UpdatingAnItemShouldRemoveItFromAllFirstLevelCaches()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1170,153 +1168,151 @@ namespace DesertOctopus.MammothCache.Tests
             _cache.Get<CachingTestClass>(key);
             otherCache.Get<CachingTestClass>(key);
 
-            Assert.AreEqual(1, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(1, otherFirstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, otherFirstLevelCache.NumberOfObjects);
 
             _cache.Set(key, _testObject, ttl: TimeSpan.FromSeconds(5));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, otherFirstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RemoveAllShouldEmptyTheCacheAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _testObject, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
             await RemoveAllAndWaitAsync().ConfigureAwait(false);
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemoveAllShouldEmptyTheCache()
         {
             var key = RandomKey();
             _cache.Set(key, _testObject, TimeSpan.FromSeconds(30));
 
-            Assert.AreEqual(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
+            Assert.Equal(_testObject.Value, _firstLevelCache.Get<CachingTestClass>(key).Value.Value);
             var bytes = _secondLevelCache.Get(key);
-            Assert.AreEqual(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
+            Assert.Equal(_testObject.Value, KrakenSerializer.Deserialize<CachingTestClass>(bytes).Value);
 
             RemoveAllAndWait();
 
-            Assert.IsFalse(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.False(_firstLevelCache.Get<CachingTestClass>(key).IsSuccessful);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public async Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
+        [Fact]
+        [Trait("Category", "Integration")]
+        public Task UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionAsync()
         {
-            await _cache.GetOrAddAsync<CachingTestClass>(RandomKey(), null).ConfigureAwait(false);
+            return Assert.ThrowsAsync<ArgumentNullException>(() => _cache.GetOrAddAsync<CachingTestClass>(RandomKey(), null));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
-        [ExpectedException(typeof(ArgumentNullException))]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void UsingGetOrAddSingleItemWithoutDelegateShouldThrowAnExceptionSync()
         {
-            _cache.GetOrAdd<CachingTestClass>(RandomKey(), null);
+            Assert.Throws<ArgumentNullException>(() => _cache.GetOrAdd<CachingTestClass>(RandomKey(), null));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ItemIsFetchedFromFirstLevelCacheAsync()
         {
             var key = RandomKey();
             _firstLevelCache.Set(key, _serializedTestObject);
 
             var obj = await _cache.GetAsync<CachingTestClass>(key).ConfigureAwait(false);
-            Assert.AreEqual(_testObject.Value, obj.Value);
+            Assert.Equal(_testObject.Value, obj.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ItemIsFetchedFromFirstLevelCacheSync()
         {
             var key = RandomKey();
             _firstLevelCache.Set(key, _serializedTestObject);
 
             var obj = _cache.Get<CachingTestClass>(key);
-            Assert.AreEqual(_testObject.Value, obj.Value);
+            Assert.Equal(_testObject.Value, obj.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task CachingANullObjectDoesNothingAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync<CachingTestClass>(key, null).ConfigureAwait(false);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CachingANullObjectDoesNothingSync()
         {
             var key = RandomKey();
             _cache.Set<CachingTestClass>(key, null);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.IsNull(_secondLevelCache.Get(key));
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Null(_secondLevelCache.Get(key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void DeserializeObject()
         {
             var obj = _mammothCacheSerializationProvider.Deserialize(_serializedTestObject) as CachingTestClass;
-            Assert.AreEqual(_testObject.Value, obj.Value);
+            Assert.Equal(_testObject.Value, obj.Value);
         }
 
 
 
 
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task CachingANonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
 
-            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CachingANonSerializableObjectShouldStoreItInNonSerializableCacheSync()
         {
             var key = RandomKey();
             _cache.Set(key, _nonSerializableTestObject);
 
-            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(1, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheAsync()
         {
             var key1 = RandomKey();
@@ -1325,22 +1321,22 @@ namespace DesertOctopus.MammothCache.Tests
             var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
             values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
             values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
-            
+
             await _cache.SetAsync(values).ConfigureAwait(false);
 
-            Assert.AreEqual(2, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             foreach (var key in new [] { key1, key2 })
             {
                 var bytes = _secondLevelCache.Get(key);
-                Assert.IsNotNull(bytes);
+                Assert.NotNull(bytes);
                 var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+                Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CachingMultipleNonSerializableObjectShouldStoreItInNonSerializableCacheSync()
         {
             var key1 = RandomKey();
@@ -1349,22 +1345,22 @@ namespace DesertOctopus.MammothCache.Tests
             var values = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
             values.Add(new CacheItemDefinition { Key = key1, TimeToLive = TimeSpan.FromSeconds(30) }, _nonSerializableTestObject);
             values.Add(new CacheItemDefinition { Key = key2 }, _nonSerializableTestObject2);
-            
+
             _cache.Set(values);
 
-            Assert.AreEqual(2, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(2, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             foreach (var key in new [] { key1, key2 })
             {
                 var bytes = _secondLevelCache.Get(key);
-                Assert.IsNotNull(bytes);
+                Assert.NotNull(bytes);
                 var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+                Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key1 = RandomKey();
@@ -1381,12 +1377,12 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2 });
 
             var objs = await _cache.GetAsync<NotSerializableTestClass>(keys).ConfigureAwait(false);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RetrievingMultipleNonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key1 = RandomKey();
@@ -1403,76 +1399,76 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2 });
 
             var objs = _cache.Get<NotSerializableTestClass>(keys);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, objs.Single(x => x.Value.Value == _nonSerializableTestObject.Value).Value));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject2, objs.Single(x => x.Value.Value == _nonSerializableTestObject2.Value).Value));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
             var obj = await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, obj));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RetrievinMultipleANonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key = RandomKey();
             _cache.Set(key, _nonSerializableTestObject);
             var obj = _cache.Get<NotSerializableTestClass>(key);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, obj));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RetrievingANonSerializableObjectShouldReturnTheSameReferenceAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
             var obj = await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, obj));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RetrievingANonSerializableObjectShouldReturnTheSameReferenceSync()
         {
             var key = RandomKey();
             _cache.Set(key, _nonSerializableTestObject);
             var obj = _cache.Get<NotSerializableTestClass>(key);
-            Assert.IsTrue(ReferenceEquals(_nonSerializableTestObject, obj));
+            Assert.True(ReferenceEquals(_nonSerializableTestObject, obj));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
         {
             var key = RandomKey();
             await _cache.SetAsync(key, _nonSerializableTestObject).ConfigureAwait(false);
             _nonSerializableCache.RemoveAll();
-            Assert.IsNull(await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false));
-            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Null(await _cache.GetAsync<NotSerializableTestClass>(key).ConfigureAwait(false));
+            Assert.Equal(0, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RetrievingANonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
         {
             var key = RandomKey();
             _cache.Set(key, _nonSerializableTestObject);
             _nonSerializableCache.RemoveAll();
-            Assert.IsNull(_cache.Get<NotSerializableTestClass>(key));
-            Assert.AreEqual(0, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Null(_cache.Get<NotSerializableTestClass>(key));
+            Assert.Equal(0, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullAsync()
         {
             var key1 = RandomKey();
@@ -1490,11 +1486,11 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2 });
 
             var objs = await _cache.GetAsync<NotSerializableTestClass>(keys).ConfigureAwait(false);
-            Assert.AreEqual(0, objs.Count);
+            Assert.Empty(objs);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RetrievingMultipleNonSerializableObjectFromSecondLevelCacheShouldReturnNullSync()
         {
             var key1 = RandomKey();
@@ -1512,24 +1508,24 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2 });
 
             var objs = _cache.Get<NotSerializableTestClass>(keys);
-            Assert.AreEqual(0, objs.Count);
+            Assert.Empty(objs);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemovingANonSerializableObjectPlaceHolderFromSecondLevelCacheShouldRemoveItFromTheNonSerializableCache()
         {
             var key = RandomKey();
             _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(5));
-            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.True(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.False(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ANonSerializableSystemTypeShouldBeStoredInTheNonSerializableCache()
         {
             using (var ms = new MemoryStream())
@@ -1538,65 +1534,65 @@ namespace DesertOctopus.MammothCache.Tests
 
                 var key = RandomKey();
                 _cache.Set(key, obj);
-                Assert.IsNull(_cache.Get<NotSerializableTestClass>(key));
-                Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
-                Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+                Assert.Null(_cache.Get<NotSerializableTestClass>(key));
+                Assert.Equal(1, _nonSerializableCache.NumberOfObjects);
+                Assert.Equal(0, _firstLevelCache.NumberOfObjects);
                 var bytes = _secondLevelCache.Get(key);
-                Assert.IsNotNull(bytes);
+                Assert.NotNull(bytes);
                 var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-                Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+                Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
             }
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task ANonSerializableObjectShouldBeReturnedByGetOrAddAsync()
         {
             bool delegateWasCalled = false;
             var key = RandomKey();
             var value = await _cache.GetOrAddAsync<NotSerializableTestClass>(key,
-                                                                     () =>
-                                                                     {
-                                                                         delegateWasCalled = true;
-                                                                         return Task.FromResult(_nonSerializableTestObject);
-                                                                     },
-                                                                     TimeSpan.FromSeconds(30))
+                                                                             () =>
+                                                                             {
+                                                                                 delegateWasCalled = true;
+                                                                                 return Task.FromResult(_nonSerializableTestObject);
+                                                                             },
+                                                                             TimeSpan.FromSeconds(30))
                                     .ConfigureAwait(false);
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(_nonSerializableTestObject.Value, value.Value);
-            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.True(delegateWasCalled);
+            Assert.Equal(_nonSerializableTestObject.Value, value.Value);
+            Assert.True(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void ANonSerializableObjectShouldBeReturnedByGetOrAddSync()
         {
             bool delegateWasCalled = false;
             var key = RandomKey();
-            var value =  _cache.GetOrAdd<NotSerializableTestClass>(key,
-                                                           () =>
-                                                           {
-                                                               delegateWasCalled = true;
-                                                               return _nonSerializableTestObject;
-                                                           },
-                                                           TimeSpan.FromSeconds(30));
-            Assert.IsTrue(delegateWasCalled);
-            Assert.AreEqual(_nonSerializableTestObject.Value, value.Value);
-            Assert.IsTrue(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
-            Assert.IsFalse(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            var value = _cache.GetOrAdd<NotSerializableTestClass>(key,
+                                                                  () =>
+                                                                  {
+                                                                      delegateWasCalled = true;
+                                                                      return _nonSerializableTestObject;
+                                                                  },
+                                                                  TimeSpan.FromSeconds(30));
+            Assert.True(delegateWasCalled);
+            Assert.Equal(_nonSerializableTestObject.Value, value.Value);
+            Assert.True(_nonSerializableCache.Get<NotSerializableTestClass>(key).IsSuccessful);
+            Assert.False(_firstLevelCache.Get<NotSerializableTestClass>(key).IsSuccessful);
             var bytes = _secondLevelCache.Get(key);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddAsync()
         {
 #pragma warning disable 219
@@ -1622,20 +1618,20 @@ namespace DesertOctopus.MammothCache.Tests
                                                                               })
                                      .ConfigureAwait(false);
 
-            Assert.AreEqual(1, values.Count);
-            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Single(values);
+            Assert.Equal(1, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             var bytes = _secondLevelCache.Get(key1);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
 
-            Assert.IsNull(_secondLevelCache.Get(key2));
-            Assert.IsNull(_secondLevelCache.Get(key3));
+            Assert.Null(_secondLevelCache.Get(key2));
+            Assert.Null(_secondLevelCache.Get(key3));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void MultipleNonSerializableObjectsShouldBeReturnedByGetOrAddSync()
         {
 #pragma warning disable 219
@@ -1650,54 +1646,54 @@ namespace DesertOctopus.MammothCache.Tests
             keys.Add(new CacheItemDefinition { Key = key2, TimeToLive = TimeSpan.FromSeconds(10) });
             keys.Add(new CacheItemDefinition { Key = key3 });
 
-            var values =  _cache.GetOrAdd<NotSerializableTestClass>(keys,
-                                                                    definitions =>
-                                                                    {
-                                                                        delegateWasCalled = true;
-                                                                        var results = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
-                                                                        results.Add(definitions.Single(x => x.Key == key1), _nonSerializableTestObject);
+            var values = _cache.GetOrAdd<NotSerializableTestClass>(keys,
+                                                                   definitions =>
+                                                                   {
+                                                                       delegateWasCalled = true;
+                                                                       var results = new Dictionary<CacheItemDefinition, NotSerializableTestClass>();
+                                                                       results.Add(definitions.Single(x => x.Key == key1), _nonSerializableTestObject);
 
-                                                                        return results;
-                                                                    });
+                                                                       return results;
+                                                                   });
 
-            Assert.AreEqual(1, values.Count);
-            Assert.AreEqual(1, _nonSerializableCache.NumberOfObjects);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
+            Assert.Single(values);
+            Assert.Equal(1, _nonSerializableCache.NumberOfObjects);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
             var bytes = _secondLevelCache.Get(key1);
-            Assert.IsNotNull(bytes);
+            Assert.NotNull(bytes);
             var deserializedValue = _mammothCacheSerializationProvider.Deserialize(bytes);
-            Assert.IsTrue(deserializedValue is NonSerializableObjectPlaceHolder);
+            Assert.True(deserializedValue is NonSerializableObjectPlaceHolder);
 
-            Assert.IsNull(_secondLevelCache.Get(key2));
-            Assert.IsNull(_secondLevelCache.Get(key3));
+            Assert.Null(_secondLevelCache.Get(key2));
+            Assert.Null(_secondLevelCache.Get(key3));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task AcquiringAndReleasingALockShouldCreateTheKeyInRedisAsync()
         {
             var key = RandomKey();
             using (await _cache.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)).ConfigureAwait(false))
             {
-                Assert.IsTrue(await _secondLevelCache.KeyExistsAsync("DistributedLock:" + key).ConfigureAwait(false));
+                Assert.True(await _secondLevelCache.KeyExistsAsync("DistributedLock:" + key).ConfigureAwait(false));
             }
-            Assert.IsFalse(_secondLevelCache.KeyExists("DistributedLock:" + key));
+            Assert.False(_secondLevelCache.KeyExists("DistributedLock:" + key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void AcquiringAndReleasingALockShouldCreateTheKeyInRedisSync()
         {
             var key = RandomKey();
             using (_cache.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
             {
-                Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+                Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key));
             }
-            Assert.IsFalse(_secondLevelCache.KeyExists("DistributedLock:" + key));
+            Assert.False(_secondLevelCache.KeyExists("DistributedLock:" + key));
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddOneKeyShouldLockTheKeyWhenTheItemIsMissingAsync()
         {
             bool delegateWasCalled = false;
@@ -1707,16 +1703,16 @@ namespace DesertOctopus.MammothCache.Tests
                                                  {
                                                      delegateWasCalled = true;
 
-                                                     Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+                                                     Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key));
 
                                                      return Task.FromResult(_testObject);
                                                  }).ConfigureAwait(false);
 
-            Assert.IsTrue(delegateWasCalled);
+            Assert.True(delegateWasCalled);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddOneKeyShouldLockTheKeyWhenTheItemIsMissingSync()
         {
             bool delegateWasCalled = false;
@@ -1726,16 +1722,16 @@ namespace DesertOctopus.MammothCache.Tests
                                       {
                                           delegateWasCalled = true;
 
-                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key));
+                                          Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key));
 
                                           return Task.FromResult(_testObject);
                                       });
 
-            Assert.IsTrue(delegateWasCalled);
+            Assert.True(delegateWasCalled);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task GetOrAddMultipleKeyShouldLockTheKeyWhenTheItemIsMissingAsync()
         {
             bool delegateWasCalled = false;
@@ -1753,20 +1749,20 @@ namespace DesertOctopus.MammothCache.Tests
                                                                       {
                                                                           delegateWasCalled = true;
 
-                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
-                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
-                                                                          Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                                          Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                                          Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                                          Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
 
                                                                           var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
                                                                           results.Add(definitions.Single(x => x.Key == key1), _testObject);
                                                                           return Task.FromResult(results);
                                                                       })
                                      .ConfigureAwait(false);
-            Assert.IsTrue(delegateWasCalled);
+            Assert.True(delegateWasCalled);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void GetOrAddMultipleKeyShouldLockTheKeyWhenTheItemIsMissingSync()
         {
             bool delegateWasCalled = false;
@@ -1784,19 +1780,19 @@ namespace DesertOctopus.MammothCache.Tests
                                                            {
                                                                delegateWasCalled = true;
 
-                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
-                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
-                                                               Assert.IsTrue(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                               Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                               Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
+                                                               Assert.True(_secondLevelCache.KeyExists("DistributedLock:" + key1));
 
                                                                var results = new Dictionary<CacheItemDefinition, CachingTestClass>();
                                                                results.Add(definitions.Single(x => x.Key == key1), _testObject);
                                                                return results;
                                                            });
-            Assert.IsTrue(delegateWasCalled);
+            Assert.True(delegateWasCalled);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1807,15 +1803,15 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemoved = true;
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemovedFromOtherCache = true;
 
             await _cache.SetAsync(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60)).ConfigureAwait(false);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedFromOtherCache = false;
@@ -1824,12 +1820,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void StoringANonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1840,15 +1836,15 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemoved = false;
             bool itemsWereRemovedFromOtherCache = false;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemoved = true; };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e) { itemsWereRemovedFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemoved = true;
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) => itemsWereRemovedFromOtherCache = true;
 
             _cache.Set(key, _nonSerializableTestObject, ttl: TimeSpan.FromSeconds(60));
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedFromOtherCache = false;
@@ -1857,12 +1853,12 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1881,25 +1877,25 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemoved = true;
-                Interlocked.Increment(ref itemsWereRemovedCount);
-            };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemovedFromOtherCache = true;
-                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
-            };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
 
             await _cache.SetAsync(objects).ConfigureAwait(false);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(0, itemsWereRemovedCount);
-            Assert.AreEqual(2, itemsWereRemovedCountFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
+            Assert.Equal(0, itemsWereRemovedCount);
+            Assert.Equal(2, itemsWereRemovedCountFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
@@ -1910,16 +1906,16 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
             itemsWereRemovedFromOtherCache = false;
             itemsWereRemovedCountFromOtherCache = 0;
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void StoringMultipleNonSerializableItemIn2CachesShouldNotTriggerARemoveUnlessItemIsAlreadyInNonSerializableCacheSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -1938,25 +1934,25 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemoved = true;
-                Interlocked.Increment(ref itemsWereRemovedCount);
-            };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemovedFromOtherCache = true;
-                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
-            };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
 
             _cache.Set(objects);
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsTrue(itemsWereRemovedFromOtherCache);
-            Assert.AreEqual(0, itemsWereRemovedCount);
-            Assert.AreEqual(2, itemsWereRemovedCountFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.True(itemsWereRemovedFromOtherCache);
+            Assert.Equal(0, itemsWereRemovedCount);
+            Assert.Equal(2, itemsWereRemovedCountFromOtherCache);
 
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
@@ -1967,16 +1963,16 @@ namespace DesertOctopus.MammothCache.Tests
 
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
             itemsWereRemoved = false;
             itemsWereRemovedCount = 0;
             itemsWereRemovedFromOtherCache = false;
             itemsWereRemovedCountFromOtherCache = 0;
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task RemovingAllKeysShouldExpireAllKeysAsync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -2000,32 +1996,32 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemoved = true;
-                Interlocked.Increment(ref itemsWereRemovedCount);
-            };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemovedFromOtherCache = true;
-                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
-            };
-            _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
-            otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
+            _secondLevelCache.OnRemoveAllItems += (sender, args) => removeAll = true;
+            otherSecondLevelCache.OnRemoveAllItems += (sender, args) => removeAllFromOtherCache = true;
 
             await RemoveAllAndWaitAsync().ConfigureAwait(false);
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
-            Assert.IsTrue(removeAll);
-            Assert.IsTrue(removeAllFromOtherCache);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
+            Assert.True(removeAll);
+            Assert.True(removeAllFromOtherCache);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, otherFirstLevelCache.NumberOfObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Integration")]
+        [Fact]
+        [Trait("Category", "Integration")]
         public void RemovingAllKeysShouldExpireAllKeysSync()
         {
             var otherFirstLevelCache = new SquirrelCache(_config, _noCloningProvider, _serializationProvider);
@@ -2049,28 +2045,28 @@ namespace DesertOctopus.MammothCache.Tests
             bool itemsWereRemovedFromOtherCache = false;
             int itemsWereRemovedCountFromOtherCache = 0;
 
-            _secondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemoved = true;
-                Interlocked.Increment(ref itemsWereRemovedCount);
-            };
-            otherSecondLevelCache.OnItemRemovedFromCache += delegate (object sender, ItemEvictedEventArgs e)
-            {
-                itemsWereRemovedFromOtherCache = true;
-                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
-            };
-            _secondLevelCache.OnRemoveAllItems += delegate { removeAll = true; };
-            otherSecondLevelCache.OnRemoveAllItems += delegate { removeAllFromOtherCache = true; };
+            _secondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                        {
+                                                            itemsWereRemoved = true;
+                                                            Interlocked.Increment(ref itemsWereRemovedCount);
+                                                        };
+            otherSecondLevelCache.OnItemRemovedFromCache += (sender, e) =>
+                                                            {
+                                                                itemsWereRemovedFromOtherCache = true;
+                                                                Interlocked.Increment(ref itemsWereRemovedCountFromOtherCache);
+                                                            };
+            _secondLevelCache.OnRemoveAllItems += (sender, args) => removeAll = true;
+            otherSecondLevelCache.OnRemoveAllItems += (sender, args) => removeAllFromOtherCache = true;
 
             RemoveAllAndWait();
             WaitFor(_config.AbsoluteExpiration.TotalSeconds + 5);
 
-            Assert.IsFalse(itemsWereRemoved);
-            Assert.IsFalse(itemsWereRemovedFromOtherCache);
-            Assert.IsTrue(removeAll);
-            Assert.IsTrue(removeAllFromOtherCache);
-            Assert.AreEqual(0, _firstLevelCache.NumberOfObjects);
-            Assert.AreEqual(0, otherFirstLevelCache.NumberOfObjects);
+            Assert.False(itemsWereRemoved);
+            Assert.False(itemsWereRemovedFromOtherCache);
+            Assert.True(removeAll);
+            Assert.True(removeAllFromOtherCache);
+            Assert.Equal(0, _firstLevelCache.NumberOfObjects);
+            Assert.Equal(0, otherFirstLevelCache.NumberOfObjects);
         }
 
 

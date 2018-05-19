@@ -6,24 +6,23 @@ using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Redis.Tests.Models;
 using DesertOctopus.MammothCache.Tests;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace DesertOctopus.MammothCache.Redis.Tests
 {
-    [TestClass]
     public class RedisUnitTest : BaseTest
     {
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SleepsDurationOfTheRetryPolicyShouldBeInitialized()
         {
             var policy = new RedisRetryPolicy(TimeSpan.FromSeconds(1),
                                               TimeSpan.FromSeconds(2),
                                               TimeSpan.FromSeconds(3));
-            Assert.AreEqual(3, policy.SleepDurations.Count);
-            Assert.AreEqual(1, policy.SleepDurations.ElementAt(0).TotalSeconds);
-            Assert.AreEqual(2, policy.SleepDurations.ElementAt(1).TotalSeconds);
-            Assert.AreEqual(3, policy.SleepDurations.ElementAt(2).TotalSeconds);
+            Assert.Equal(3, policy.SleepDurations.Count);
+            Assert.Equal(1, policy.SleepDurations.ElementAt(0).TotalSeconds);
+            Assert.Equal(2, policy.SleepDurations.ElementAt(1).TotalSeconds);
+            Assert.Equal(3, policy.SleepDurations.ElementAt(2).TotalSeconds);
         }
     }
 }
