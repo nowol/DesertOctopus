@@ -90,18 +90,6 @@ namespace DesertOctopus.Utilities
         private void ComputeShortTypeName()
         {
             _shortTypeName = Type.AssemblyQualifiedName;
-            if (!Type.IsGenericType
-                && Type.Namespace != null
-                && Type.Namespace.StartsWith("System."))
-            {
-                // try to resolve the type using only the FullName
-                var resolvedType = Type.GetType(Type.FullName);
-                if (resolvedType != null)
-                {
-                    _shortTypeName = Type.FullName;
-                }
-            }
-
             _shortTypeName = SerializedTypeResolver.ApplyTypeReplacements(_shortTypeName);
         }
     }

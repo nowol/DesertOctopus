@@ -9,35 +9,38 @@ using DesertOctopus.Serialization;
 using DesertOctopus.Tests.TestObjects;
 using DesertOctopus.Utilities;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace DesertOctopus.Tests
 {
-    [TestClass]
     public class SerializerTest : BaseDuplicationTest
     {
+        public SerializerTest(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
         public override T Duplicate<T>(T obj)
         {
             var bytes = Serializer.Serialize(obj);
             return Deserializer.Deserialize<T>(bytes);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(TypeNotFoundException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DeserializeUnknownType()
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
             var bytes = Serializer.Serialize(instance);
             bytes[25] = 54;
 
-            Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
+            Assert.Throws<TypeNotFoundException>(() => Deserializer.Deserialize<ClassWithDynamicProperty>(bytes));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(TypeWasModifiedSinceSerializationException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DeserializeTypeThatWasModified()
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
@@ -50,11 +53,11 @@ namespace DesertOctopus.Tests
             // if the way/order (currently TypeName + Hash) that an object is serialized changes the line below will need to be modified to target a byte of the hashcode
             bytes[index + needle.Length + 1] = (bytes[index + needle.Length + 1] == 255) ? SerializerObjectTracker.Value0 : (byte)(bytes[index + needle.Length] + 1); // change the hashcode to something invalid
 
-            Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
+            Assert.Throws<TypeWasModifiedSinceSerializationException>(() => Deserializer.Deserialize<ClassWithDynamicProperty>(bytes));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeInParallel()
         {
             Serializer.ClearTypeSerializersCache(); // empty the serialization Type to TypeData dictionary to start from a fresh state.
@@ -71,46 +74,35 @@ namespace DesertOctopus.Tests
                                  var bytes = Serializer.Serialize(instance);
                                  var deserializedValue = Deserializer.Deserialize<ClassWithIEnumerable<int>>(bytes);
 
-                                 Assert.AreEqual(instance.Items.Count(),
+                                 Assert.Equal(instance.Items.Count(),
                                                  deserializedValue.Items.Count());
-                                 CollectionAssert.AreEquivalent(instance.Items.ToList(),
-                                                             deserializedValue.Items.ToList());
+                                 Assert.Equal(instance.Items.ToList(),
+                                              deserializedValue.Items.ToList());
                              });
             }
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeGroupByContainedInAClass()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             var instance = new GenericBaseClass<IEnumerable<IGrouping<int, ClassWithoutSerializableAttribute>>> { Value = list.GroupBy(x => x.PublicPropertyValue) };
-            Serializer.Serialize(instance);
+            Assert.Throws<NotSupportedException>(() => Serializer.Serialize(instance));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(NotSupportedException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeIQueryableDirectly()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
             IQueryable<ClassWithoutSerializableAttribute> instance = list.AsQueryable();
 
-            var bytes = Serializer.Serialize(instance);
-            var deserializedValue = Deserializer.Deserialize<IQueryable<ClassWithoutSerializableAttribute>>(bytes);
-
-            Assert.IsNotNull(deserializedValue);
-            Assert.IsNotNull(deserializedValue);
-            var deserializedArray = deserializedValue.ToArray();
-
-            Assert.AreEqual(list[0].PublicPropertyValue, deserializedArray[0].PublicPropertyValue);
-            Assert.IsNull(deserializedArray[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, deserializedArray[2].PublicPropertyValue);
+            Assert.Throws<NotSupportedException>(() => Serializer.Serialize(instance));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void KrakenSerializerShouldWork()
         {
             var instance = new GenericBaseClass<IQueryable> { Value = null };
@@ -118,30 +110,30 @@ namespace DesertOctopus.Tests
             var bytes = KrakenSerializer.Serialize(instance);
             var deserializedValue = KrakenSerializer.Deserialize<GenericBaseClass<IQueryable>>(bytes);
 
-            Assert.IsNotNull(deserializedValue);
-            Assert.IsNull(deserializedValue.Value);
+            Assert.NotNull(deserializedValue);
+            Assert.Null(deserializedValue.Value);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void StringShouldNotBeSerializedTwiceInsideAList()
         {
             var str = RandomString(1000);
             var instance = new List<string> { str };
             var bytes = KrakenSerializer.Serialize(instance);
             var deserializedValue = KrakenSerializer.Deserialize<List<string>>(bytes);
-            CollectionAssert.AreEqual(instance, deserializedValue);
+            Assert.Equal(instance, deserializedValue);
 
             instance = new List<string> { str, str };
             var bytesTwice = KrakenSerializer.Serialize(instance);
             deserializedValue = KrakenSerializer.Deserialize<List<string>>(bytesTwice);
-            CollectionAssert.AreEqual(instance, deserializedValue);
+            Assert.Equal(instance, deserializedValue);
 
-            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+            Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void StringShouldNotBeSerializedTwice2Properties()
         {
             var str = RandomString(1000);
@@ -149,17 +141,17 @@ namespace DesertOctopus.Tests
             var instance2 = new ClassWith2Property<string>(str, str);
             var bytes = KrakenSerializer.Serialize(instance1);
             var deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytes);
-            instance1.ShouldBeEquivalentTo(deserializedValue);
-            
+            instance1.Should().BeEquivalentTo(deserializedValue);
+
             var bytesTwice = KrakenSerializer.Serialize(instance2);
             deserializedValue = KrakenSerializer.Deserialize<ClassWith2Property<string>>(bytesTwice);
-            instance2.ShouldBeEquivalentTo(deserializedValue);
+            instance2.Should().BeEquivalentTo(deserializedValue);
 
-            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+            Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void StringShouldNotBeSerializedTwiceAsADictionaryValue()
         {
             var str = RandomString(1000);
@@ -167,17 +159,17 @@ namespace DesertOctopus.Tests
             var instance2 = new Dictionary<int, string> { { 123, str }, { 1235, str } };
             var bytes = KrakenSerializer.Serialize(instance1);
             var deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytes);
-            instance1.ShouldBeEquivalentTo(deserializedValue);
-            
+            instance1.Should().BeEquivalentTo(deserializedValue);
+
             var bytesTwice = KrakenSerializer.Serialize(instance2);
             deserializedValue = KrakenSerializer.Deserialize<Dictionary<int, string>>(bytesTwice);
-            instance2.ShouldBeEquivalentTo(deserializedValue);
+            instance2.Should().BeEquivalentTo(deserializedValue);
 
-            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+            Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void StringShouldNotBeSerializedTwiceAsType()
         {
             var instance1 = new ClassWithGenericInt { Value = 123 };
@@ -186,28 +178,28 @@ namespace DesertOctopus.Tests
             var instance = new List<object> { instance1 };
             var bytes = KrakenSerializer.Serialize(instance);
             var deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytes);
-            CollectionAssert.AreEqual(instance, deserializedValue);
+            Assert.Equal(instance, deserializedValue);
 
             instance = new List<object> { instance1, instance2 };
             var bytesTwice = KrakenSerializer.Serialize(instance);
             deserializedValue = KrakenSerializer.Deserialize<List<object>>(bytesTwice);
-            CollectionAssert.AreEqual(instance, deserializedValue);
+            Assert.Equal(instance, deserializedValue);
 
-            Assert.IsTrue(bytes.Length + 500 > bytesTwice.Length);
+            Assert.True(bytes.Length + 500 > bytesTwice.Length);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void SerializeClassWithAllPrimitiveTypes()
         {
             var instance = new ClassWithAllPrimitiveTypes();
             var bytes = KrakenSerializer.Serialize(instance);
             var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytes);
-            instance.ShouldBeEquivalentTo(deserializedValue);
+            instance.Should().BeEquivalentTo(deserializedValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DuplicateIQueryableInsideExpandoObject()
         {
             var list = new List<ClassWithoutSerializableAttribute> { new ClassWithoutSerializableAttribute { PublicPropertyValue = 123 }, null, new ClassWithoutSerializableAttribute { PublicPropertyValue = 456 } };
@@ -222,89 +214,88 @@ namespace DesertOctopus.Tests
             var instance = new List<ExpandoObject> { eo, null, eo };
             var duplicatedList = Duplicate(instance);
 
-            Assert.AreEqual(3, duplicatedList.Count);
+            Assert.Equal(3, duplicatedList.Count);
             dynamic duplicatedValue = duplicatedList[0];
 
-            Assert.AreEqual(eo.Property1, duplicatedValue.Property1);
-            Assert.AreEqual(eo.Property2, duplicatedValue.Property2);
-            Assert.AreEqual(eo.Property3, duplicatedValue.Property3);
-            Assert.IsTrue(duplicatedValue.Property4.GetType() == typeof(object));
-            Assert.IsNull(duplicatedValue.Property5);
-            Assert.IsTrue(ReferenceEquals(duplicatedList[0], duplicatedList[2]));
+            Assert.Equal(eo.Property1, duplicatedValue.Property1);
+            Assert.Equal(eo.Property2, duplicatedValue.Property2);
+            Assert.Equal(eo.Property3, duplicatedValue.Property3);
+            Assert.True(duplicatedValue.Property4.GetType() == typeof(object));
+            Assert.Null(duplicatedValue.Property5);
+            Assert.True(ReferenceEquals(duplicatedList[0], duplicatedList[2]));
 
             var duplicatedValueProperty6 = duplicatedValue.Property6;
-            Assert.IsTrue(duplicatedValueProperty6 is Array); // side effect of mixing ExpandoObject and IQueryable
+            Assert.True(duplicatedValueProperty6 is Array); // side effect of mixing ExpandoObject and IQueryable
 
-            var duplicatedValueProperty6AsArray = ((ClassWithoutSerializableAttribute[])duplicatedValueProperty6);
+            var duplicatedValueProperty6AsArray = (ClassWithoutSerializableAttribute[])duplicatedValueProperty6;
 
-            Assert.AreEqual(list[0].PublicPropertyValue, duplicatedValueProperty6AsArray[0].PublicPropertyValue);
-            Assert.IsNull(duplicatedValueProperty6AsArray[1]);
-            Assert.AreEqual(list[2].PublicPropertyValue, duplicatedValueProperty6AsArray[2].PublicPropertyValue);
+            Assert.Equal(list[0].PublicPropertyValue, duplicatedValueProperty6AsArray[0].PublicPropertyValue);
+            Assert.Null(duplicatedValueProperty6AsArray[1]);
+            Assert.Equal(list[2].PublicPropertyValue, duplicatedValueProperty6AsArray[2].PublicPropertyValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
-        [ExpectedException(typeof(InvalidSerializationVersionException))]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void UnexpectedVersionHeaderShouldThrowAnException()
         {
             ClassWithDynamicProperty instance = new ClassWithDynamicProperty { Value = 123 };
             var bytes = Serializer.Serialize(instance);
 
             // this is a hackish way to change the version of a serialized object
-            bytes[0] = (byte) (bytes[0] + 1);
+            bytes[0] = (byte)(bytes[0] + 1);
 
-            Deserializer.Deserialize<ClassWithDynamicProperty>(bytes);
+            Assert.Throws<InvalidSerializationVersionException>(() => Deserializer.Deserialize<ClassWithDynamicProperty>(bytes));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DictionaryIsDetectedAsNormalDictionary()
         {
-            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<int, int>()));
+            Assert.True(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<int, int>()));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void CustomDictionaryIsDetectedAsNormalDictionary()
         {
-            Assert.IsTrue(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionary()));
+            Assert.True(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionary()));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DictionaryWithCustomComparerIsNotDetectedAsNormalDictionary()
         {
-            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
+            Assert.False(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new Dictionary<StructForTesting, int>(new StructForTestingComparer())));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DictionaryAdditionalPropertiesAsNormalDictionary()
         {
-            Assert.IsFalse(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
+            Assert.False(DictionaryHelper.IsObjectADictionaryWithDefaultComparerAndNoAdditionalProperties(new CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback()));
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DeserializerObjectTrackerShouldNotTrackNullObjects()
         {
             var tracker = new DeserializerObjectTracker();
             tracker.TrackObject(null);
-            Assert.AreEqual(0, tracker.NumberOfTrackedObjects);
+            Assert.Equal(0, tracker.NumberOfTrackedObjects);
         }
 
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void DeserializerObjectTrackerShouldTrackNullObjects()
         {
             var tracker = new DeserializerObjectTracker();
             tracker.TrackObject(3);
-            Assert.AreEqual(1, tracker.NumberOfTrackedObjects);
+            Assert.Equal(1, tracker.NumberOfTrackedObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void OmittedRootTypeCanBeDeserialized()
         {
             var instance = new ClassWithAllPrimitiveTypes();
@@ -312,20 +303,20 @@ namespace DesertOctopus.Tests
             var bytesWithType = KrakenSerializer.Serialize(instance);
             var bytesWithOmittedType = KrakenSerializer.Serialize(instance, new SerializationOptions() { OmitRootTypeName = true });
 
-            Assert.IsTrue(bytesWithOmittedType.Length < bytesWithType.Length);
+            Assert.True(bytesWithOmittedType.Length < bytesWithType.Length);
 
             var deserializedValue = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithType);
             var deserializedValueFromOmitted = KrakenSerializer.Deserialize<ClassWithAllPrimitiveTypes>(bytesWithOmittedType, new SerializationOptions() { OmitRootTypeName = true });
 
-            instance.ShouldBeEquivalentTo(deserializedValue);
-            deserializedValueFromOmitted.ShouldBeEquivalentTo(deserializedValue);
+            instance.Should().BeEquivalentTo(deserializedValue);
+            deserializedValueFromOmitted.Should().BeEquivalentTo(deserializedValue);
         }
 
 
 
 
-        //[TestMethod]
-        //[TestCategory("Unit")]
+        //[Fact]
+        //[Trait("Category", "Unit")]
         //[ExpectedException(typeof(NotSupportedException))]
         //public void SerializingAStreamIsNotSupported()
         //{
@@ -336,8 +327,8 @@ namespace DesertOctopus.Tests
         //}
 
 
-        //[TestMethod]
-        //[TestCategory("Unit")]
+        //[Fact]
+        //[Trait("Category", "Unit")]
         //public void z_AdditionalTestsToImplements()
         //{
         //    // mix primitive and class in array/list

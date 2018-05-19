@@ -8,37 +8,36 @@ using System.Threading.Tasks;
 using DesertOctopus.Cloning;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Utilities;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
+using Xunit;
 
 namespace DesertOctopus.Tests
 {
-    [TestClass]
     public class TrackerTest
     {
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void TrackingNullObjectShouldTrackNothing()
         {
             var tracker = new SerializerObjectTracker();
             tracker.TrackObject(null);
-            Assert.AreEqual(0, tracker.NumberOfTrackedObjects);
+            Assert.Equal(0, tracker.NumberOfTrackedObjects);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void GettingTheIndexOfANullObjectShouldReturnNull()
         {
             var tracker = new SerializerObjectTracker();
-            Assert.IsFalse(tracker.GetTrackedObjectIndex(null).HasValue);
+            Assert.False(tracker.GetTrackedObjectIndex(null).HasValue);
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void ObjectClonerReferenceTrackerShouldReturnNullIfItDoesNotContainsObject()
         {
             var tracker = new ObjectClonerReferenceTracker();
-            Assert.IsNull(tracker.GetEquivalentTargetObject(23));
+            Assert.Null(tracker.GetEquivalentTargetObject(23));
         }
     }
 }

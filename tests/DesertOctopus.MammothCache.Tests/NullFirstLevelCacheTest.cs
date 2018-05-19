@@ -6,59 +6,56 @@ using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 using DesertOctopus.MammothCache.Tests.Models;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace DesertOctopus.MammothCache.Tests
 {
-    [TestClass]
-    public class NullFirstLevelCacheTest : BaseTest
+    public class NullFirstLevelCacheTest : BaseTest, IDisposable
     {
         private NullFirstLevelCache _cache;
 
-        [TestInitialize]
-        public void Initialize()
+        public NullFirstLevelCacheTest()
         {
             _cache = new NullFirstLevelCache();
         }
 
-        [TestCleanup]
-        public void Cleanup()
+        public void Dispose()
         {
             _cache.Dispose();
         }
 
-        [TestMethod]
+        [Fact]
         public void NullFirstLevelCacheShouldNotStoreAnything()
         {
             _cache.Set("key", new byte[1]);
-            Assert.AreEqual(0, _cache.EstimatedMemorySize);
-            Assert.AreEqual(0, _cache.NumberOfObjects);
-            Assert.IsFalse(_cache.Get<byte[]>("key").IsSuccessful);
+            Assert.Equal(0, _cache.EstimatedMemorySize);
+            Assert.Equal(0, _cache.NumberOfObjects);
+            Assert.False(_cache.Get<byte[]>("key").IsSuccessful);
         }
 
-        [TestMethod]
+        [Fact]
         public void NullFirstLevelCacheShouldNotStoreAnythingWithTtl()
         {
             _cache.Set("key", new byte[1], TimeSpan.FromMinutes(1));
-            Assert.AreEqual(0, _cache.EstimatedMemorySize);
-            Assert.AreEqual(0, _cache.NumberOfObjects);
-            Assert.IsFalse(_cache.Get<byte[]>("key").IsSuccessful);
+            Assert.Equal(0, _cache.EstimatedMemorySize);
+            Assert.Equal(0, _cache.NumberOfObjects);
+            Assert.False(_cache.Get<byte[]>("key").IsSuccessful);
         }
 
-        [TestMethod]
+        [Fact]
         public void NullFirstLevelCacheShouldNotRemoveAnything()
         {
             _cache.Remove("key");
-            Assert.AreEqual(0, _cache.EstimatedMemorySize);
-            Assert.AreEqual(0, _cache.NumberOfObjects);
+            Assert.Equal(0, _cache.EstimatedMemorySize);
+            Assert.Equal(0, _cache.NumberOfObjects);
         }
 
-        [TestMethod]
+        [Fact]
         public void NullFirstLevelCacheShouldNotRemoveEverything()
         {
             _cache.RemoveAll();
-            Assert.AreEqual(0, _cache.EstimatedMemorySize);
-            Assert.AreEqual(0, _cache.NumberOfObjects);
+            Assert.Equal(0, _cache.EstimatedMemorySize);
+            Assert.Equal(0, _cache.NumberOfObjects);
         }
     }
 }

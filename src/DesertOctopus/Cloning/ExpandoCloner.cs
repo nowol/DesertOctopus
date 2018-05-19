@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Reflection;
 using DesertOctopus.Utilities;
 using DesertOctopus.Utilities.MethodInfoHelpers;
 
@@ -60,8 +61,8 @@ namespace DesertOctopus.Cloning
         {
             Func<EnumerableLoopBodyCargo, Expression> loopBody = cargo =>
             {
-                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Key"));
-                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetProperty("Current")), cargo.KvpType.GetProperty("Value"));
+                var keyExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetDeclaredProperty("Current")), cargo.KvpType.GetTypeInfo().GetDeclaredProperty("Key"));
+                var valueExpression = Expression.Property(Expression.Property(cargo.Enumerator, cargo.EnumeratorType.GetTypeInfo().GetDeclaredProperty("Current")), cargo.KvpType.GetTypeInfo().GetDeclaredProperty("Value"));
 
                 var addExpr = Expression.Call(clone,
                                               DictionaryMih.Add<string, object>(),

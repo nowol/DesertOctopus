@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SerializerTests.TestObjects
 {
@@ -16,6 +13,7 @@ namespace SerializerTests.TestObjects
         {
 
         }
+
         public CustomDictionary(IEqualityComparer<string> comparer)
             : base(comparer)
         {
@@ -23,7 +21,8 @@ namespace SerializerTests.TestObjects
 
         protected CustomDictionary(SerializationInfo info, StreamingContext context)
             : base(info, context)
-        { }
+        {
+        }
     }
 
     [Serializable]
@@ -39,7 +38,8 @@ namespace SerializerTests.TestObjects
 
         protected CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback(SerializationInfo info, StreamingContext context)
             : base(info, context)
-        { }
+        {
+        }
 
         public override void GetObjectData(SerializationInfo info,
                                            StreamingContext context)
@@ -52,6 +52,7 @@ namespace SerializerTests.TestObjects
     public class CustomDictionaryWithAdditionalPropertiesWithOverridingOnDeserializedCallback : Dictionary<string, object>
     {
         private readonly SerializationInfo _info;
+
         public int SomeProperty { get; set; }
 
         public CustomDictionaryWithAdditionalPropertiesWithOverridingOnDeserializedCallback()
@@ -85,11 +86,13 @@ namespace SerializerTests.TestObjects
     public class CustomDictionaryWithAdditionalPropertiesAndGenerics<TKey, TValue> : Dictionary<TKey, TValue>
     {
         private readonly SerializationInfo _info;
+
         public int SomeProperty { get; set; }
 
         public CustomDictionaryWithAdditionalPropertiesAndGenerics()
         {
         }
+
         protected CustomDictionaryWithAdditionalPropertiesAndGenerics(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -118,13 +121,11 @@ namespace SerializerTests.TestObjects
 
         public CustomDictionaryWithoutSerializationConstructor()
         {
-            
         }
 
         public CustomDictionaryWithoutSerializationConstructor(IEqualityComparer<TKey> comparer)
             : base(comparer)
         {
-            
         }
     }
 
@@ -138,11 +139,13 @@ namespace SerializerTests.TestObjects
     public class CustomDictionaryWithDictionaryProperty<TKey, TValue> : Dictionary<TKey, TValue>
     {
         private readonly SerializationInfo _info;
+
         public Dictionary<TValue, TKey> SwitchedDictionary { get; set; }
 
         public CustomDictionaryWithDictionaryProperty()
         {
         }
+
         protected CustomDictionaryWithDictionaryProperty(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

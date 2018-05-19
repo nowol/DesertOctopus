@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DesertOctopus.MammothCache.Tests
 {
@@ -32,45 +32,24 @@ namespace DesertOctopus.MammothCache.Tests
             return Guid.NewGuid().ToString();
         }
 
-        protected string GetAppSetting(string key)
+        private string GetSetting(string settingsName, string defaultValue)
         {
-            var propKey = TestContext.Properties.Keys.OfType<string>()
-                                     .FirstOrDefault(x => String.Equals(x,
-                                                                        key,
-                                                                        StringComparison.InvariantCultureIgnoreCase));
-            if (propKey != null)
-            {
-                return TestContext.Properties[propKey] as string;
-            }
-
             var envKey = Environment.GetEnvironmentVariables()
                                     .Keys.OfType<string>()
                                     .FirstOrDefault(x => String.Equals(x,
-                                                                       key,
+                                                                       settingsName,
                                                                        StringComparison.InvariantCultureIgnoreCase));
             if (envKey != null
-                && Environment.GetEnvironmentVariables()[key] != null)
+                && Environment.GetEnvironmentVariables()[settingsName] != null)
             {
-                return Environment.GetEnvironmentVariables()[key].ToString();
+                return Environment.GetEnvironmentVariables()[settingsName].ToString();
             }
 
-            return ConfigurationManager.AppSettings[key];
+            return defaultValue;
         }
 
-        protected string RedisConnectionString { get { return GetAppSetting("RedisConnectionString"); } }
+        protected string RedisConnectionString => GetSetting("RedisConnectionString", TestConfiguration.Instance.AppSettings.RedisConnectionString);
 
-
-        private TestContext _testContextInstance;
-        public TestContext TestContext
-        {
-            get
-            {
-                return _testContextInstance;
-            }
-            set
-            {
-                _testContextInstance = value;
-            }
-        }
+        protected string RedisMaxMemory => GetSetting("RedisMaxMemory", TestConfiguration.Instance.AppSettings.RedisMaxMemory.ToString());
     }
 }

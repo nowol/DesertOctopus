@@ -1,4 +1,4 @@
-﻿#define INLINE_PRIMITIVE_METHOD
+﻿//#define INLINE_PRIMITIVE_METHOD
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using DesertOctopus.Utilities;
 
@@ -222,6 +223,16 @@ namespace DesertOctopus.Serialization
             return (byte)inputStream.ReadByte();
         }
 
+        private static Expression ConvertIfNecessary(Type expectedType, Expression obj)
+        {
+            if (obj.Type != expectedType)
+            {
+                return Expression.Convert(obj, expectedType);
+            }
+
+            return obj;
+        }
+
         private static Expression WriteIntegerNumberPrimitive(ParameterExpression outputStream, Expression obj, Expression objTracker, int numberOfBytes, Type expectedType)
         {
             if (expectedType == typeof(byte)
@@ -239,22 +250,22 @@ namespace DesertOctopus.Serialization
             else if (expectedType == typeof(int))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteSignedInt32), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, outputStream, obj);
+                return Expression.Call(mi, outputStream, ConvertIfNecessary(expectedType, obj));
             }
             else if (expectedType == typeof(uint))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteVarint32), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, outputStream, obj);
+                return Expression.Call(mi, outputStream, ConvertIfNecessary(expectedType, obj));
             }
             else if (expectedType == typeof(long))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteSignedInt64), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, outputStream, obj);
+                return Expression.Call(mi, outputStream, ConvertIfNecessary(expectedType, obj));
             }
             else if (expectedType == typeof(ulong))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(WriteVarint64), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, outputStream, obj);
+                return Expression.Call(mi, outputStream, ConvertIfNecessary(expectedType, obj));
             }
             else
             {
@@ -279,22 +290,22 @@ namespace DesertOctopus.Serialization
             else if (expectedType == typeof(int))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadSignedInt32), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, inputStream);
+                return ConvertIfNecessary(expectedType, Expression.Call(mi, inputStream));
             }
             else if (expectedType == typeof(uint))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadVarint32), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, inputStream);
+                return ConvertIfNecessary(expectedType, Expression.Call(mi, inputStream));
             }
             else if (expectedType == typeof(long))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadSignedInt64), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, inputStream);
+                return ConvertIfNecessary(expectedType, Expression.Call(mi, inputStream));
             }
             else if (expectedType == typeof(ulong))
             {
                 var mi = typeof(PrimitiveHelpers).GetMethod(nameof(ReadVarint64), BindingFlags.NonPublic | BindingFlags.Static);
-                return Expression.Call(mi, inputStream);
+                return ConvertIfNecessary(expectedType, Expression.Call(mi, inputStream));
             }
             else
             {
@@ -1457,6 +1468,7 @@ namespace DesertOctopus.Serialization
                                    objTracker);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string ReadStringImpl(Stream inputStream, DeserializerObjectTracker objTracker)
         {
             if (inputStream.ReadByte() == SerializerObjectTracker.Value0)
@@ -1503,6 +1515,7 @@ namespace DesertOctopus.Serialization
                                    objTracker);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteStringImpl(Stream outputStream,
                                          string obj,
                                          SerializerObjectTracker objTracker)

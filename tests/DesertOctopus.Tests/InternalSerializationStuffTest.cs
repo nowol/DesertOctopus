@@ -9,49 +9,50 @@ using DesertOctopus.Cloning;
 using DesertOctopus.Exceptions;
 using DesertOctopus.Utilities;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SerializerTests.TestObjects;
+using Xunit;
 
 namespace DesertOctopus.Tests
 {
-    [TestClass]
     public class InternalSerializationStuffTest
     {
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void GetFieldsShouldIncludeBaseClass()
         {
             var fields = InternalSerializationStuff.GetFields(typeof(CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback));
             fields.Select(x => x.Name)
                   .ToArray()
-                  .ShouldAllBeEquivalentTo(new[]
-                                           {
-                                               "<SomeProperty>k__BackingField",
-                                               "_syncRoot",
-                                               "buckets",
-                                               "comparer",
-                                               "count",
-                                               "entries",
-                                               "freeCount",
-                                               "freeList",
-                                               "keys",
-                                               "values",
-                                               "version"
-                                           });
+                  .Should()
+                  .BeEquivalentTo(new[]
+                                  {
+                                      "<SomeProperty>k__BackingField",
+                                      "_syncRoot",
+                                      "buckets",
+                                      "comparer",
+                                      "count",
+                                      "entries",
+                                      "freeCount",
+                                      "freeList",
+                                      "keys",
+                                      "values",
+                                      "version"
+                                  });
         }
 
-        [TestMethod]
-        [TestCategory("Unit")]
+        [Fact]
+        [Trait("Category", "Unit")]
         public void GetFieldShouldExcludeSpecifiedBaseClass()
         {
             var fields = InternalSerializationStuff.GetFields(typeof(CustomDictionaryWithAdditionalPropertiesWithoutOverridingOnDeserializedCallback),
                                                               typeof(Dictionary<string, object>));
             fields.Select(x => x.Name)
                   .ToArray()
-                  .ShouldAllBeEquivalentTo(new[]
-                                           {
-                                               "<SomeProperty>k__BackingField"
-                                           });
+                  .Should()
+                  .BeEquivalentTo(new[]
+                                  {
+                                      "<SomeProperty>k__BackingField"
+                                  });
         }
     }
 }

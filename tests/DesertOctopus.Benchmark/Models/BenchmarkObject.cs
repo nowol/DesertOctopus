@@ -9,7 +9,6 @@ namespace DesertOctopus.Benchmark.Models
     [Serializable]
     public sealed class BenchmarkObject2<TLocalizedType>
         where TLocalizedType : Dictionary<string, string>, new()
-
     {
         public BenchmarkObject2()
         {
@@ -164,7 +163,6 @@ namespace DesertOctopus.Benchmark.Models
     {
         public NonISerializableDictionary()
         {
-            
         }
     }
 }

@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Caching;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DesertOctopus.MammothCache.Common;
 
@@ -13,27 +14,38 @@ namespace DesertOctopus.MammothCache
     /// </summary>
     public sealed class NonSerializableCache : INonSerializableCache, IDisposable
     {
-        private readonly MemoryCache _cache = new MemoryCache("NonSerializableCache");
+        private readonly InMemoryCache _cache = new InMemoryCache(Timeout.InfiniteTimeSpan, Int32.MaxValue);
 
         /// <summary>
         /// Dispose the object
         /// </summary>
         public void Dispose()
         {
-            _cache.Dispose();
         }
 
         /// <inheritdoc/>
         public ConditionalResult<T> Get<T>(string key)
             where T : class
         {
-            var value = _cache.Get(key) as T;
-            if (value == null)
+            CachedObject cachedObject = _cache.Get(key);
+
+            if (cachedObject == null)
             {
                 return ConditionalResult.CreateFailure<T>();
             }
 
-            return ConditionalResult.CreateSuccessful(value);
+            if (cachedObject.Value == null)
+            {
+                return ConditionalResult.CreateSuccessful<T>(null);
+            }
+
+            var castedValue = cachedObject.Value as T;
+            if (castedValue == null)
+            {
+                return ConditionalResult.CreateFailure<T>();
+            }
+
+            return ConditionalResult.CreateSuccessful(castedValue);
         }
 
         /// <inheritdoc/>
@@ -45,11 +57,7 @@ namespace DesertOctopus.MammothCache
         /// <inheritdoc/>
         public void RemoveAll()
         {
-            List<string> cacheKeys = _cache.Select(kvp => kvp.Key).ToList();
-            foreach (string cacheKey in cacheKeys)
-            {
-                Remove(cacheKey);
-            }
+            _cache.RemoveAll();
         }
 
         /// <inheritdoc/>
@@ -57,32 +65,24 @@ namespace DesertOctopus.MammothCache
                         object value,
                         TimeSpan? ttl)
         {
-            if (value == null)
-            {
-                return;
-            }
-
-            Remove(key); // removing the item first to decrease the estimated memory usage
-
-            var cacheItem = new CacheItem(key, value);
-            var policy = new CacheItemPolicy();
+            DateTime? policyTtl = null;
             if (ttl.HasValue)
             {
-                policy.Priority = CacheItemPriority.Default;
-                policy.AbsoluteExpiration = DateTimeOffset.UtcNow.Add(ttl.Value);
-            }
-            else
-            {
-                policy.Priority = CacheItemPriority.NotRemovable;
+                policyTtl = DateTime.UtcNow.Add(ttl.Value);
             }
 
-            _cache.Set(cacheItem, policy);
+            var co = new CachedObject
+                     {
+                         Key = key,
+                         Value = value,
+                         ObjectSize = 0,
+                         ExpireAt = policyTtl
+                     };
+
+            _cache.Add(key, co);
         }
 
         /// <inheritdoc/>
-        public int NumberOfObjects
-        {
-            get { return (int)_cache.GetCount(); }
-        }
+        public int NumberOfObjects => _cache.Count;
     }
 }

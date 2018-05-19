@@ -7,41 +7,63 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Attributes.Jobs;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnostics.Windows;
+using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Validators;
 using DesertOctopus.Benchmark.Models;
-using DesertOctopus.MammothCache;
-using DesertOctopus.MammothCache.Common;
-using DesertOctopus.MammothCache.Redis;
 using DesertOctopus.Serialization;
 using DesertOctopus.Utilities;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
+using Xunit.Abstractions;
+
+#if  NET46
+using BenchmarkDotNet.Diagnostics.Windows;
 using NetSerializer;
 using Serializer = NetSerializer.Serializer;
+#endif
+
+#pragma warning disable CS0414, SA1401, SA1025, SA1308, SA1400, SA1129, SA1001, SA1028, SA1307, CS0162, SA1028, CS1052, CA1052
 
 // ReSharper disable PossibleMultipleEnumeration
 // ReSharper disable UnusedVariable
 
+
 namespace DesertOctopus.Benchmark
 {
-    [TestClass]
+    public class AllowNonOptimized : ManualConfig
+    {
+        public AllowNonOptimized()
+        {
+            //Add(JitOptimizationsValidator.DontFailOnError); // ALLOW NON-OPTIMIZED DLLS
+
+            Add(DefaultConfig.Instance.GetLoggers().ToArray()); // manual config has no loggers by default
+            Add(DefaultConfig.Instance.GetExporters().ToArray()); // manual config has no exporters by default
+            Add(DefaultConfig.Instance.GetColumnProviders().ToArray()); // manual config has no columns by default
+        }
+    }
+
     public class SerializationBenchmarkTest
     {
-        public SerializationBenchmarkTest()
+        private readonly ITestOutputHelper _output;
+
+        public SerializationBenchmarkTest(ITestOutputHelper output)
         {
+            _output = output;
 //#if DEBUG
 //            throw new Exception("Use release mode");
 //#endif
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void ForOptimization()
         {
             //ParameterExpression outputStream = Expression.Parameter(typeof(Stream)), objTracking = Expression.Parameter(typeof(SerializerObjectTracker));
@@ -64,8 +86,8 @@ namespace DesertOctopus.Benchmark
 
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void ProfileSerialization()
         {
             var root = BenchmarkObjectNormalDictionary.GetNewInitialized();
@@ -86,11 +108,11 @@ namespace DesertOctopus.Benchmark
             }
 
             sw.Stop();
-            Assert.Fail(sw.Elapsed.ToString());
+            _output.WriteLine(sw.Elapsed.ToString());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void ProfileSerialization2()
         {
             var instance = Enumerable.Range(0, 100).ToArray();
@@ -111,48 +133,54 @@ namespace DesertOctopus.Benchmark
             }
 
             sw.Stop();
-            Assert.Fail(sw.Elapsed.ToString());
+            _output.WriteLine(sw.Elapsed.ToString());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void PrintComplexObjectSerializationSizes()
         {
             var b = new ComplexObjectSerializationBenchmark();
-            Console.WriteLine("JsonSerialization: {0}", b.JsonSerialization().Length);
-            Console.WriteLine("OmniSerialization: {0}", b.OmniSerialization().Length);
-            Console.WriteLine("KrakenSerialization: {0}", b.KrakenSerialization().Length);
-            Console.WriteLine("BinaryFormatterSerialization: {0}", b.BinaryFormatterSerialization().Length);
+            _output.WriteLine("JsonSerialization: {0}", b.JsonSerialization().Length);
+#if NET46
+            _output.WriteLine("OmniSerialization: {0}", b.OmniSerialization().Length);
+            _output.WriteLine("NetSerializerSerialization: {0}", b.NetSerializerSerialization().Length);
+#endif
+            _output.WriteLine("KrakenSerialization: {0}", b.KrakenSerialization().Length);
+            _output.WriteLine("BinaryFormatterSerialization: {0}", b.BinaryFormatterSerialization().Length);
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void ComplexObjectSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<ComplexObjectSerializationBenchmark>();
-                
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
             PrintComplexObjectSerializationSizes();
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
 
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void KrakenBenchmarks()
         {
 #if DEBUG
             throw new Exception("Use release mode");
 #endif
+//#if NET46
+//            return; // we only benchmark .Net core
+//#endif
 
             var benchmarks = new Dictionary<string, Type>();
             benchmarks.Add("This benchmark serialize and deserialize a fairly large object containing array, lists and dictionaries.", typeof(ComplexObjectSerializationBenchmark));
@@ -160,12 +188,13 @@ namespace DesertOctopus.Benchmark
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 ints.", typeof(IntArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 doubles.", typeof(DoubleArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an array of 100000 decimals.", typeof(DecimalArraySerializationBenchmark));
+            benchmarks.Add("This benchmark serialize and deserialize an array of 100000 DateTimes.", typeof(DateTimeArraySerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of int,int with 100000 items.", typeof(DictionaryIntIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize an Dictionary of string,int with 100000 items.", typeof(DictionaryStringIntSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize a string of 1000 characters.", typeof(StringSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize a large struct.", typeof(LargeStructSerializationBenchmark));
             benchmarks.Add("This benchmark serialize and deserialize a small class used by the Wire project.", typeof(WireSmallObjectSerializationBenchmark));
-            
+
 
             var sb = new StringBuilder();
 
@@ -186,9 +215,9 @@ namespace DesertOctopus.Benchmark
                         {
                             foreach (var validationError in summary.ValidationErrors)
                             {
-                                Console.WriteLine(validationError.Message);
+                                _output.WriteLine(validationError.Message);
                             }
-                            Assert.Fail(kvp.Key);
+                            Assert.True(false, kvp.Key);
                         }
 
                         BenchmarkDotNet.Exporters.MarkdownExporter.GitHub.ExportToLog(summary, logger);
@@ -202,14 +231,17 @@ namespace DesertOctopus.Benchmark
             }
 
             // ### Benchmark
-
-            var file = @"..\..\..\..\Docs\KrakenSerializer.md";
+#if NET46
+            var file = @"..\..\..\..\..\Docs\KrakenSerializer.md";
+#else
+            var file = @"..\..\..\..\..\Docs\KrakenSerializerCore.md";
+#endif
             var fileContent = System.IO.File.ReadAllText(file);
             var marker = "### Benchmark";
             var pos = fileContent.IndexOf(marker, StringComparison.InvariantCultureIgnoreCase);
             if (pos == -1)
             {
-                Assert.Fail("Could not find position of " + marker);
+                Assert.True(false, "Could not find position of " + marker);
             }
 
             fileContent = fileContent.Substring(0, pos + marker.Length);
@@ -218,46 +250,44 @@ namespace DesertOctopus.Benchmark
             System.IO.File.WriteAllText(file, fileContent, Encoding.UTF8);
         }
 
-
-
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void SimpleDtoWithEveryPrimitivesSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<SimpleDtoWithEveryPrimitivesSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void IntArraySerializationBenchmark()
         {
             var ii = new IntArraySerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<IntArraySerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void DoubleArraySerializationBenchmark()
         {
             var ii = new DoubleArraySerializationBenchmark();
@@ -265,142 +295,161 @@ namespace DesertOctopus.Benchmark
 
             var summary = BenchmarkRunner.Run<DoubleArraySerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void DecimalArraySerializationBenchmark()
         {
             var ii = new DecimalArraySerializationBenchmark();
 
-            var summary = BenchmarkRunner.Run<DecimalArraySerializationBenchmark>();
+            var summary = BenchmarkRunner.Run<DecimalArraySerializationBenchmark>(new AllowNonOptimized());
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
+        public void DateTimeArraySerializationBenchmark()
+        {
+            var ii = new DateTimeArraySerializationBenchmark();
+
+            var summary = BenchmarkRunner.Run<DateTimeArraySerializationBenchmark>(new AllowNonOptimized());
+
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
+
+            foreach (var validationError in summary.ValidationErrors)
+            {
+                _output.WriteLine(validationError.Message);
+            }
+
+            _output.WriteLine(k.First());
+        }
+
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void DictionaryStringIntSerializationBenchmark()
         {
             var ii = new DictionaryStringIntSerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<DictionaryStringIntSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void DictionaryIntIntSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<DictionaryIntIntSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void StringSerializationBenchmark()
         {
             var ii = new StringSerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<StringSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void LargeStructSerializationBenchmark()
         {
             var ii = new LargeStructSerializationBenchmark();
 
             var summary = BenchmarkRunner.Run<LargeStructSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void WireSmallObjectSerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<WireSmallObjectSerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
 
-        [TestMethod]
-        [TestCategory("Benchmark")]
+        [Fact]
+        [Trait("Category", "Benchmark")]
         public void TwoDimIntArraySerializationBenchmark()
         {
             var summary = BenchmarkRunner.Run<TwoDimIntArraySerializationBenchmark>();
 
-            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary);
-            Console.WriteLine(k.First());
+            var k = BenchmarkDotNet.Exporters.HtmlExporter.Default.ExportToFiles(summary, NullLogger.Instance);
+            _output.WriteLine(k.First());
 
             foreach (var validationError in summary.ValidationErrors)
             {
-                Console.WriteLine(validationError.Message);
+                _output.WriteLine(validationError.Message);
             }
 
-            Assert.Fail(k.First());
+            _output.WriteLine(k.First());
         }
     }
 
@@ -452,12 +501,22 @@ namespace DesertOctopus.Benchmark
         public static decimal[] Array = Enumerable.Range(0, 100000).Select(x => 5456465.564M).ToArray();
     }
 
+    public class DateTimeArraySerializationBenchmark : SerializationBenchmarkBase<DateTime[]>
+    {
+        public DateTimeArraySerializationBenchmark()
+            : base(DateTimeArraySerializationBenchmark.Array)
+        {
+        }
+
+        public static DateTime[] Array = Enumerable.Range(0, 100000).Select(x => DateTime.UtcNow).ToArray();
+    }
+
     public class DictionaryStringIntSerializationBenchmark : SerializationBenchmarkBase<Dictionary<string, int>>
     {
         public DictionaryStringIntSerializationBenchmark()
             : base(DictionaryStringIntSerializationBenchmark.Dict)
         {
-            
+
         }
 
         static DictionaryStringIntSerializationBenchmark()
@@ -476,7 +535,7 @@ namespace DesertOctopus.Benchmark
         public DictionaryIntIntSerializationBenchmark()
             : base(DictionaryIntIntSerializationBenchmark.Dict)
         {
-            
+
         }
 
         static DictionaryIntIntSerializationBenchmark()
@@ -495,9 +554,8 @@ namespace DesertOctopus.Benchmark
         public StringSerializationBenchmark()
             : base(StringSerializationBenchmark.Str)
         {
-            
         }
-        
+
         public static ObjectWrapper<string> Str = new ObjectWrapper<string>() { Value = new string('c', 1000) };
     }
 
@@ -506,9 +564,9 @@ namespace DesertOctopus.Benchmark
         public LargeStructSerializationBenchmark()
             : base(LargeStructSerializationBenchmark.Str)
         {
-            
+
         }
-        
+
         public static ObjectWrapper<LargeStruct> Str = new ObjectWrapper<LargeStruct> { Value = LargeStruct.Create() };
     }
 
@@ -517,9 +575,9 @@ namespace DesertOctopus.Benchmark
         public WireSmallObjectSerializationBenchmark()
             : base(WireSmallObjectSerializationBenchmark.Str)
         {
-            
+
         }
-        
+
         public static WireSmallObject Str = new WireSmallObject { StringProp = "hello", IntProp = 123, GuidProp = Guid.NewGuid(), DateProp = DateTime.Now };
     }
 
@@ -536,7 +594,6 @@ namespace DesertOctopus.Benchmark
     [Serializable]
     public struct LargeStruct
     {
-
         ulong m_val1;
         ulong m_val2;
         ulong m_val3;
@@ -611,8 +668,8 @@ namespace DesertOctopus.Benchmark
         {
             public BenchmarkConfiguration()
             {
-                Add(new MemoryDiagnoser());
-                Add(new InliningDiagnoser());
+                Add(BenchmarkDotNet.Diagnosers.MemoryDiagnoser.Default);
+                //Add(new InliningDiagnoser());
                 Add(new TagColumn("Size (bytes)", GetSizeFromName));
             }
 
@@ -628,7 +685,7 @@ namespace DesertOctopus.Benchmark
     }
 
     public class SerializationBenchmarkBase<T> : SerializationBenchmarkBase
-        where T: class
+        where T : class
     {
         //private class Config : BenchmarkDotNet.Configs.ManualConfig
         //{
@@ -640,26 +697,29 @@ namespace DesertOctopus.Benchmark
         //        //Add(new TagColumn("Number", name => name.Substring(3)));
         //        BenchmarkDotNet.Configs.DefaultConfig
 
-        //        Add(Job.AllJits);
-        //        Add(Job.LegacyX64, Job.RyuJitX64);
-        //        Add(Job.Default.With(Mode.SingleRun).WithProcessCount(1).WithWarmupCount(1).WithTargetCount(1));
-        //        Add(Job.Default.With(Framework.V40).With(Runtime.Mono).With(Platform.X64));
+//        Add(Job.AllJits);
+//        Add(Job.LegacyX64, Job.RyuJitX64);
+//        Add(Job.Default.With(Mode.SingleRun).WithProcessCount(1).WithWarmupCount(1).WithTargetCount(1));
+//        Add(Job.Default.With(Framework.V40).With(Runtime.Mono).With(Platform.X64));
 
-        //    }
-        //}
+//    }
+//}
 
-        private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         private BinaryFormatter bf = new BinaryFormatter();
         public byte[] krakenBytes;
         public byte[] krakenBytesWithOmittedRootType;
         public byte[] bfBytes;
+#if NET46
+        private Orckestra.OmniSerializer.Serializer omni = new Orckestra.OmniSerializer.Serializer();
         public byte[] omniBytes;
-        public byte[] wireBytes;
-        public byte[] netBytes;
-        protected object obj;
-        private string Json = String.Empty;
-        private Wire.Serializer wireSerializer = new Wire.Serializer();
         private NetSerializer.Serializer netSerializer;
+        public byte[] netBytes;
+#endif
+        public byte[] wireBytes;
+        protected object obj;
+        private string json = String.Empty;
+        private Wire.Serializer wireSerializer = new Wire.Serializer();
+
         private SerializationOptions _serializationOptions;
 
         public SerializationBenchmarkBase(object objectToTest, bool benchmarkOmni = true, bool benchmarkSS = true)
@@ -669,8 +729,8 @@ namespace DesertOctopus.Benchmark
             obj = objectToTest;
             if (benchmarkSS)
             {
-                Json = ServiceStack.Text.JsonSerializer.SerializeToString(obj);
-                System.IO.File.WriteAllText("JsonSerialization", Json.Length.ToString());
+                json = ServiceStack.Text.JsonSerializer.SerializeToString(obj);
+                System.IO.File.WriteAllText("JsonSerialization", json.Length.ToString());
             }
 
             using (var ms = new MemoryStream())
@@ -679,26 +739,15 @@ namespace DesertOctopus.Benchmark
                 bfBytes = ms.ToArray();
             }
 
+#if NET46
             using (var ms = new MemoryStream())
             {
                 if (benchmarkOmni)
                 {
                     omni.SerializeObject(ms, obj);
                     omniBytes = ms.ToArray();
-                }
-            }
-
-            krakenBytes = DesertOctopus.KrakenSerializer.Serialize(obj);
-            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
-
-            _serializationOptions = new SerializationOptions { OmitRootTypeName = true };
-            krakenBytesWithOmittedRootType = DesertOctopus.KrakenSerializer.Serialize(obj, _serializationOptions);
-            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytesWithOmittedRootType, _serializationOptions);
-
-            if (benchmarkSS)
-            {
-                ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
-            }
+        }
+    }
 
             netSerializer = CreateNetSerializer();
 
@@ -710,12 +759,27 @@ namespace DesertOctopus.Benchmark
                 object o;
                 netSerializer.Deserialize(ms, out o);
             }
+#endif
+
+            krakenBytes = DesertOctopus.KrakenSerializer.Serialize(obj);
+            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytes);
+
+            _serializationOptions = new SerializationOptions { OmitRootTypeName = true };
+            krakenBytesWithOmittedRootType = DesertOctopus.KrakenSerializer.Serialize(obj, _serializationOptions);
+            DesertOctopus.KrakenSerializer.Deserialize<T>(krakenBytesWithOmittedRootType, _serializationOptions);
+
+            if (benchmarkSS)
+            {
+                ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(json);
+            }
 
             System.IO.File.WriteAllText("KrakenSerialization", krakenBytes.Length.ToString());
             System.IO.File.WriteAllText("KrakenSerializationWithOmittedRootType", krakenBytesWithOmittedRootType.Length.ToString());
             System.IO.File.WriteAllText("BinaryFormatterSerialization", bfBytes.Length.ToString());
+#if NET46
             System.IO.File.WriteAllText("OmniSerialization", omniBytes.Length.ToString());
             System.IO.File.WriteAllText("NetSerializerSerialization", netBytes.Length.ToString());
+#endif
 
             //using (var ms = new MemoryStream())
             //{
@@ -725,6 +789,38 @@ namespace DesertOctopus.Benchmark
             //    wireSerializer.Deserialize<T>(ms);
             //}
         }
+
+        public bool BenchmarkOmni { get; set; }
+        public bool BenchmarkSs { get; set; }
+
+
+        [Benchmark]
+        public byte[] JsonSerialization()
+        {
+            if (!BenchmarkSs)
+            {
+                return null;
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                ServiceStack.Text.JsonSerializer.SerializeToStream(obj, ms);
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public T JsonDeserialization()
+        {
+            if (!BenchmarkSs)
+            {
+                return null;
+            }
+
+            return ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(json);
+        }
+
+#if NET46
 
         private Serializer CreateNetSerializer()
         {
@@ -771,36 +867,6 @@ namespace DesertOctopus.Benchmark
             }
         }
 
-        public bool BenchmarkOmni { get; set; }
-        public bool BenchmarkSs { get; set; }
-
-
-        [Benchmark]
-        public byte[] JsonSerialization()
-        {
-            if (!BenchmarkSs)
-            {
-                return null;
-            }
-
-            using (var ms = new MemoryStream())
-            {
-                ServiceStack.Text.JsonSerializer.SerializeToStream(obj, ms);
-                return ms.ToArray();
-            }
-        }
-
-        [Benchmark]
-        public T JsonDeserialization()
-        {
-            if (!BenchmarkSs)
-            {
-                return null;
-            }
-
-            return ServiceStack.Text.JsonSerializer.DeserializeFromString<T>(Json);
-        }
-
         [Benchmark]
         public byte[] OmniSerialization()
         {
@@ -829,6 +895,26 @@ namespace DesertOctopus.Benchmark
                 return omni.Deserialize(ms) as T;
             }
         }
+
+        [Benchmark]
+        public byte[] NetSerializerSerialization()
+        {
+            using (var ms = new MemoryStream())
+            {
+                netSerializer.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public T NetSerializerDeserialization()
+        {
+            using (var ms = new MemoryStream(netBytes))
+            {
+                return netSerializer.Deserialize(ms) as T;
+            }
+        }
+#endif
 
         [Benchmark]
         public byte[] KrakenSerialization()
@@ -870,25 +956,6 @@ namespace DesertOctopus.Benchmark
             using (var ms = new MemoryStream(bfBytes))
             {
                 return bf.Deserialize(ms) as T;
-            }
-        }
-
-        [Benchmark]
-        public byte[] NetSerializerSerialization()
-        {
-            using (var ms = new MemoryStream())
-            {
-                netSerializer.Serialize(ms, obj);
-                return ms.ToArray();
-            }
-        }
-
-        [Benchmark]
-        public T NetSerializerDeserialization()
-        {
-            using (var ms = new MemoryStream(netBytes))
-            {
-                return netSerializer.Deserialize(ms) as T;
             }
         }
 
