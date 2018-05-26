@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -252,17 +253,52 @@ namespace DesertOctopus.MammothCache.Redis.Tests
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void AcquireLockInDifferentThreadsAsync()
+        public async Task AcquireLockInDifferentThreadsAsync()
         {
             var key = RandomKey();
             int counter = 0;
             bool inLock = false;
+
+            var tasks = Enumerable.Range(0, 10)
+                                  .Select(async i =>
+                                          {
+                                              using (await _connection.AcquireLockAsync(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(300)).ConfigureAwait(false))
+                                              {
+                                                  Interlocked.Increment(ref counter);
+                                                  Assert.False(inLock);
+                                                  inLock = true;
+                                                  Thread.Sleep(1000);
+                                                  inLock = false;
+                                              }
+                                          });
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            Assert.False(inLock);
+            Assert.Equal(10, counter);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void AcquireLockInDifferentThreads()
+        {
+#if NETCOREAPP2_0
+            ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
+            ThreadPool.SetMinThreads(10, 10); // increase number of threads in .net core apps otherwise it will hang
+#endif
+
+
+            var key = RandomKey();
+            int counter = 0;
+            bool inLock = false;
+
             Parallel.For(0,
                          10,
                          i =>
                          {
-                             using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)))
+                             using (_connection.AcquireLock(key, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(300)))
                              {
+                                 System.Diagnostics.Trace.WriteLine(counter);
                                  Interlocked.Increment(ref counter);
                                  Assert.False(inLock);
                                  inLock = true;
@@ -272,6 +308,10 @@ namespace DesertOctopus.MammothCache.Redis.Tests
                          });
             Assert.False(inLock);
             Assert.Equal(10, counter);
+
+#if NETCOREAPP2_0
+            ThreadPool.SetMinThreads(workerThreads, completionPortThreads);
+#endif
         }
     }
 }
