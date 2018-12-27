@@ -9,8 +9,7 @@ Param(
 
 $WorkSpaceRoot = Split-Path $PSScriptRoot -Parent
 $artifacts = Join-Path $WorkSpaceRoot "artifacts"
-$artifactsTestResults = Join-path $artifacts "TestResults"
-
+$artifactsTestResults = Join-path $artifacts "TestResults\"
 
 
 function Update-RedisConnectionString() {
@@ -63,8 +62,6 @@ function Get-GitVersionCommandLinePath() {
             Write-Host "Found GitVersion: $($children[0].FullName)"
             return $children[0].FullName
         }
-
-        #gitversion.commandline
     }
 
     
@@ -95,6 +92,7 @@ try {
         Remove-Item -Path $artifacts -Force -Recurse
     }
 
+    New-Item -Path $artifactsTestResults -ItemType Directory
 
 
     #####
@@ -114,13 +112,12 @@ try {
     dotnet build -c $BuildConfiguration /p:Version=$($gitVersion.AssemblyVersion) /p:FileVersion=$($gitVersion.AssemblySemFileVer) /p:InformationalVersion=$($gitVersion.AssemblyInfoVersion)
 
 
-
     #####
     Update-RedisConnectionString
 
     #####
     Write-Host "Running unit tests"
-    dotnet test -c $BuildConfiguration --no-build --filter Category=Unit .\DesertOctopus.sln /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutputFormat=opencover /p:CoverletOutput=$artifactsTestResults
+    dotnet test -c $BuildConfiguration --no-build --filter Category=Unit .\DesertOctopus.sln /p:CollectCoverage=true /p:CoverletOutputFormat=\`"opencover,cobertura\`" /p:CoverletOutput=$artifactsTestResults
 
     #####
     Write-Host "Packing Nuget files"
